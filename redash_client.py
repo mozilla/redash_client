@@ -9,14 +9,12 @@ class RedashClient(object):
     self.api_key = api_key
 
   def new_query(self, name, query_string, data_source_id):
-    r0 = requests.post(
+    query_id = requests.post(
       self.BASE_URL + "/queries?api_key=" + self.api_key,
       data = json.dumps({"name": name, "query": query_string, "data_source_id": data_source_id}), 
-    ).json()
+    ).json()["id"]
 
-    query_id = r0["id"]
-
-    r1 = requests.post(
+    requests.post(
       self.BASE_URL + "/queries/" + str(query_id) + "/refresh?api_key=" + self.api_key
     ).json()
 
