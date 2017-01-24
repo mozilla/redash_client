@@ -1,4 +1,5 @@
 import json
+import string
 import requests
 from constants import VizType, ChartType
 
@@ -46,9 +47,15 @@ class RedashClient(object):
   ## If a dashboard with the given name already exists, don't create a new one
   ############################################################################
   def new_dashboard(self, name):
+    slug = name \
+      .lower() \
+      .replace("/", " ") \
+      .translate(None, string.punctuation) \
+      .replace(" ", "-")
+
     # Check if dashboard exists
     dash = requests.get(
-      self.BASE_URL + "/dashboards/" + name + "?api_key=" + self.api_key,
+      self.BASE_URL + "/dashboards/" + slug + "?api_key=" + self.api_key,
       data = json.dumps({"name": name}), 
     )
 
