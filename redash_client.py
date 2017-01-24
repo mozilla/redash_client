@@ -42,11 +42,24 @@ class RedashClient(object):
           "columnMapping":{"event":"x","count":"y"},"bottomMargin":50},"query_id":query_id}), 
     ).json()["id"]
 
+  ############################################################################
+  ## If a dashboard with the given name already exists, don't create a new one
+  ############################################################################
   def new_dashboard(self, name):
-    return requests.post(
-      self.BASE_URL + "/dashboards?api_key=" + self.api_key,
+    # Check if dashboard exists
+    dash = requests.get(
+      self.BASE_URL + "/dashboards/" + name + "?api_key=" + self.api_key,
       data = json.dumps({"name": name}), 
-    ).json()["id"]
+    )
+
+    # If dashboard doesn't exist, create a new one.
+    if dash.status_code != 200:
+      return requests.post(
+        self.BASE_URL + "/dashboards?api_key=" + self.api_key,
+        data = json.dumps({"name": name}),
+      ).json()["id"]
+
+    return dash.json()["id"]
 
   def append_viz_to_dash(self, dash_id, viz_id, viz_width):
     requests.post(
