@@ -10,6 +10,7 @@ class ActivityStreamExperimentDashboard(object):
 
   def __init__(self, api_key, dash_name, exp_id, start_date=None, end_date=None):
     self._api_key = api_key
+    self._dash_name = dash_name
     self._experiment_id = exp_id
     self._start_date = start_date
     self._end_date = end_date
@@ -28,3 +29,8 @@ class ActivityStreamExperimentDashboard(object):
       query_id = self.redash.new_query(query_name, query_string, self.DATA_SOURCE_ID)
       viz_id = self.redash.new_visualization(query_id, ChartType.LINE, {fields[0]: "x", fields[1]: "y", fields[2]: "series"})
       self.redash.append_viz_to_dash(self._dash_id, viz_id, VizWidth.WIDE)
+
+  def update_refresh_schedule(self, seconds_to_refresh):
+    widgets = self.redash.get_widget_ids_from_dash(self._dash_name)
+    for widget in widgets:
+      self.redash.update_query_schedule(widget, seconds_to_refresh)

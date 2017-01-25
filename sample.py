@@ -10,3 +10,4 @@ if __name__ == '__main__':
     "01/16/17"
   )
   dash.add_event_graphs()
+  dash.update_refresh_schedule(900)

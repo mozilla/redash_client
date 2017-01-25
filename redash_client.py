@@ -105,7 +105,13 @@ class RedashClient(object):
         "options":{},
         "text":""
       }), 
-    ).json()
+    )
+
+  def update_query_schedule(self, query_id, schedule):
+    requests.post(
+      self.BASE_URL + "/queries/" + str(query_id) + "?api_key=" + self.api_key,
+      data = json.dumps({"schedule": schedule, "id": query_id})
+    )
 
   def get_widget_ids_from_dash(self, name):
     slug = name \
