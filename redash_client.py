@@ -58,10 +58,14 @@ class RedashClient(object):
         "query_id":query_id}),
     ).json()["id"]
 
-  ############################################################################
-  ## If a dashboard with the given name already exists, don't create a new one
-  ############################################################################
   def new_dashboard(self, name):
+    """ Create a new Redash dashboard. If a dashboard with the given name already exists, don't create a new one
+
+    Keyword arguments:
+
+    name -- a title for the dashboard
+    """
+
     slug = name \
       .lower() \
       .replace("/", " ") \
