@@ -21,26 +21,41 @@ class RedashClient(object):
 
     return query_id
 
+  def new_visualization(self, query_id, chart_type, column_mapping, title="", viz_type=VizType.CHART):
+    """ Create a new Redash Visualization.
 
-  def new_visualization(self, query_id, title="New Visualization", viz_type=VizType.CHART, chart_type=ChartType.BAR):
+    Keyword arguments:
+
+    query_id -- the id returned when calling new_query()
+    chart_type -- one of the ChartType constants (BAR|PIE|LINE|SCATTER)
+    column_mapping -- a dict of which field names to use for the x and y axis. (e.g. {"event":"x","count":"y","type":"series"})
+    title (optional) -- title of your visualization
+    viz_type (optional) -- one of the VizType constants (CHART|<TBD>)
+    """
+
+    options = {
+      "globalSeriesType": chart_type,
+      "sortX":True,
+      "legend": {"enabled":True},
+      "yAxis": [{"type": "linear"}, {"type": "linear", "opposite":True}],
+      "xAxis": {"type": "datetime","labels": {"enabled":True}},
+      "seriesOptions":{"count": {
+        "type": chart_type,
+        "yAxis": 0,
+        "zIndex":0,
+        "index":0
+      }},
+      "columnMapping": column_mapping,
+      "bottomMargin":50
+    }
+
     return requests.post(
       self.BASE_URL + "/visualizations?api_key=" + self.api_key, 
       data = json.dumps({
         "type": viz_type,
         "name": title,
-        "options":{
-          "globalSeriesType": chart_type,
-          "sortX":True,
-          "legend": {"enabled":True},
-          "yAxis": [{"type": "linear"}, {"type": "linear", "opposite":True}],
-          "xAxis": {"type": "category","labels": {"enabled":True}},
-          "seriesOptions":{"count": {
-            "type": chart_type,
-            "yAxis": 0,
-            "zIndex":0, 
-            "index":0
-          }},
-          "columnMapping":{"event":"x","count":"y"},"bottomMargin":50},"query_id":query_id}), 
+        "options": options,
+        "query_id":query_id}),
     ).json()["id"]
 
   ############################################################################
