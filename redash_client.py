@@ -106,3 +106,17 @@ class RedashClient(object):
         "text":""
       }), 
     ).json()
+
+  def get_widget_ids_from_dash(self, name):
+    slug = name \
+      .lower() \
+      .replace("/", " ") \
+      .translate(None, string.punctuation) \
+      .replace(" ", "-")
+
+    widget_arr = requests.get(
+      self.BASE_URL + "/dashboards/" + slug + "?api_key=" + self.api_key,
+      data = json.dumps({"name": name}),
+    ).json()["widgets"]
+
+    return [widget[0]["visualization"]["query"]["id"] for widget in widget_arr]
