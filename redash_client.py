@@ -59,7 +59,9 @@ class RedashClient(object):
     ).json()["id"]
 
   def new_dashboard(self, name):
-    """ Create a new Redash dashboard. If a dashboard with the given name already exists, don't create a new one
+    """
+    Create a new Redash dashboard. If a dashboard with the given name
+    already exists, don't create a new one
 
     Keyword arguments:
 

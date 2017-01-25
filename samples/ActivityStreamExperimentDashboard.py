@@ -22,7 +22,7 @@ class ActivityStreamExperimentDashboard(object):
     required_events = self.DEFAULT_EVENTS + additional_events
 
     for event in required_events:
-      query_name = "Experiment vs. Control {0} Rate".format(event)
+      query_name = "{0} Rate".format(event.capitalize())
       query_string, fields = event_rate(event, self._start_date, self._experiment_id)
 
       query_id = self.redash.new_query(query_name, query_string, self.DATA_SOURCE_ID)
