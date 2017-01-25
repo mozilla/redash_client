@@ -87,6 +87,12 @@ class RedashClient(object):
 
     return dash.json()["id"]
 
+  def publish_dashboard(self, dash_id):
+    requests.post(
+      self.BASE_URL + "/dashboards/" + str(dash_id) + "?api_key=" + self.api_key,
+      data = json.dumps({"is_draft": False})
+    )
+
   def append_viz_to_dash(self, dash_id, viz_id, viz_width):
     requests.post(
       self.BASE_URL + "/widgets?api_key=" + self.api_key,
@@ -98,4 +104,3 @@ class RedashClient(object):
         "text":""
       }), 
     ).json()
-
