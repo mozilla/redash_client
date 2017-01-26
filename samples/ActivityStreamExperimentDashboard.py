@@ -10,13 +10,13 @@ class ActivityStreamExperimentDashboard(object):
 
   def __init__(self, api_key, dash_name, exp_id, start_date=None, end_date=None):
     self._api_key = api_key
-    self._dash_name = dash_name
+    self._dash_name = "Activity Stream A/B Testing: " + dash_name
     self._experiment_id = exp_id
     self._start_date = start_date
     self._end_date = end_date
 
     self.redash = RedashClient(api_key)
-    self._dash_id = self.redash.new_dashboard(dash_name)
+    self._dash_id = self.redash.new_dashboard(self._dash_name)
     self.redash.publish_dashboard(self._dash_id)
 
   def add_event_graphs(self, additional_events=[]):
