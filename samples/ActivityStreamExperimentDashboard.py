@@ -21,7 +21,7 @@ class ActivityStreamExperimentDashboard(object):
 
   def add_event_graphs(self, additional_events=[]):
     widgets = self.redash.get_widget_from_dash(self._dash_name)
-    chart_names = set([widget["name"] for widget in widgets])
+    chart_names = set([widget["visualization"]["query"]["name"] for widget in widgets])
     required_events = self.DEFAULT_EVENTS + additional_events
 
     for event in required_events:
@@ -40,4 +40,9 @@ class ActivityStreamExperimentDashboard(object):
   def update_refresh_schedule(self, seconds_to_refresh):
     widgets = self.redash.get_widget_from_dash(self._dash_name)
     for widget in widgets:
-      self.redash.update_query_schedule(widget["id"], seconds_to_refresh)
+      self.redash.update_query_schedule(widget["visualization"]["query"]["id"], seconds_to_refresh)
+
+  def remove_all_graphs(self):
+    widgets = self.redash.get_widget_from_dash(self._dash_name)
+    for widget in widgets:
+      self.redash.remove_visualization(self._dash_name, widget["id"])

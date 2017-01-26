@@ -95,6 +95,11 @@ class RedashClient(object):
       data = json.dumps({"is_draft": False})
     )
 
+  def remove_visualization(self, dash_name, viz_id):
+    requests.delete(
+      self.BASE_URL + "/widgets/" + str(viz_id) + "?api_key=" + self.api_key
+    )
+
   def append_viz_to_dash(self, dash_id, viz_id, viz_width):
     requests.post(
       self.BASE_URL + "/widgets?api_key=" + self.api_key,
@@ -125,4 +130,4 @@ class RedashClient(object):
       data = json.dumps({"name": name}),
     ).json()["widgets"]
 
-    return [widget[0]["visualization"]["query"] for widget in widget_arr]
+    return [widget[0] for widget in widget_arr]
