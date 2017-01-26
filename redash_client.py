@@ -113,7 +113,7 @@ class RedashClient(object):
       data = json.dumps({"schedule": schedule, "id": query_id})
     )
 
-  def get_widget_ids_from_dash(self, name):
+  def get_widget_from_dash(self, name):
     slug = name \
       .lower() \
       .replace("/", " ") \
@@ -125,4 +125,4 @@ class RedashClient(object):
       data = json.dumps({"name": name}),
     ).json()["widgets"]
 
-    return [widget[0]["visualization"]["query"]["id"] for widget in widget_arr]
+    return [widget[0]["visualization"]["query"] for widget in widget_arr]

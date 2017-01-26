@@ -20,10 +20,17 @@ class ActivityStreamExperimentDashboard(object):
     self.redash.publish_dashboard(self._dash_id)
 
   def add_event_graphs(self, additional_events=[]):
+    widgets = self.redash.get_widget_from_dash(self._dash_name)
+    chart_names = set([widget["name"] for widget in widgets])
     required_events = self.DEFAULT_EVENTS + additional_events
 
     for event in required_events:
       query_name = "{0} Rate".format(event.capitalize())
+
+      # Don't add graphs that already exist
+      if query_name in chart_names:
+        continue
+
       query_string, fields = event_rate(event, self._start_date, self._experiment_id)
 
       query_id = self.redash.new_query(query_name, query_string, self.DATA_SOURCE_ID)
@@ -31,6 +38,6 @@ class ActivityStreamExperimentDashboard(object):
       self.redash.append_viz_to_dash(self._dash_id, viz_id, VizWidth.WIDE)
 
   def update_refresh_schedule(self, seconds_to_refresh):
-    widgets = self.redash.get_widget_ids_from_dash(self._dash_name)
+    widgets = self.redash.get_widget_from_dash(self._dash_name)
     for widget in widgets:
-      self.redash.update_query_schedule(widget, seconds_to_refresh)
+      self.redash.update_query_schedule(widget["id"], seconds_to_refresh)
