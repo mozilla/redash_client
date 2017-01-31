@@ -38,7 +38,7 @@ def event_rate(event, start_date, experiment_id):
       GROUP BY date
       ORDER BY date)
 
-    (SELECT a.date, 'experiment' AS type, b.count / a.count::float * 100 AS event_rate
+    (SELECT a.date, 'experiment' AS type, COALESCE(b.count, 0) / a.count::float * 100 AS event_rate
     FROM experiment_session_counts_per_day AS a
     LEFT JOIN experiment_clicks_by_day AS b
     ON a.date = b.date
@@ -46,7 +46,7 @@ def event_rate(event, start_date, experiment_id):
 
     UNION ALL
 
-    (SELECT a.date, 'control' AS type, b.count / a.count::float * 100 AS event_rate
+    (SELECT a.date, 'control' AS type, COALESCE(b.count, 0) / a.count::float * 100 AS event_rate
     FROM control_session_counts_per_day AS a
     LEFT JOIN control_events_by_day AS b
     ON a.date = b.date
