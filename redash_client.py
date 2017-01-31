@@ -1,6 +1,7 @@
 import json
 import string
 import requests
+import itertools
 from constants import VizType, ChartType
 
 class RedashClient(object):
@@ -125,9 +126,9 @@ class RedashClient(object):
       .translate(None, string.punctuation) \
       .replace(" ", "-")
 
-    widget_arr = requests.get(
+    row_arr = requests.get(
       self.BASE_URL + "/dashboards/" + slug + "?api_key=" + self.api_key,
       data = json.dumps({"name": name}),
     ).json()["widgets"]
 
-    return [widget[0] for widget in widget_arr]
+    return list(itertools.chain.from_iterable(map(lambda row: [row[0]] if len(row) == 1 else [row[0], row[1]], row_arr)))
