@@ -2,6 +2,7 @@ import json
 import string
 import requests
 import itertools
+import sched, time
 from constants import VizType, ChartType
 
 class RedashClient(object):
@@ -9,6 +10,7 @@ class RedashClient(object):
 
   def __init__(self, api_key):
     self.api_key = api_key
+    self.s = sched.scheduler(time.time, time.sleep)
 
   def new_query(self, name, query_string, data_source_id):
     query_id = requests.post(
@@ -21,6 +23,19 @@ class RedashClient(object):
     ).json()
 
     return query_id
+
+  def get_query_results(self, query_string, data_source_id):
+    response = requests.post(
+      self.BASE_URL + "/query_results?api_key=" + self.api_key,
+      data = json.dumps({"query": query_string, "data_source_id": data_source_id}),
+    ).json()
+
+    # If this query is still not uplodaded, we'll get a job ID. Let's retry in 1 second.
+    if ("job" in response.keys()):
+      self.s.enter(1, 1, self.get_query_results, (query_string,))
+      self.s.run()
+    else:
+      return response["query_result"]["data"]["rows"]
 
   def new_visualization(self, query_id, chart_type, column_mapping, title="", viz_type=VizType.CHART):
     """ Create a new Redash Visualization.
