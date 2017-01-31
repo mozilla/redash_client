@@ -5,7 +5,7 @@ from redash_client import RedashClient
 from constants import VizType, ChartType, VizWidth
 
 class ActivityStreamExperimentDashboard(object):
-  DEFAULT_EVENTS = ["CLICK", "SEARCH", "BLOCK", "DELETE"]
+  DEFAULT_EVENTS = ["CLICK", "SEARCH", "BLOCK", "DELETE", "BOOKMARK_ADD", "SHARE"]
   DATA_SOURCE_ID = 5
 
   def __init__(self, api_key, dash_name, exp_id, start_date=None, end_date=None):
@@ -35,7 +35,7 @@ class ActivityStreamExperimentDashboard(object):
 
       query_id = self.redash.new_query(query_name, query_string, self.DATA_SOURCE_ID)
       viz_id = self.redash.new_visualization(query_id, ChartType.LINE, {fields[0]: "x", fields[1]: "y", fields[2]: "series"})
-      self.redash.append_viz_to_dash(self._dash_id, viz_id, VizWidth.WIDE)
+      self.redash.append_viz_to_dash(self._dash_id, viz_id, VizWidth.REGULAR)
 
   def update_refresh_schedule(self, seconds_to_refresh):
     widgets = self.redash.get_widget_from_dash(self._dash_name)
