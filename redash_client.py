@@ -12,10 +12,13 @@ class RedashClient(object):
     self.api_key = api_key
     self.s = sched.scheduler(time.time, time.sleep)
 
-  def new_query(self, name, query_string, data_source_id):
+  def new_query(self, name, query_string, data_source_id, description=""):
     query_id = requests.post(
       self.BASE_URL + "/queries?api_key=" + self.api_key,
-      data = json.dumps({"name": name, "query": query_string, "data_source_id": data_source_id}), 
+      data = json.dumps({"name": name,
+                         "query": query_string,
+                         "data_source_id": data_source_id,
+                         "description": description})
     ).json()["id"]
 
     requests.post(
