@@ -21,11 +21,15 @@ class RedashClient(object):
                          "description": description})
     ).json()["id"]
 
+    table_id = requests.get(
+      self.BASE_URL + "/queries/" + str(query_id) + "?api_key=" + self.api_key
+    ).json()["visualizations"][0]["id"]
+
     requests.post(
       self.BASE_URL + "/queries/" + str(query_id) + "/refresh?api_key=" + self.api_key
     ).json()
 
-    return query_id
+    return query_id, table_id
 
   def get_query_results(self, query_string, data_source_id):
     response = requests.post(
