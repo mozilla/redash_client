@@ -3,7 +3,7 @@ def event_rate(event, start_date, experiment_id):
     WITH control_events_by_day AS
       (SELECT date, COUNT(DISTINCT session_id)
       FROM activity_stream_events_daily
-      WHERE event = '{0}'
+      WHERE event IN ({0})
       AND date >= '{1}'
       AND (experiment_id = 'n/a' OR experiment_id IS NULL)
       GROUP BY date
@@ -22,7 +22,7 @@ def event_rate(event, start_date, experiment_id):
     experiment_clicks_by_day AS
       (SELECT date, COUNT(DISTINCT session_id)
       FROM activity_stream_events_daily
-      WHERE event = '{0}'
+      WHERE event IN ({0})
       AND date >= '{1}'
       AND experiment_id = '{2}'
       GROUP BY date

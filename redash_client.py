@@ -39,7 +39,7 @@ class RedashClient(object):
 
     # If this query is still not uplodaded, we'll get a job ID. Let's retry in 1 second.
     if ("job" in response.keys()):
-      self.s.enter(1, 1, self.get_query_results, (query_string,))
+      self.s.enter(1, 1, self.get_query_results, (query_string, data_source_id,))
       self.s.run()
     else:
       return response["query_result"]["data"]["rows"]

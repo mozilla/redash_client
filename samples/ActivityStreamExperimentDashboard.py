@@ -14,7 +14,11 @@ class ActivityStreamExperimentDashboard(object):
     observed when one does not exists. Larger power (e.g. >= 0.7) indicates a high probability \
     that an observed difference is correct. Beta error (1 - power) indicates the probability that no \
     difference is observed when indeed one exists."
-  DEFAULT_EVENTS = ["CLICK", "SEARCH", "BLOCK", "DELETE", "BOOKMARK_ADD", "SHARE"]
+
+  # These are either strings representing both the measurement name
+  # event being measured or a key value pair: {<measurement_name>: <events>}
+  DEFAULT_EVENTS = ["CLICK", "SEARCH", "BLOCK", "DELETE", "BOOKMARK_ADD", "SHARE",
+    {"event_name": "Positive Interactions", "event_list": ['CLICK', 'BOOKMARK_ADD', 'SHARE', 'SEARCH']}]
   ALPHA_ERROR = 0.05
   TILES_DATA_SOURCE_ID = 5
   SHEETS_DATA_SOURCE_ID = 11
@@ -55,13 +59,16 @@ class ActivityStreamExperimentDashboard(object):
     required_events = self.DEFAULT_EVENTS + additional_events
 
     for event in required_events:
-      query_name = "{0} Rate".format(event.capitalize())
+      event_name = event.capitalize() if type(event) == str else event["event_name"]
+      event_string = "'{}'".format(event) if type(event) == str else \
+        ", ".join(["'{}'".format(event) for event in event["event_list"]])
+      query_name = "{0} Rate".format(event_name)
 
       # Don't add graphs that already exist
       if query_name in chart_names:
         continue
 
-      query_string, fields = event_rate(event, self._start_date, self._experiment_id)
+      query_string, fields = event_rate(event_string, self._start_date, self._experiment_id)
 
       query_id, table_id = self.redash.new_query(query_name, query_string, self.TILES_DATA_SOURCE_ID)
       viz_id = self.redash.new_visualization(query_id, ChartType.LINE, {fields[0]: "x", fields[1]: "y", fields[2]: "series"})
@@ -89,7 +96,10 @@ class ActivityStreamExperimentDashboard(object):
 
     # Create the t-table
     for event in self.DEFAULT_EVENTS:
-      query_string, fields = event_rate(event, self._start_date, self._experiment_id)
+      event_name = event.capitalize() if type(event) == str else event["event_name"]
+      event_string = "'{}'".format(event) if type(event) == str else \
+        ", ".join(["'{}'".format(event) for event in event["event_list"]])
+      query_string, fields = event_rate(event_string, self._start_date, self._experiment_id)
       data = self.redash.get_query_results(query_string, self.TILES_DATA_SOURCE_ID)
 
       control_vals = []
@@ -101,7 +111,7 @@ class ActivityStreamExperimentDashboard(object):
           control_vals.append(row["event_rate"])
 
       power, p_val = self._power_and_ttest(control_vals, exp_vals)
-      values.append(["{0} Rate".format(event.capitalize()), self.ALPHA_ERROR, power, p_val])
+      values.append(["{0} Rate".format(event_name), self.ALPHA_ERROR, power, p_val])
 
     spreadsheet_id = self.sheets.write_to_sheet(self._dash_name, values, gservice_email)
     query_string = "{0}|0".format(spreadsheet_id)
