@@ -52,7 +52,7 @@ class ActivityStreamExperimentDashboard(object):
                                           ratio=len(exp_vals) / len(control_vals),
                                           alpha=self.ALPHA_ERROR, alternative='two-sided')
     p_val = stats.ttest_ind(control_vals, exp_vals, equal_var = False)[1]
-    return power, p_val
+    return power, p_val, exp_mean - control_mean
 
   def add_event_graphs(self, additional_events=[]):
     widgets = self.redash.get_widget_from_dash(self._dash_name)
@@ -96,7 +96,7 @@ class ActivityStreamExperimentDashboard(object):
     if query_name in chart_names:
       return
 
-    values = [["Metric", "Alpha Error", "Power", "Two-Tailed P-value (ttest)"]]
+    values = [["Metric", "Alpha Error", "Power", "Two-Tailed P-value (ttest)", "Experiment Mean - Control Mean"]]
 
     # Create the t-table
     for event in self.DEFAULT_EVENTS:
@@ -111,8 +111,8 @@ class ActivityStreamExperimentDashboard(object):
         else:
           control_vals.append(row["event_rate"])
 
-      power, p_val = self._power_and_ttest(control_vals, exp_vals)
-      values.append([event_query_name, self.ALPHA_ERROR, power, p_val])
+      power, p_val, mean_diff = self._power_and_ttest(control_vals, exp_vals)
+      values.append([event_query_name, self.ALPHA_ERROR, power, p_val, mean_diff])
 
     spreadsheet_id = self.sheets.write_to_sheet(self._dash_name, values, gservice_email)
     query_string = "{0}|0".format(spreadsheet_id)
