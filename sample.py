@@ -8,6 +8,7 @@ if __name__ == '__main__':
     api_key,
     "Deduped Combined Frecency",
     "exp-006-deduped-combined-frecency",
+    ['1.2.0', '1.3.0'],
     "01/18/17"
   )
 

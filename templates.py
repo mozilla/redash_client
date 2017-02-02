@@ -1,4 +1,4 @@
-def event_rate(event, start_date, experiment_id):
+def event_rate(event, start_date, experiment_id, addon_versions):
   return """
     WITH control_events_by_day AS
       (SELECT date, COUNT(DISTINCT session_id)
@@ -6,6 +6,7 @@ def event_rate(event, start_date, experiment_id):
       WHERE event IN ({0})
       AND date >= '{1}'
       AND (experiment_id = 'n/a' OR experiment_id IS NULL)
+      AND addon_version IN ({3})
       GROUP BY date
       ORDER BY date),
 
@@ -16,6 +17,7 @@ def event_rate(event, start_date, experiment_id):
       AND stats.session_id IS NOT NULL
       AND stats.session_id <> 'n/a'
       AND (experiment_id = 'n/a' OR experiment_id IS NULL)
+      AND addon_version IN ({3})
       GROUP BY date
       ORDER BY date),
 
@@ -25,6 +27,7 @@ def event_rate(event, start_date, experiment_id):
       WHERE event IN ({0})
       AND date >= '{1}'
       AND experiment_id = '{2}'
+      AND addon_version IN ({3})
       GROUP BY date
       ORDER BY date),
 
@@ -35,6 +38,7 @@ def event_rate(event, start_date, experiment_id):
       AND experiment_id = '{2}'
       AND stats.session_id IS NOT NULL
       AND stats.session_id <> 'n/a'
+      AND addon_version IN ({3})
       GROUP BY date
       ORDER BY date)
 
@@ -50,6 +54,6 @@ def event_rate(event, start_date, experiment_id):
     FROM control_session_counts_per_day AS a
     LEFT JOIN control_events_by_day AS b
     ON a.date = b.date
-    ORDER by a.date)""".format(event, start_date, experiment_id), ["date", "event_rate", "type"]
+    ORDER by a.date)""".format(event, start_date, experiment_id, addon_versions), ["date", "event_rate", "type"]
 
 

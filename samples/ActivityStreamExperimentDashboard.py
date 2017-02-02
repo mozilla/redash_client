@@ -23,12 +23,13 @@ class ActivityStreamExperimentDashboard(object):
   TILES_DATA_SOURCE_ID = 5
   SHEETS_DATA_SOURCE_ID = 11
 
-  def __init__(self, api_key, dash_name, exp_id, start_date=None, end_date=None):
+  def __init__(self, api_key, dash_name, exp_id, addon_versions, start_date=None, end_date=None):
     self._api_key = api_key
     self._dash_name = "Activity Stream A/B Testing: " + dash_name
     self._experiment_id = exp_id
     self._start_date = start_date
     self._end_date = end_date
+    self._addon_versions = ", ".join(["'{}'".format(version) for version in addon_versions])
 
     self.redash = RedashClient(api_key)
     self.sheets = SheetsClient()
@@ -59,7 +60,7 @@ class ActivityStreamExperimentDashboard(object):
     required_events = self.DEFAULT_EVENTS + additional_events
 
     for event in required_events:
-      query_name, query_string = self._get_query_data(event)
+      query_name, query_string, fields = self._get_query_data(event)
 
       # Don't add graphs that already exist
       if query_name in chart_names:
@@ -83,9 +84,9 @@ class ActivityStreamExperimentDashboard(object):
     event_name = event.capitalize() if type(event) == str else event["event_name"]
     event_string = "'{}'".format(event) if type(event) == str else \
       ", ".join(["'{}'".format(event) for event in event["event_list"]])
-    query_string, fields = event_rate(event_string, self._start_date, self._experiment_id)
+    query_string, fields = event_rate(event_string, self._start_date, self._experiment_id, self._addon_versions)
     query_name = "{0} Rate".format(event_name)
-    return query_name, query_string
+    return query_name, query_string, fields
 
   def add_ttable(self, gservice_email):
     # Don't add a table if it already exists
@@ -99,7 +100,7 @@ class ActivityStreamExperimentDashboard(object):
 
     # Create the t-table
     for event in self.DEFAULT_EVENTS:
-      event_query_name, query_string = self._get_query_data(event)
+      event_query_name, query_string, fields = self._get_query_data(event)
       data = self.redash.get_query_results(query_string, self.TILES_DATA_SOURCE_ID)
 
       control_vals = []
