@@ -12,6 +12,7 @@ if __name__ == '__main__':
     "01/18/17"
   )
 
+  dash.add_retention_diff()
   dash.add_event_graphs()
   dash.add_ttable(gservice_email)
   dash.update_refresh_schedule(900)

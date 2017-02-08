@@ -2,7 +2,7 @@ import os
 import math
 import statistics
 from scipy import stats
-from templates import event_rate
+from templates import event_rate, retention_diff
 import statsmodels.stats.power as smp
 from redash_client import RedashClient
 from sheets_client import SheetsClient
@@ -54,21 +54,34 @@ class ActivityStreamExperimentDashboard(object):
     p_val = stats.ttest_ind(control_vals, exp_vals, equal_var = False)[1]
     return power, p_val, exp_mean - control_mean
 
-  def add_event_graphs(self, additional_events=[]):
+  def get_chart_names(self):
     widgets = self.redash.get_widget_from_dash(self._dash_name)
-    chart_names = set([widget["visualization"]["query"]["name"] for widget in widgets])
+    return set([widget["visualization"]["query"]["name"] for widget in widgets])
+
+  def add_event_graphs(self, additional_events=[]):
     required_events = self.DEFAULT_EVENTS + additional_events
 
+    chart_names = self.get_chart_names()
     for event in required_events:
-      query_name, query_string, fields = self._get_query_data(event)
+      query_name, query_string, fields = self._get_event_query_data(event)
 
       # Don't add graphs that already exist
       if query_name in chart_names:
         continue
 
       query_id, table_id = self.redash.new_query(query_name, query_string, self.TILES_DATA_SOURCE_ID)
-      viz_id = self.redash.new_visualization(query_id, ChartType.LINE, {fields[0]: "x", fields[1]: "y", fields[2]: "series"})
+      viz_id = self.redash.new_visualization(query_id, VizType.CHART, "", ChartType.LINE, {fields[0]: "x", fields[1]: "y", fields[2]: "series"})
       self.redash.append_viz_to_dash(self._dash_id, viz_id, VizWidth.REGULAR)
+
+  def add_retention_diff(self):
+    query_name = "Daily Retention Difference (Experiment - Control)"
+    if query_name in self.get_chart_names():
+      return
+
+    query_string, fields = retention_diff(self._start_date, self._experiment_id, self._addon_versions)
+    query_id, table_id = self.redash.new_query(query_name, query_string, self.TILES_DATA_SOURCE_ID)
+    viz_id = self.redash.new_visualization(query_id, VizType.COHORT, time_interval="daily")
+    self.redash.append_viz_to_dash(self._dash_id, viz_id, VizWidth.WIDE)
 
   def update_refresh_schedule(self, seconds_to_refresh):
     widgets = self.redash.get_widget_from_dash(self._dash_name)
@@ -80,7 +93,7 @@ class ActivityStreamExperimentDashboard(object):
     for widget in widgets:
       self.redash.remove_visualization(self._dash_name, widget["id"])
 
-  def _get_query_data(self, event):
+  def _get_event_query_data(self, event):
     event_name = event.capitalize() if type(event) == str else event["event_name"]
     event_string = "'{}'".format(event) if type(event) == str else \
       ", ".join(["'{}'".format(event) for event in event["event_list"]])
@@ -91,16 +104,14 @@ class ActivityStreamExperimentDashboard(object):
   def add_ttable(self, gservice_email):
     # Don't add a table if it already exists
     query_name = "Statistical Analysis"
-    widgets = self.redash.get_widget_from_dash(self._dash_name)
-    chart_names = set([widget["visualization"]["query"]["name"] for widget in widgets])
-    if query_name in chart_names:
+    if query_name in self.get_chart_names():
       return
 
     values = [["Metric", "Alpha Error", "Power", "Two-Tailed P-value (ttest)", "Experiment Mean - Control Mean"]]
 
     # Create the t-table
     for event in self.DEFAULT_EVENTS:
-      event_query_name, query_string, fields = self._get_query_data(event)
+      event_query_name, query_string, fields = self._get_event_query_data(event)
       data = self.redash.get_query_results(query_string, self.TILES_DATA_SOURCE_ID)
 
       control_vals = []

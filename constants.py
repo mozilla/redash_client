@@ -1,5 +1,6 @@
 class VizType:
   CHART = "CHART"
+  COHORT = "COHORT"
 
 class VizWidth:
   REGULAR = 1

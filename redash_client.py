@@ -44,33 +44,52 @@ class RedashClient(object):
     else:
       return response["query_result"]["data"]["rows"]
 
-  def new_visualization(self, query_id, chart_type, column_mapping, title="", viz_type=VizType.CHART):
+  def new_visualization(self, query_id, viz_type=VizType.CHART, title="", chart_type=None, column_mapping=None, time_interval=None):
     """ Create a new Redash Visualization.
 
     Keyword arguments:
 
     query_id -- the id returned when calling new_query()
-    chart_type -- one of the ChartType constants (BAR|PIE|LINE|SCATTER)
-    column_mapping -- a dict of which field names to use for the x and y axis. (e.g. {"event":"x","count":"y","type":"series"})
+    viz_type (optional) -- one of the VizType constants (CHART|COHORT)
     title (optional) -- title of your visualization
-    viz_type (optional) -- one of the VizType constants (CHART|<TBD>)
+    chart_type (optional) -- one of the ChartType constants (BAR|PIE|LINE|SCATTER)
+      - applies only to VizType.CHART
+    column_mapping (optional) -- a dict of which field names to use for the x and
+      y axis. (e.g. {"event":"x","count":"y","type":"series"})
+      - applies only to VizType.CHART
+    time_interval (optional) -- one of "daily", "weekly", "monthly"
+      - applies only to VizType.COHORT
     """
 
-    options = {
-      "globalSeriesType": chart_type,
-      "sortX":True,
-      "legend": {"enabled":True},
-      "yAxis": [{"type": "linear"}, {"type": "linear", "opposite":True}],
-      "xAxis": {"type": "datetime","labels": {"enabled":True}},
-      "seriesOptions":{"count": {
-        "type": chart_type,
-        "yAxis": 0,
-        "zIndex":0,
-        "index":0
-      }},
-      "columnMapping": column_mapping,
-      "bottomMargin":50
-    }
+    options = {}
+
+    if viz_type == VizType.CHART:
+      if chart_type == None or column_mapping == None:
+        raise ValueError("chart_type and column_mapping values required for a Chart visualization")
+
+      options = {
+        "globalSeriesType": chart_type,
+        "sortX":True,
+        "legend": {"enabled":True},
+        "yAxis": [{"type": "linear"}, {"type": "linear", "opposite":True}],
+        "xAxis": {"type": "datetime","labels": {"enabled":True}},
+        "seriesOptions":{"count": {
+          "type": chart_type,
+          "yAxis": 0,
+          "zIndex":0,
+          "index":0
+        }},
+        "columnMapping": column_mapping,
+        "bottomMargin":50
+      }
+
+    if viz_type == VizType.COHORT:
+      if time_interval == None:
+        raise ValueError("time_interval value required for a Cohort visualization")
+
+      options = {
+        "timeInterval": time_interval
+      }
 
     return requests.post(
       self.BASE_URL + "/visualizations?api_key=" + self.api_key, 
@@ -78,7 +97,7 @@ class RedashClient(object):
         "type": viz_type,
         "name": title,
         "options": options,
-        "query_id":query_id}),
+        "query_id": query_id}),
     ).json()["id"]
 
   def new_dashboard(self, name):
