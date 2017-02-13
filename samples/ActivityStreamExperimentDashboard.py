@@ -49,7 +49,7 @@ class ActivityStreamExperimentDashboard(object):
     effect_size = (percent_diff * float(control_mean)) / float(pooled_stddev)
     power = smp.TTestIndPower().solve_power(effect_size,
                                           nobs1=len(control_vals),
-                                          ratio=len(exp_vals) / len(control_vals),
+                                          ratio=len(exp_vals) / float(len(control_vals)),
                                           alpha=self.ALPHA_ERROR, alternative='two-sided')
     p_val = stats.ttest_ind(control_vals, exp_vals, equal_var = False)[1]
     return power, p_val, exp_mean - control_mean
