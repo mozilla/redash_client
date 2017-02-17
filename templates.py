@@ -56,6 +56,61 @@ def event_rate(event, start_date, experiment_id, addon_versions):
     ON a.date = b.date
     ORDER by a.date)""".format(event, start_date, experiment_id, addon_versions), ["date", "event_rate", "type"]
 
+def disable_rate(start_date, experiment_id, addon_versions):
+  return """
+    WITH exp_disabled AS
+      (SELECT date, COUNT(DISTINCT client_id)
+      FROM activity_stream_events_daily
+      WHERE date >= {0}
+      AND (event = 'uninstall' OR event = 'disable')
+      AND experiment_id = '{1}'
+      AND addon_version IN ({2})
+      GROUP BY date
+      ORDER BY date),
+
+    control_disabled AS
+      (SELECT date, COUNT(DISTINCT client_id)
+      FROM activity_stream_events_daily
+      WHERE date >= {0}
+      AND (event = 'uninstall' OR event = 'disable')
+      AND (experiment_id = 'n/a' OR experiment_id IS NULL)
+      AND addon_version IN ({2})
+      GROUP BY date
+      ORDER BY date),
+
+    exp_users AS
+      (SELECT date, COUNT(DISTINCT client_id)
+      FROM activity_stream_stats_daily
+      WHERE date >= {0}
+      AND experiment_id = '{1}'
+      AND addon_version IN ({2})
+      GROUP BY date
+      ORDER BY date),
+
+    control_users AS
+      (SELECT date, COUNT(DISTINCT client_id)
+      FROM activity_stream_stats_daily
+      WHERE date >= {0}
+      AND (experiment_id = 'n/a' OR experiment_id IS NULL)
+      AND addon_version IN ({2})
+      GROUP BY date
+      ORDER BY date)
+
+    (SELECT exp_disabled.date, 'experiment' AS type, exp_disabled.count / exp_users.count::float * 100 AS disable_rate
+    FROM exp_users
+    LEFT JOIN exp_disabled
+    ON exp_disabled.date = exp_users.date
+    ORDER BY date)
+
+    UNION ALL
+
+    (SELECT control_disabled.date, 'control' AS type, control_disabled.count / control_users.count::float * 100 AS disable_rate
+    FROM control_users
+    LEFT JOIN control_disabled
+    ON control_disabled.date = control_users.date
+    ORDER BY date)
+  """.format(start_date, experiment_id, addon_versions), ["date", "disable_rate", "type"]
+
 def retention_diff(start_date, experiment_id, addon_versions):
   return """
     WITH control_interactions AS

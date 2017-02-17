@@ -14,6 +14,7 @@ if __name__ == '__main__':
 
   dash.add_retention_diff()
   dash.add_event_graphs()
+  dash.add_disable_graph()
   dash.add_ttable(gservice_email)
   dash.update_refresh_schedule(900)
   #dash.remove_all_graphs()

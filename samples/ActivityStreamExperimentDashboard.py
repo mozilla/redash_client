@@ -2,11 +2,11 @@ import os
 import math
 import statistics
 from scipy import stats
-from templates import event_rate, retention_diff
 import statsmodels.stats.power as smp
 from redash_client import RedashClient
 from sheets_client import SheetsClient
 from constants import VizType, ChartType, VizWidth
+from templates import event_rate, retention_diff, disable_rate
 
 class ActivityStreamExperimentDashboard(object):
   TTABLE_DESCRIPTION = "Smaller p-values (e.g. <= 0.05) indicate a high probability that the \
@@ -22,6 +22,7 @@ class ActivityStreamExperimentDashboard(object):
   ALPHA_ERROR = 0.05
   TILES_DATA_SOURCE_ID = 5
   SHEETS_DATA_SOURCE_ID = 11
+  DISABLE_TITLE = "Disable Rate"
 
   def __init__(self, api_key, dash_name, exp_id, addon_versions, start_date=None, end_date=None):
     self._api_key = api_key
@@ -73,6 +74,15 @@ class ActivityStreamExperimentDashboard(object):
       viz_id = self.redash.new_visualization(query_id, VizType.CHART, "", ChartType.LINE, {fields[0]: "x", fields[1]: "y", fields[2]: "series"})
       self.redash.append_viz_to_dash(self._dash_id, viz_id, VizWidth.REGULAR)
 
+  def add_disable_graph(self):
+    if self.DISABLE_TITLE in self.get_chart_names():
+      return
+
+    query_string, fields = disable_rate(self._start_date, self._experiment_id, self._addon_versions)
+    query_id, table_id = self.redash.new_query(self.DISABLE_TITLE, query_string, self.TILES_DATA_SOURCE_ID)
+    viz_id = self.redash.new_visualization(query_id, VizType.CHART, "", ChartType.LINE, {fields[0]: "x", fields[1]: "y", fields[2]: "series"})
+    self.redash.append_viz_to_dash(self._dash_id, viz_id, VizWidth.REGULAR)
+
   def add_retention_diff(self):
     query_name = "Daily Retention Difference (Experiment - Control)"
     if query_name in self.get_chart_names():
@@ -101,6 +111,19 @@ class ActivityStreamExperimentDashboard(object):
     query_name = "{0} Rate".format(event_name)
     return query_name, query_string, fields
 
+  def get_ttable_data_for_query(self, label, query_string, column_name):
+    data = self.redash.get_query_results(query_string, self.TILES_DATA_SOURCE_ID)
+    control_vals = []
+    exp_vals = []
+    for row in data:
+      if row["type"] == "experiment":
+        exp_vals.append(row[column_name])
+      else:
+        control_vals.append(row[column_name])
+
+    power, p_val, mean_diff = self._power_and_ttest(control_vals, exp_vals)
+    return [label, self.ALPHA_ERROR, power, p_val, mean_diff]
+
   def add_ttable(self, gservice_email):
     # Don't add a table if it already exists
     query_name = "Statistical Analysis"
@@ -112,18 +135,11 @@ class ActivityStreamExperimentDashboard(object):
     # Create the t-table
     for event in self.DEFAULT_EVENTS:
       event_query_name, query_string, fields = self._get_event_query_data(event)
-      data = self.redash.get_query_results(query_string, self.TILES_DATA_SOURCE_ID)
+      ttable_row = self.get_ttable_data_for_query(event_query_name, query_string, "event_rate")
+      values.append(ttable_row)
 
-      control_vals = []
-      exp_vals = []
-      for row in data:
-        if row["type"] == "experiment":
-          exp_vals.append(row["event_rate"])
-        else:
-          control_vals.append(row["event_rate"])
-
-      power, p_val, mean_diff = self._power_and_ttest(control_vals, exp_vals)
-      values.append([event_query_name, self.ALPHA_ERROR, power, p_val, mean_diff])
+    query_string, fields = disable_rate(self._start_date, self._experiment_id, self._addon_versions)
+    values.append(self.get_ttable_data_for_query(self.DISABLE_TITLE, query_string, "disable_rate"))
 
     spreadsheet_id = self.sheets.write_to_sheet(self._dash_name, values, gservice_email)
     query_string = "{0}|0".format(spreadsheet_id)
