@@ -113,6 +113,10 @@ class ActivityStreamExperimentDashboard(object):
 
   def get_ttable_data_for_query(self, label, query_string, column_name):
     data = self.redash.get_query_results(query_string, self.TILES_DATA_SOURCE_ID)
+
+    if data is None:
+      return []
+
     control_vals = []
     exp_vals = []
     for row in data:
@@ -139,7 +143,9 @@ class ActivityStreamExperimentDashboard(object):
       values.append(ttable_row)
 
     query_string, fields = disable_rate(self._start_date, self._experiment_id, self._addon_versions)
-    values.append(self.get_ttable_data_for_query(self.DISABLE_TITLE, query_string, "disable_rate"))
+    disable_ttable_row = self.get_ttable_data_for_query(self.DISABLE_TITLE, query_string, "disable_rate")
+    if len(disable_ttable_row) > 0:
+      values.append(disable_ttable_row)
 
     spreadsheet_id = self.sheets.write_to_sheet(self._dash_name, values, gservice_email)
     query_string = "{0}|0".format(spreadsheet_id)
