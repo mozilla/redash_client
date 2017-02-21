@@ -111,6 +111,72 @@ def disable_rate(start_date, experiment_id, addon_versions):
     ORDER BY date)
   """.format(start_date, experiment_id, addon_versions), ["date", "disable_rate", "type"]
 
+def retention(events_table, retention_type, start_date, where_clause):
+  return """
+  WITH population AS
+      (SELECT client_id AS unique_id, DATE_TRUNC('{1}', date) AS cohort_date, COUNT(*)
+       FROM {0}
+       WHERE 1 = 1
+       {3}
+       GROUP BY 1, 2),
+
+  activity AS
+      (SELECT DATE_TRUNC('{1}', date) AS activity_date, client_id AS unique_id, cohort_date
+       FROM {0}
+       JOIN population
+       ON population.unique_id = client_id
+       WHERE DATE_TRUNC('{1}', date) >= (CURRENT_DATE - INTERVAL '91 days')
+       AND DATE_TRUNC('{1}', cohort_date) >= (CURRENT_DATE - INTERVAL '91 days')
+       {3}),
+
+  population_agg AS
+      (SELECT DATE_TRUNC('{1}', date) AS cohort_date, COUNT(DISTINCT client_id) AS total
+       FROM {0}
+       WHERE 1 = 1
+       {3}
+       GROUP BY 1)
+
+  SELECT * FROM
+      (SELECT date, day as week_number, value, total, MAX(day) over (PARTITION BY date) AS max_week_num
+      FROM
+          (SELECT activity.cohort_date AS date,
+             DATE_DIFF('{1}', activity.cohort_date, activity_date) AS day,
+             total,
+             COUNT(DISTINCT unique_id) AS value
+          FROM activity
+          JOIN population_agg
+          ON activity.cohort_date = population_agg.cohort_date
+          WHERE activity_date >= activity.cohort_date
+          AND activity.cohort_date > '{2}'
+          GROUP BY 1, 2, 3))
+  WHERE week_number < max_week_num
+  ORDER BY date, week_number""".format(events_table, retention_type, start_date, where_clause), []
+
+def all_events_weekly(events_table, start_date, where_clause):
+  return """
+    WITH weekly_events AS
+      (SELECT DATE_TRUNC('week', date) AS week, COUNT(*)
+      FROM {0}
+      WHERE DATE_TRUNC('week', date) >= '{1}'
+      {2}
+      GROUP BY 1),
+
+  event_counts AS
+      (SELECT week, event_type, count FROM
+          (SELECT *, RANK() over (PARTITION BY week ORDER BY count) AS rank FROM
+              (SELECT DATE_TRUNC('week', date) AS week, event_type, COUNT(*)
+              FROM {0}
+              WHERE DATE_TRUNC('week', date) >= '{1}'
+              {2}
+              GROUP BY 1, 2
+              ORDER BY 1, 2))
+      WHERE rank <= 20)
+
+  SELECT weekly_events.week, event_counts.event_type, event_counts.count / weekly_events.count::FLOAT * 100 AS rate
+  FROM weekly_events
+  LEFT JOIN event_counts
+  ON weekly_events.week = event_counts.week""".format(events_table, start_date, where_clause), ["week", "rate", "event_type"]
+
 def retention_diff(start_date, experiment_id, addon_versions):
   return """
     WITH control_interactions AS
@@ -192,4 +258,4 @@ def retention_diff(start_date, experiment_id, addon_versions):
     LEFT JOIN exp_retention AS exp
     ON con.date = exp.date
     AND con.week_number = exp.week_number
-    ORDER BY date, week_number""".format(start_date, experiment_id, addon_versions), ["date", "event_rate", "type"]
+    ORDER BY date, week_number""".format(start_date, experiment_id, addon_versions), []
