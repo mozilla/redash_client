@@ -1,3 +1,7 @@
+class RetentionType:
+  DAILY = 'day'
+  WEEKLY = 'week'
+
 class VizType:
   CHART = "CHART"
   COHORT = "COHORT"
