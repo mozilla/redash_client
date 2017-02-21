@@ -20,14 +20,17 @@ class ActivityStreamExperimentDashboard(SummaryDashboard):
   DEFAULT_EVENTS = ["CLICK", "SEARCH", "BLOCK", "DELETE", "BOOKMARK_ADD", "SHARE",
     {"event_name": "Positive Interactions", "event_list": ['CLICK', 'BOOKMARK_ADD', 'SHARE', 'SEARCH']}]
   ALPHA_ERROR = 0.05
-  TILES_DATA_SOURCE_ID = 5
   SHEETS_DATA_SOURCE_ID = 11
   DISABLE_TITLE = "Disable Rate"
 
   def __init__(self, api_key, dash_name, exp_id, addon_versions, start_date=None, end_date=None):
-    super(ActivityStreamExperimentDashboard, self).__init__(api_key, "Activity Stream A/B Testing: " + dash_name)
+    super(ActivityStreamExperimentDashboard, self).__init__(
+      api_key,
+      "Activity Stream A/B Testing: " + dash_name,
+      "activity_stream_events_daily",
+      start_date)
+
     self._experiment_id = exp_id
-    self._start_date = start_date
     self._end_date = end_date
     self._addon_versions = ", ".join(["'{}'".format(version) for version in addon_versions])
     self.sheets = SheetsClient()
@@ -49,10 +52,6 @@ class ActivityStreamExperimentDashboard(SummaryDashboard):
                                           alpha=self.ALPHA_ERROR, alternative='two-sided')
     p_val = stats.ttest_ind(control_vals, exp_vals, equal_var = False)[1]
     return power, p_val, exp_mean - control_mean
-
-  def get_chart_names(self):
-    widgets = self.redash.get_widget_from_dash(self._dash_name)
-    return set([widget["visualization"]["query"]["name"] for widget in widgets])
 
   def add_event_graphs(self, additional_events=[]):
     required_events = self.DEFAULT_EVENTS + additional_events
@@ -87,16 +86,6 @@ class ActivityStreamExperimentDashboard(SummaryDashboard):
     query_id, table_id = self.redash.new_query(query_name, query_string, self.TILES_DATA_SOURCE_ID)
     viz_id = self.redash.new_visualization(query_id, VizType.COHORT, time_interval="daily")
     self.redash.append_viz_to_dash(self._dash_id, viz_id, VizWidth.WIDE)
-
-  def update_refresh_schedule(self, seconds_to_refresh):
-    widgets = self.redash.get_widget_from_dash(self._dash_name)
-    for widget in widgets:
-      self.redash.update_query_schedule(widget["visualization"]["query"]["id"], seconds_to_refresh)
-
-  def remove_all_graphs(self):
-    widgets = self.redash.get_widget_from_dash(self._dash_name)
-    for widget in widgets:
-      self.redash.remove_visualization(self._dash_name, widget["id"])
 
   def _get_event_query_data(self, event):
     event_name = event.capitalize() if type(event) == str else event["event_name"]
