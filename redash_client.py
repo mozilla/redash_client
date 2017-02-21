@@ -44,7 +44,8 @@ class RedashClient(object):
     else:
       return response["query_result"]["data"]["rows"]
 
-  def new_visualization(self, query_id, viz_type=VizType.CHART, title="", chart_type=None, column_mapping=None, time_interval=None):
+  def new_visualization(self, query_id, viz_type=VizType.CHART, title="",
+    chart_type=None, column_mapping=None, time_interval=None, stacking=False):
     """ Create a new Redash Visualization.
 
     Keyword arguments:
@@ -82,6 +83,9 @@ class RedashClient(object):
         "columnMapping": column_mapping,
         "bottomMargin":50
       }
+
+    if stacking:
+      options["series"] = { "stacking": "normal" }
 
     if viz_type == VizType.COHORT:
       if time_interval == None:
