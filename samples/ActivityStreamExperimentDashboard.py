@@ -3,12 +3,12 @@ import math
 import statistics
 from scipy import stats
 import statsmodels.stats.power as smp
-from redash_client import RedashClient
 from sheets_client import SheetsClient
 from constants import VizType, ChartType, VizWidth
+from samples.SummaryDashboard import SummaryDashboard
 from templates import event_rate, retention_diff, disable_rate
 
-class ActivityStreamExperimentDashboard(object):
+class ActivityStreamExperimentDashboard(SummaryDashboard):
   TTABLE_DESCRIPTION = "Smaller p-values (e.g. <= 0.05) indicate a high probability that the \
     variants have different distributions. Alpha error indicates the probability a difference is \
     observed when one does not exists. Larger power (e.g. >= 0.7) indicates a high probability \
@@ -25,17 +25,12 @@ class ActivityStreamExperimentDashboard(object):
   DISABLE_TITLE = "Disable Rate"
 
   def __init__(self, api_key, dash_name, exp_id, addon_versions, start_date=None, end_date=None):
-    self._api_key = api_key
-    self._dash_name = "Activity Stream A/B Testing: " + dash_name
+    super(ActivityStreamExperimentDashboard, self).__init__(api_key, "Activity Stream A/B Testing: " + dash_name)
     self._experiment_id = exp_id
     self._start_date = start_date
     self._end_date = end_date
     self._addon_versions = ", ".join(["'{}'".format(version) for version in addon_versions])
-
-    self.redash = RedashClient(api_key)
     self.sheets = SheetsClient()
-    self._dash_id = self.redash.new_dashboard(self._dash_name)
-    self.redash.publish_dashboard(self._dash_id)
 
   def _power_and_ttest(self, control_vals, exp_vals):
     control_mean = statistics.mean(control_vals)
