@@ -32,7 +32,7 @@ class SummaryDashboard(object):
     for widget in widgets:
       self.redash.remove_visualization(self._dash_name, widget["id"])
 
-  def add_mau_dau(self, start_date, where_clause):
+  def add_mau_dau(self, where_clause=""):
     if self.MAU_DAU_TITLE in self.get_chart_names():
       return
 
@@ -57,7 +57,7 @@ class SummaryDashboard(object):
       },
     }
 
-    query_string, fields = active_users(self._events_table, start_date, where_clause)
+    query_string, fields = active_users(self._events_table, self._start_date, where_clause)
     query_id, table_id = self.redash.new_query(self.MAU_DAU_TITLE, query_string, self.TILES_DATA_SOURCE_ID)
 
     # Make the MAU/WAU/DAU graph
@@ -70,22 +70,22 @@ class SummaryDashboard(object):
       ChartType.LINE, {fields[0]: "x", fields[4]: "y", fields[5]: "y"})
     self.redash.append_viz_to_dash(self._dash_id, viz_id, VizWidth.WIDE)
 
-  def add_retention_graph(self, retention_type, start_date, where_clause):
+  def add_retention_graph(self, retention_type, where_clause=""):
     if self.DAILY_RETENTION_TITLE in self.get_chart_names():
       return
 
     time_interval = "daily" if retention_type == RetentionType.DAILY else "weekly"
 
-    query_string, fields = retention(self._events_table, retention_type, start_date, where_clause)
+    query_string, fields = retention(self._events_table, retention_type, self._start_date, where_clause)
     query_id, table_id = self.redash.new_query(self.DAILY_RETENTION_TITLE, query_string, self.TILES_DATA_SOURCE_ID)
     viz_id = self.redash.new_visualization(query_id, VizType.COHORT, time_interval=time_interval)
     self.redash.append_viz_to_dash(self._dash_id, viz_id, VizWidth.WIDE)
 
-  def add_events_weekly(self, start_date, where_clause):
+  def add_events_weekly(self, where_clause="", event_column="event_type"):
     if self.EVENTS_WEEKLY_TITLE in self.get_chart_names():
       return
 
-    query_string, fields = all_events_weekly(self._events_table, start_date, where_clause)
+    query_string, fields = all_events_weekly(self._events_table, self._start_date, where_clause, event_column)
     query_id, table_id = self.redash.new_query(self.EVENTS_WEEKLY_TITLE, query_string, self.TILES_DATA_SOURCE_ID)
     viz_id = self.redash.new_visualization(query_id, VizType.CHART, "",
       ChartType.BAR, {fields[0]: "x", fields[1]: "y", fields[2]: "series"}, stacking=True)

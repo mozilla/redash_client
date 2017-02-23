@@ -14,15 +14,12 @@ class TestPilotDashboard(SummaryDashboard):
   def add_retention_graph(self, retention_type):
     super(TestPilotDashboard, self).add_retention_graph(
       retention_type,
-      self._start_date,
       self._where_clause)
 
   def add_events_weekly(self):
     super(TestPilotDashboard, self).add_events_weekly(
-      self._start_date,
       self._where_clause)
 
   def add_mau_dau(self):
     super(TestPilotDashboard, self).add_mau_dau(
-      self._start_date,
       self._where_clause)
