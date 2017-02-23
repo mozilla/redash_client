@@ -152,7 +152,7 @@ def retention(events_table, retention_type, start_date, where_clause):
   WHERE week_number < max_week_num
   ORDER BY date, week_number""".format(events_table, retention_type, start_date, where_clause), []
 
-def all_events_weekly(events_table, start_date, where_clause):
+def all_events_weekly(events_table, start_date, where_clause, event_column):
   return """
     WITH weekly_events AS
       (SELECT DATE_TRUNC('week', date) AS week, COUNT(*)
@@ -162,9 +162,9 @@ def all_events_weekly(events_table, start_date, where_clause):
       GROUP BY 1),
 
   event_counts AS
-      (SELECT week, event_type, count FROM
+      (SELECT week, {3}, count FROM
           (SELECT *, RANK() over (PARTITION BY week ORDER BY count) AS rank FROM
-              (SELECT DATE_TRUNC('week', date) AS week, event_type, COUNT(*)
+              (SELECT DATE_TRUNC('week', date) AS week, {3}, COUNT(*)
               FROM {0}
               WHERE DATE_TRUNC('week', date) >= '{1}'
               {2}
@@ -172,10 +172,10 @@ def all_events_weekly(events_table, start_date, where_clause):
               ORDER BY 1, 2))
       WHERE rank <= 20)
 
-  SELECT weekly_events.week, event_counts.event_type, event_counts.count / weekly_events.count::FLOAT * 100 AS rate
+  SELECT weekly_events.week, event_counts.{3}, event_counts.count / weekly_events.count::FLOAT * 100 AS rate
   FROM weekly_events
   LEFT JOIN event_counts
-  ON weekly_events.week = event_counts.week""".format(events_table, start_date, where_clause), ["week", "rate", "event_type"]
+  ON weekly_events.week = event_counts.week""".format(events_table, start_date, where_clause, event_column), ["week", "rate", event_column]
 
 def active_users(events_table, start_date, where_clause):
   return """
