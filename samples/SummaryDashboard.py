@@ -1,11 +1,12 @@
 from redash_client import RedashClient
-from templates import retention, all_events_weekly
+from templates import retention, all_events_weekly, active_users
 from constants import VizWidth, VizType, RetentionType, ChartType
 
 class SummaryDashboard(object):
   TILES_DATA_SOURCE_ID = 5
   DAILY_RETENTION_TITLE = "Daily Retention"
   EVENTS_WEEKLY_TITLE = "Weely Events"
+  MAU_DAU_TITLE = "Engagement"
 
   def __init__(self, api_key, dash_name, events_table_name, start_date):
     self._api_key = api_key
@@ -30,6 +31,44 @@ class SummaryDashboard(object):
     widgets = self.redash.get_widget_from_dash(self._dash_name)
     for widget in widgets:
       self.redash.remove_visualization(self._dash_name, widget["id"])
+
+  def add_mau_dau(self, start_date, where_clause):
+    if self.MAU_DAU_TITLE in self.get_chart_names():
+      return
+
+    series_options = {
+      "mau": {
+        "type": ChartType.AREA,
+        "yAxis": 0,
+        "zIndex":0,
+        "index":0
+      },
+      "wau": {
+        "type": ChartType.AREA,
+        "yAxis": 0,
+        "zIndex": 1,
+        "index":0
+      },
+      "dau": {
+        "type": ChartType.AREA,
+        "yAxis": 0,
+        "zIndex": 2,
+        "index":0
+      },
+    }
+
+    query_string, fields = active_users(self._events_table, start_date, where_clause)
+    query_id, table_id = self.redash.new_query(self.MAU_DAU_TITLE, query_string, self.TILES_DATA_SOURCE_ID)
+
+    # Make the MAU/WAU/DAU graph
+    viz_id = self.redash.new_visualization(query_id, VizType.CHART, "",
+      ChartType.AREA, {fields[0]: "x", fields[1]: "y", fields[2]: "y", fields[3]: "y"}, series_options=series_options)
+    self.redash.append_viz_to_dash(self._dash_id, viz_id, VizWidth.WIDE)
+
+    # Make the engagement ratio graph
+    viz_id = self.redash.new_visualization(query_id, VizType.CHART, "",
+      ChartType.LINE, {fields[0]: "x", fields[4]: "y", fields[5]: "y"})
+    self.redash.append_viz_to_dash(self._dash_id, viz_id, VizWidth.WIDE)
 
   def add_retention_graph(self, retention_type, start_date, where_clause):
     if self.DAILY_RETENTION_TITLE in self.get_chart_names():

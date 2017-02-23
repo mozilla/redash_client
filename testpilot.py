@@ -19,6 +19,7 @@ if __name__ == '__main__':
       "02/13/2017"
     )
 
+    dash.add_mau_dau()
     dash.add_retention_graph(RetentionType.DAILY)
     dash.add_events_weekly()
     dash.update_refresh_schedule(3600)

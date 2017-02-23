@@ -177,6 +177,64 @@ def all_events_weekly(events_table, start_date, where_clause):
   LEFT JOIN event_counts
   ON weekly_events.week = event_counts.week""".format(events_table, start_date, where_clause), ["week", "rate", "event_type"]
 
+def active_users(events_table, start_date, where_clause):
+  return """
+    WITH weekly AS
+    (SELECT day, COUNT(DISTINCT client_id) AS dist_clients
+    FROM
+      (SELECT DISTINCT date
+       FROM {0}
+       WHERE date >= '{1}'
+       {2}
+       ORDER BY date) AS g(day)
+    LEFT JOIN {0}
+    ON {0}.date BETWEEN g.day - 7 AND g.day
+    AND {0}.date >= '{1}'
+    {2}
+    GROUP BY day
+    ORDER BY day),
+
+    monthly AS
+    (SELECT day, count(DISTINCT client_id) AS dist_clients
+    FROM
+      (SELECT DISTINCT date
+       FROM {0}
+       WHERE date >= '{1}'
+       {2}
+       ORDER BY date) AS g(day)
+    LEFT JOIN {0}
+    ON {0}.date BETWEEN g.day - 28 AND g.day
+    AND {0}.date >= '{1}'
+    {2}
+    GROUP BY day
+    ORDER BY day),
+
+    daily AS
+    (SELECT date, COUNT(DISTINCT a.client_id) AS dau
+     FROM {0} AS a WHERE date >= '{1}' {2} GROUP BY date),
+
+    smoothed_daily AS
+    (SELECT date as day,
+           dau,
+           AVG(dau) OVER(order by date ROWS BETWEEN 7 PRECEDING AND 0 FOLLOWING) as dist_clients
+    FROM daily
+    ORDER BY day desc)
+
+    SELECT
+      date,
+      d.dist_clients as dau,
+      w.dist_clients as wau,
+      m.dist_clients as mau,
+      (d.dist_clients::FLOAT / w.dist_clients) * 100.0 as weekly_engagement,
+      (d.dist_clients::FLOAT / m.dist_clients) * 100.0 as monthly_engagement
+    FROM {0} a
+    JOIN smoothed_daily d on d.day = date
+    JOIN weekly w on w.day = date
+    JOIN monthly m on m.day = date
+    WHERE date < current_date and date >= '2016-05-10'
+    GROUP BY date, d.dist_clients, wau, mau
+    ORDER BY date, dau, wau, mau""".format(events_table, start_date, where_clause), ["date", "dau", "wau", "mau", "weekly_engagement", "monthly_engagement"]
+
 def retention_diff(start_date, experiment_id, addon_versions):
   return """
     WITH control_interactions AS

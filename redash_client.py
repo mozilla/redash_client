@@ -45,7 +45,7 @@ class RedashClient(object):
       return response["query_result"]["data"]["rows"]
 
   def new_visualization(self, query_id, viz_type=VizType.CHART, title="",
-    chart_type=None, column_mapping=None, time_interval=None, stacking=False):
+    chart_type=None, column_mapping=None, series_options=None, time_interval=None, stacking=False):
     """ Create a new Redash Visualization.
 
     Keyword arguments:
@@ -53,7 +53,7 @@ class RedashClient(object):
     query_id -- the id returned when calling new_query()
     viz_type (optional) -- one of the VizType constants (CHART|COHORT)
     title (optional) -- title of your visualization
-    chart_type (optional) -- one of the ChartType constants (BAR|PIE|LINE|SCATTER)
+    chart_type (optional) -- one of the ChartType constants (BAR|PIE|LINE|SCATTER|AREA)
       - applies only to VizType.CHART
     column_mapping (optional) -- a dict of which field names to use for the x and
       y axis. (e.g. {"event":"x","count":"y","type":"series"})
@@ -74,18 +74,13 @@ class RedashClient(object):
         "legend": {"enabled":True},
         "yAxis": [{"type": "linear"}, {"type": "linear", "opposite":True}],
         "xAxis": {"type": "datetime","labels": {"enabled":True}},
-        "seriesOptions":{"count": {
-          "type": chart_type,
-          "yAxis": 0,
-          "zIndex":0,
-          "index":0
-        }},
+        "seriesOptions": series_options,
         "columnMapping": column_mapping,
         "bottomMargin":50
       }
 
-    if stacking:
-      options["series"] = { "stacking": "normal" }
+    options["series"] = { "stacking": "normal" if stacking else None }
+    options["seriesOptions"] = series_options if series_options else {}
 
     if viz_type == VizType.COHORT:
       if time_interval == None:

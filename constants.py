@@ -15,3 +15,4 @@ class ChartType:
   PIE = "pie"
   LINE = "line"
   SCATTER = "scatter"
+  AREA = "area"

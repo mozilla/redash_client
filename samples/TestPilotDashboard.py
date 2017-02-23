@@ -21,3 +21,8 @@ class TestPilotDashboard(SummaryDashboard):
     super(TestPilotDashboard, self).add_events_weekly(
       self._start_date,
       self._where_clause)
+
+  def add_mau_dau(self):
+    super(TestPilotDashboard, self).add_mau_dau(
+      self._start_date,
+      self._where_clause)
