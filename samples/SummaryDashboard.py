@@ -99,6 +99,9 @@ class SummaryDashboard(object):
     if self.DAILY_RETENTION_TITLE in self.get_chart_names():
       return
 
+    if retention_type == RetentionType.DAILY:
+      time_interval = "daily"
+
     time_interval = "daily" if retention_type == RetentionType.DAILY else "weekly"
 
     query_string, fields = retention(self._events_table, retention_type, self._start_date, where_clause)
