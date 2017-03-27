@@ -2,9 +2,9 @@ import os
 import math
 import statistics
 from scipy import stats
+from utils import upload_as_json
 import statsmodels.stats.power as smp
-from sheets_client import SheetsClient
-from constants import VizType, ChartType, VizWidth
+from constants import VizType, ChartType, VizWidth, TtableSchema
 from samples.SummaryDashboard import SummaryDashboard
 from templates import retention_diff, disable_rate
 
@@ -21,7 +21,7 @@ class ActivityStreamExperimentDashboard(SummaryDashboard):
     {"event_name": "Positive Interactions", "event_list": ['CLICK', 'BOOKMARK_ADD', 'SEARCH']}]
   MASGA_EVENTS = ["HIDE_LOADER", "SHOW_LOADER", "MISSING_IMAGE", "SLOW_ADDON_DETECTED"]
   ALPHA_ERROR = 0.005
-  SHEETS_DATA_SOURCE_ID = 11
+  URL_FETCHER_DATA_SOURCE_ID = 28
   DISABLE_TITLE = "Disable Rate"
 
   def __init__(self, api_key, dash_name, exp_id, addon_versions, start_date=None, end_date=None):
@@ -88,7 +88,13 @@ class ActivityStreamExperimentDashboard(SummaryDashboard):
         control_vals.append(row[column_name])
 
     power, p_val, mean_diff = self._power_and_ttest(control_vals, exp_vals)
-    return [label, self.ALPHA_ERROR, power, p_val, mean_diff]
+    return {
+      "Metric": label,
+      "Alpha Error": self.ALPHA_ERROR,
+      "Power": power,
+      "Two-Tailed P-value (ttest)": p_val,
+      "Experiment Mean - Control Mean": mean_diff
+    }
 
   def add_ttable(self, gservice_email):
     # Don't add a table if it already exists
@@ -96,7 +102,7 @@ class ActivityStreamExperimentDashboard(SummaryDashboard):
     if query_name in self.get_chart_names():
       return
 
-    values = [["Metric", "Alpha Error", "Power", "Two-Tailed P-value (ttest)", "Experiment Mean - Control Mean"]]
+    values = { "columns": TtableSchema, "rows": [] }
 
     # Create the t-table
     for event in self.DEFAULT_EVENTS + self.MASGA_EVENTS:
@@ -106,15 +112,14 @@ class ActivityStreamExperimentDashboard(SummaryDashboard):
 
       event_query_name, query_string, fields = self._get_event_query_data(event, table)
       ttable_row = self.get_ttable_data_for_query(event_query_name, query_string, "event_rate")
-      values.append(ttable_row)
+      values["rows"].append(ttable_row)
 
     query_string, fields = disable_rate(self._start_date, self._experiment_id, self._addon_versions)
     disable_ttable_row = self.get_ttable_data_for_query(self.DISABLE_TITLE, query_string, "disable_rate")
     if len(disable_ttable_row) > 0:
       values.append(disable_ttable_row)
 
-    spreadsheet_id = self.sheets.write_to_sheet(self._dash_name, values, gservice_email)
-    query_string = "{0}|0".format(spreadsheet_id)
+    query_string = upload_as_json("experiments", self._experiment_id, values)
     query_id, table_id = self.redash.new_query(query_name, query_string,
-      self.SHEETS_DATA_SOURCE_ID, self.TTABLE_DESCRIPTION)
+      self.URL_FETCHER_DATA_SOURCE_ID, self.TTABLE_DESCRIPTION)
     self.redash.append_viz_to_dash(self._dash_id, table_id, VizWidth.WIDE)
