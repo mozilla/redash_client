@@ -96,7 +96,7 @@ class ActivityStreamExperimentDashboard(SummaryDashboard):
       "Experiment Mean - Control Mean": mean_diff
     }
 
-  def add_ttable(self, gservice_email):
+  def add_ttable(self):
     # Don't add a table if it already exists
     query_name = "Statistical Analysis"
     if query_name in self.get_chart_names():
