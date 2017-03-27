@@ -1,5 +1,5 @@
 from redash_client import RedashClient
-from templates import retention, all_events_weekly, active_users
+from templates import retention, all_events_weekly, active_users, event_rate
 from constants import VizWidth, VizType, RetentionType, ChartType
 
 class SummaryDashboard(object):
@@ -31,6 +31,31 @@ class SummaryDashboard(object):
     widgets = self.redash.get_widget_from_dash(self._dash_name)
     for widget in widgets:
       self.redash.remove_visualization(self._dash_name, widget["id"])
+
+  def _get_event_query_data(self, event, events_table=None):
+    if events_table is None:
+      events_table = self._events_table
+
+    event_name = event.capitalize() if type(event) == str else event["event_name"]
+    event_string = "'{}'".format(event) if type(event) == str else \
+      ", ".join(["'{}'".format(event) for event in event["event_list"]])
+    query_string, fields = event_rate(event_string, self._start_date,
+      self._experiment_id, self._addon_versions, events_table)
+    query_name = "{0} Rate".format(event_name)
+    return query_name, query_string, fields
+
+  def add_event_graphs(self, events_list, events_table=None):
+    chart_names = self.get_chart_names()
+    for event in events_list:
+      query_name, query_string, fields = self._get_event_query_data(event, events_table)
+
+      # Don't add graphs that already exist
+      if query_name in chart_names:
+        return
+
+      query_id, table_id = self.redash.new_query(query_name, query_string, self.TILES_DATA_SOURCE_ID)
+      viz_id = self.redash.new_visualization(query_id, VizType.CHART, "", ChartType.LINE, {fields[0]: "x", fields[1]: "y", fields[2]: "series"})
+      self.redash.append_viz_to_dash(self._dash_id, viz_id, VizWidth.REGULAR)
 
   def add_mau_dau(self, where_clause=""):
     if self.MAU_DAU_TITLE in self.get_chart_names():

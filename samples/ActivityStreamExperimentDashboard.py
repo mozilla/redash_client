@@ -6,7 +6,7 @@ import statsmodels.stats.power as smp
 from sheets_client import SheetsClient
 from constants import VizType, ChartType, VizWidth
 from samples.SummaryDashboard import SummaryDashboard
-from templates import event_rate, retention_diff, disable_rate
+from templates import retention_diff, disable_rate
 
 class ActivityStreamExperimentDashboard(SummaryDashboard):
   TTABLE_DESCRIPTION = "Smaller p-values (e.g. <= 0.05) indicate a high probability that the \
@@ -54,21 +54,6 @@ class ActivityStreamExperimentDashboard(SummaryDashboard):
     p_val = stats.ttest_ind(control_vals, exp_vals, equal_var = False)[1]
     return power, p_val, exp_mean - control_mean
 
-  def add_event_graphs(self, additional_events=[]):
-    required_events = self.DEFAULT_EVENTS + additional_events
-
-    chart_names = self.get_chart_names()
-    for event in required_events:
-      query_name, query_string, fields = self._get_event_query_data(event)
-
-      # Don't add graphs that already exist
-      if query_name in chart_names:
-        continue
-
-      query_id, table_id = self.redash.new_query(query_name, query_string, self.TILES_DATA_SOURCE_ID)
-      viz_id = self.redash.new_visualization(query_id, VizType.CHART, "", ChartType.LINE, {fields[0]: "x", fields[1]: "y", fields[2]: "series"})
-      self.redash.append_viz_to_dash(self._dash_id, viz_id, VizWidth.REGULAR)
-
   def add_disable_graph(self):
     if self.DISABLE_TITLE in self.get_chart_names():
       return
@@ -87,14 +72,6 @@ class ActivityStreamExperimentDashboard(SummaryDashboard):
     query_id, table_id = self.redash.new_query(query_name, query_string, self.TILES_DATA_SOURCE_ID)
     viz_id = self.redash.new_visualization(query_id, VizType.COHORT, time_interval="daily")
     self.redash.append_viz_to_dash(self._dash_id, viz_id, VizWidth.WIDE)
-
-  def _get_event_query_data(self, event):
-    event_name = event.capitalize() if type(event) == str else event["event_name"]
-    event_string = "'{}'".format(event) if type(event) == str else \
-      ", ".join(["'{}'".format(event) for event in event["event_list"]])
-    query_string, fields = event_rate(event_string, self._start_date, self._experiment_id, self._addon_versions)
-    query_name = "{0} Rate".format(event_name)
-    return query_name, query_string, fields
 
   def get_ttable_data_for_query(self, label, query_string, column_name):
     data = self.redash.get_query_results(query_string, self.TILES_DATA_SOURCE_ID)
