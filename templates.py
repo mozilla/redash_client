@@ -1,60 +1,54 @@
-def event_rate(event, start_date, experiment_id, addon_versions):
+def event_rate(event, start_date, experiment_id, addon_versions, events_table):
   return """
     WITH control_events_by_day AS
-      (SELECT date, COUNT(DISTINCT session_id)
-      FROM activity_stream_events_daily
+      (SELECT DISTINCT date, session_id
+      FROM {4}
       WHERE event IN ({0})
       AND date >= '{1}'
       AND (experiment_id = 'n/a' OR experiment_id IS NULL)
-      AND addon_version IN ({3})
-      GROUP BY date
-      ORDER BY date),
+      AND addon_version IN ({3})),
 
     control_session_counts_per_day AS
-      (SELECT date, count(DISTINCT session_id)
+      (SELECT DISTINCT date, session_id
       FROM activity_stream_stats_daily AS stats
       WHERE date >= '{1}'
       AND stats.session_id IS NOT NULL
       AND stats.session_id <> 'n/a'
       AND (experiment_id = 'n/a' OR experiment_id IS NULL)
-      AND addon_version IN ({3})
-      GROUP BY date
-      ORDER BY date),
+      AND addon_version IN ({3})),
 
-    experiment_clicks_by_day AS
-      (SELECT date, COUNT(DISTINCT session_id)
-      FROM activity_stream_events_daily
+    experiment_events_by_day AS
+      (SELECT DISTINCT date, session_id
+      FROM {4}
       WHERE event IN ({0})
       AND date >= '{1}'
       AND experiment_id = '{2}'
-      AND addon_version IN ({3})
-      GROUP BY date
-      ORDER BY date),
+      AND addon_version IN ({3})),
 
     experiment_session_counts_per_day AS
-      (SELECT date, count(DISTINCT session_id)
+      (SELECT DISTINCT date, session_id
       FROM activity_stream_stats_daily AS stats
       WHERE date >= '{1}'
       AND experiment_id = '{2}'
       AND stats.session_id IS NOT NULL
       AND stats.session_id <> 'n/a'
-      AND addon_version IN ({3})
-      GROUP BY date
-      ORDER BY date)
+      AND addon_version IN ({3}))
 
-    (SELECT a.date, 'experiment' AS type, COALESCE(b.count, 0) / a.count::float * 100 AS event_rate
+    (SELECT a.date, 'experiment' AS type, COALESCE(COUNT(DISTINCT b.session_id), 0) / COUNT(DISTINCT a.session_id)::float * 100 AS event_rate
     FROM experiment_session_counts_per_day AS a
-    LEFT JOIN experiment_clicks_by_day AS b
+    LEFT JOIN experiment_events_by_day AS b
     ON a.date = b.date
-    ORDER by a.date)
+    GROUP BY 1
+    ORDER BY 1)
 
     UNION ALL
 
-    (SELECT a.date, 'control' AS type, COALESCE(b.count, 0) / a.count::float * 100 AS event_rate
+    (SELECT a.date, 'control' AS type, COALESCE(COUNT(DISTINCT b.session_id), 0) / COUNT(DISTINCT a.session_id)::float * 100 AS event_rate
     FROM control_session_counts_per_day AS a
     LEFT JOIN control_events_by_day AS b
     ON a.date = b.date
-    ORDER by a.date)""".format(event, start_date, experiment_id, addon_versions), ["date", "event_rate", "type"]
+    GROUP BY 1
+    ORDER BY 1)""".format(event, start_date, experiment_id, addon_versions, events_table), ["date", "event_rate", "type"]
 
 def disable_rate(start_date, experiment_id, addon_versions):
   return """
