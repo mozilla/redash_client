@@ -99,8 +99,12 @@ class ActivityStreamExperimentDashboard(SummaryDashboard):
     values = [["Metric", "Alpha Error", "Power", "Two-Tailed P-value (ttest)", "Experiment Mean - Control Mean"]]
 
     # Create the t-table
-    for event in self.DEFAULT_EVENTS:
-      event_query_name, query_string, fields = self._get_event_query_data(event)
+    for event in self.DEFAULT_EVENTS + self.MASGA_EVENTS:
+      table = self._events_table
+      if event in self.MASGA_EVENTS:
+        table = "activity_stream_masga"
+
+      event_query_name, query_string, fields = self._get_event_query_data(event, table)
       ttable_row = self.get_ttable_data_for_query(event_query_name, query_string, "event_rate")
       values.append(ttable_row)
 
