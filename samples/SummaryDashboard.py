@@ -30,7 +30,8 @@ class SummaryDashboard(object):
   def remove_all_graphs(self):
     widgets = self.redash.get_widget_from_dash(self._dash_name)
     for widget in widgets:
-      self.redash.remove_visualization(self._dash_name, widget["id"])
+      self.redash.remove_visualization(widget["id"])
+      self.redash.delete_query(widget["visualization"]["query"]["id"])
 
   def _get_event_query_data(self, event, events_table=None):
     if events_table is None:

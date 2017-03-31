@@ -34,7 +34,6 @@ class ActivityStreamExperimentDashboard(SummaryDashboard):
     self._experiment_id = exp_id
     self._end_date = end_date
     self._addon_versions = ", ".join(["'{}'".format(version) for version in addon_versions])
-    self.sheets = SheetsClient()
 
   def _power_and_ttest(self, control_vals, exp_vals):
     control_mean = statistics.mean(control_vals)
