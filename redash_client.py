@@ -122,6 +122,13 @@ class RedashClient(object):
         "query_id": query_id}),
     ).json()["id"]
 
+  def get_slug(self, name):
+    return name \
+      .lower() \
+      .replace("/", " ") \
+      .translate(None, string.punctuation) \
+      .replace(" ", "-")
+
   def new_dashboard(self, name):
     """
     Create a new Redash dashboard. If a dashboard with the given name
@@ -132,11 +139,7 @@ class RedashClient(object):
     name -- a title for the dashboard
     """
 
-    slug = name \
-      .lower() \
-      .replace("/", " ") \
-      .translate(None, string.punctuation) \
-      .replace(" ", "-")
+    slug = self.get_slug(name)
 
     # Check if dashboard exists
     dash = self._do_get(
@@ -188,11 +191,7 @@ class RedashClient(object):
     )
 
   def get_widget_from_dash(self, name):
-    slug = name \
-      .lower() \
-      .replace("/", " ") \
-      .translate(None, string.punctuation) \
-      .replace(" ", "-")
+    slug = self.get_slug(name)
 
     row_arr = self._do_get(
       self.BASE_URL + "/dashboards/" + slug + "?api_key=" + self._api_key,
