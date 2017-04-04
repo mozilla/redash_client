@@ -62,7 +62,9 @@ class RedashClient(object):
     else:
       return response["query_result"]["data"]["rows"]
 
-  def make_viz_options(self, chart_type, viz_type, column_mapping, series_options, time_interval, stacking):
+  def make_viz_options(self, chart_type=None, viz_type=None, column_mapping=None,
+    series_options=None, time_interval=None, stacking=None):
+
     if viz_type == VizType.COHORT:
       return {
         "timeInterval": time_interval
@@ -193,9 +195,14 @@ class RedashClient(object):
   def get_widget_from_dash(self, name):
     slug = self.get_slug(name)
 
+    # Note: row_arr is in the form:
+    # [[{}, {}], [{}], ...]
+    #
+    # Where each sub-array represents a row of widgets in a redash dashboard
     row_arr = self._do_get(
       self.BASE_URL + "/dashboards/" + slug + "?api_key=" + self._api_key,
       data = json.dumps({"name": name}),
     ).json()["widgets"]
 
+    # Return a flattened list of all widgets
     return list(itertools.chain.from_iterable(map(lambda row: [row[0]] if len(row) == 1 else [row[0], row[1]], row_arr)))
