@@ -21,6 +21,9 @@ class RedashClient(object):
   def _do_get(self, url, data={}):
     return requests.get(url, data=data)
 
+  def _do_delete(self, url):
+    return requests.delete(url)
+
   def new_query(self, name, query_string, data_source_id, description=""):
     query_id = self._do_post(
       self.BASE_URL + "/queries?api_key=" + self._api_key,
@@ -157,12 +160,12 @@ class RedashClient(object):
     )
 
   def remove_visualization(self, viz_id):
-    requests.delete(
+    self._do_delete(
       self.BASE_URL + "/widgets/" + str(viz_id) + "?api_key=" + self._api_key
     )
 
   def delete_query(self, query_id):
-    requests.delete(
+    self._do_delete(
       self.BASE_URL + "/queries/" + str(query_id) + "?api_key=" + self._api_key
     )
 
