@@ -150,8 +150,8 @@ class RedashClient(object):
     )
 
     # If dashboard doesn't exist, create a new one.
-    if dash.status_code != 200:
-      return requests.post(
+    if dash.status_code == 404:
+      return self._do_post(
         self.BASE_URL + "/dashboards?api_key=" + self._api_key,
         data = json.dumps({"name": name}),
       ).json()["id"]
