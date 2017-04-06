@@ -3,6 +3,7 @@ import string
 import requests
 import itertools
 import sched, time
+
 from custom_timer import CustomTimer
 from constants import VizType, ChartType
 
@@ -13,19 +14,9 @@ class RedashClient(object):
   def __init__(self, api_key):
     self._api_key = api_key
     self._retry_count = self.MAX_RETRY_COUNT
-    self._s = sched.scheduler(time.time, time.sleep)
-
-  def _do_post(self, url, data={}):
-    return requests.post(url, data=data)
-
-  def _do_get(self, url, data={}):
-    return requests.get(url, data=data)
-
-  def _do_delete(self, url):
-    return requests.delete(url)
 
   def new_query(self, name, query_string, data_source_id, description=""):
-    query_id = self._do_post(
+    query_id = requests.post(
       self.BASE_URL + "/queries?api_key=" + self._api_key,
       json.dumps({"name": name,
                   "query": query_string,
@@ -33,18 +24,18 @@ class RedashClient(object):
                   "description": description})
     ).json()["id"]
 
-    table_id = self._do_get(
+    table_id = requests.get(
       self.BASE_URL + "/queries/" + str(query_id) + "?api_key=" + self._api_key
     ).json()["visualizations"][0]["id"]
 
-    self._do_post(
+    requests.post(
       self.BASE_URL + "/queries/" + str(query_id) + "/refresh?api_key=" + self._api_key
     ).json()
 
     return query_id, table_id
 
   def get_query_results(self, query_string, data_source_id):
-    response = self._do_post(
+    response = requests.post(
       self.BASE_URL + "/query_results?api_key=" + self._api_key,
       data = json.dumps({"query": query_string, "data_source_id": data_source_id}),
     ).json()
@@ -115,7 +106,7 @@ class RedashClient(object):
       raise ValueError("VizType must be one of: VizType.CHART, VizType.COHORT")
 
     options = self.make_viz_options(chart_type, viz_type, column_mapping, series_options, time_interval, stacking)
-    return self._do_post(
+    return requests.post(
       self.BASE_URL + "/visualizations?api_key=" + self._api_key,
       data = json.dumps({
         "type": viz_type,
@@ -144,14 +135,14 @@ class RedashClient(object):
     slug = self.get_slug(name)
 
     # Check if dashboard exists
-    dash = self._do_get(
+    dash = requests.get(
       self.BASE_URL + "/dashboards/" + slug + "?api_key=" + self._api_key,
       json.dumps({"name": name})
     )
 
     # If dashboard doesn't exist, create a new one.
     if dash.status_code == 404:
-      return self._do_post(
+      return requests.post(
         self.BASE_URL + "/dashboards?api_key=" + self._api_key,
         data = json.dumps({"name": name}),
       ).json()["id"]
@@ -159,23 +150,23 @@ class RedashClient(object):
     return dash.json()["id"]
 
   def publish_dashboard(self, dash_id):
-    self._do_post(
+    requests.post(
       self.BASE_URL + "/dashboards/" + str(dash_id) + "?api_key=" + self._api_key,
       data = json.dumps({"is_draft": False})
     )
 
   def remove_visualization(self, viz_id):
-    self._do_delete(
+    requests.delete(
       self.BASE_URL + "/widgets/" + str(viz_id) + "?api_key=" + self._api_key
     )
 
   def delete_query(self, query_id):
-    self._do_delete(
+    requests.delete(
       self.BASE_URL + "/queries/" + str(query_id) + "?api_key=" + self._api_key
     )
 
   def append_viz_to_dash(self, dash_id, viz_id, viz_width):
-    self._do_post(
+    requests.post(
       self.BASE_URL + "/widgets?api_key=" + self._api_key,
       data = json.dumps({
         "dashboard_id": dash_id,
@@ -187,7 +178,7 @@ class RedashClient(object):
     )
 
   def update_query_schedule(self, query_id, schedule):
-    self._do_post(
+    requests.post(
       self.BASE_URL + "/queries/" + str(query_id) + "?api_key=" + self._api_key,
       data = json.dumps({"schedule": schedule, "id": query_id})
     )
@@ -199,7 +190,7 @@ class RedashClient(object):
     # [[{}, {}], [{}], ...]
     #
     # Where each sub-array represents a row of widgets in a redash dashboard
-    row_arr = self._do_get(
+    row_arr = requests.get(
       self.BASE_URL + "/dashboards/" + slug + "?api_key=" + self._api_key,
       data = json.dumps({"name": name}),
     ).json()["widgets"]
