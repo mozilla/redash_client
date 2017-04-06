@@ -15,11 +15,11 @@ class RedashClient(object):
     self._api_key = api_key
     self._retry_count = self.MAX_RETRY_COUNT
 
-  def new_query(self, name, query_string, data_source_id, description=""):
+  def create_new_query(self, name, sql_query, data_source_id, description=None):
     query_id = requests.post(
       self.BASE_URL + "/queries?api_key=" + self._api_key,
       json.dumps({"name": name,
-                  "query": query_string,
+                  "query": sql_query,
                   "data_source_id": data_source_id,
                   "description": description})
     ).json()["id"]
@@ -34,10 +34,10 @@ class RedashClient(object):
 
     return query_id, table_id
 
-  def get_query_results(self, query_string, data_source_id):
+  def get_query_results(self, sql_query, data_source_id):
     response = requests.post(
       self.BASE_URL + "/query_results?api_key=" + self._api_key,
-      data = json.dumps({"query": query_string, "data_source_id": data_source_id}),
+      data = json.dumps({"query": sql_query, "data_source_id": data_source_id}),
     ).json()
 
     # If this query is still not uploaded, we'll get a job ID. Let's retry in 1 second.
@@ -47,14 +47,14 @@ class RedashClient(object):
         return []
       else:
         self._retry_count -= 1
-        t = CustomTimer(1, self.get_query_results, [query_string, data_source_id])
+        t = CustomTimer(1, self.get_query_results, [sql_query, data_source_id])
         t.start()
         return t.join()
     else:
       return response["query_result"]["data"]["rows"]
 
-  def make_viz_options(self, chart_type=None, viz_type=None, column_mapping=None,
-    series_options=None, time_interval=None, stacking=None):
+  def make_visualization_options(self, chart_type=None, viz_type=None, column_mapping=None,
+                                 series_options=None, time_interval=None, stacking=None):
 
     if viz_type == VizType.COHORT:
       return {
@@ -78,13 +78,14 @@ class RedashClient(object):
 
     return options
 
-  def new_visualization(self, query_id, viz_type=VizType.CHART, title="",
-    chart_type=None, column_mapping=None, series_options=None, time_interval=None, stacking=False):
+  def create_new_visualization(self, query_id, viz_type=VizType.CHART, title="",
+                               chart_type=None, column_mapping=None, series_options=None,
+                               time_interval=None, stacking=False):
     """ Create a new Redash Visualization.
 
     Arguments:
 
-    query_id -- the id returned when calling new_query()
+    query_id -- the id returned when calling create_new_query()
     viz_type (optional) -- one of the VizType constants (CHART|COHORT)
     title (optional) -- title of your visualization
     chart_type (optional) -- one of the ChartType constants (BAR|PIE|LINE|SCATTER|AREA)
@@ -105,7 +106,7 @@ class RedashClient(object):
     else:
       raise ValueError("VizType must be one of: VizType.CHART, VizType.COHORT")
 
-    options = self.make_viz_options(chart_type, viz_type, column_mapping, series_options, time_interval, stacking)
+    options = self.make_visualization_options(chart_type, viz_type, column_mapping, series_options, time_interval, stacking)
     return requests.post(
       self.BASE_URL + "/visualizations?api_key=" + self._api_key,
       data = json.dumps({
@@ -122,7 +123,7 @@ class RedashClient(object):
       .translate(None, string.punctuation) \
       .replace(" ", "-")
 
-  def new_dashboard(self, name):
+  def create_new_dashboard(self, name):
     """
     Create a new Redash dashboard. If a dashboard with the given name
     already exists, don't create a new one
@@ -165,7 +166,7 @@ class RedashClient(object):
       self.BASE_URL + "/queries/" + str(query_id) + "?api_key=" + self._api_key
     )
 
-  def append_viz_to_dash(self, dash_id, viz_id, viz_width):
+  def add_visualization_to_dashboard(self, dash_id, viz_id, viz_width):
     requests.post(
       self.BASE_URL + "/widgets?api_key=" + self._api_key,
       data = json.dumps({

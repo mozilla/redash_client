@@ -33,13 +33,13 @@ class TestRedashClient(unittest.TestCase):
   def test_init(self):
     self.assertEqual(self.redash.BASE_URL, "https://sql.telemetry.mozilla.org/api")
 
-  def test_new_query(self):
+  def test_create_new_query_returns_expected_ids(self):
     self.mock_requests_post.return_value = self.get_mock_response(
       content=json.dumps(QUERY_ID_RESPONSE))
     self.mock_requests_get.return_value = self.get_mock_response(
       content=json.dumps(VISUALIZATION_LIST_RESPONSE))
 
-    query_id, table_id = self.redash.new_query(
+    query_id, table_id = self.redash.create_new_query(
       "Dash Name",
       "SELECT * FROM test", 5)
 
@@ -48,7 +48,7 @@ class TestRedashClient(unittest.TestCase):
     self.assertEqual(self.mock_requests_get.call_count, 1)
     self.assertEqual(self.mock_requests_post.call_count, 2)
 
-  def test_query_results_ready_immediate(self):
+  def test_immediate_query_results_are_correct(self):
     self.mock_requests_post.return_value = self.get_mock_response(
       content=json.dumps(QUERY_RESULTS_RESPONSE))
 
@@ -57,7 +57,7 @@ class TestRedashClient(unittest.TestCase):
     self.assertItemsEqual(rows, EXPECTED_ROWS)
     self.assertEqual(self.mock_requests_post.call_count, 1)
 
-  def test_query_results_ready_late(self):
+  def test_late_response_query_results_are_correct(self):
     self.assertEqual(self.redash._retry_count, self.redash.MAX_RETRY_COUNT)
 
     self.mock_requests_post.return_value = self.get_mock_response(
@@ -73,7 +73,7 @@ class TestRedashClient(unittest.TestCase):
 
     self.assertEqual(rows, EXPECTED_ROWS)
 
-  def test_query_results_not_ready(self):
+  def test_query_results_not_available(self):
     self.assertEqual(self.redash._retry_count, self.redash.MAX_RETRY_COUNT)
 
     self.mock_requests_post.return_value = self.get_mock_response(
@@ -86,56 +86,67 @@ class TestRedashClient(unittest.TestCase):
     self.assertEqual(rows, [])
     self.assertEqual(self.mock_requests_post.call_count, 6)
 
-  def test_new_viz_throws(self):
+  def test_new_visualization_throws_for_missing_chart_data(self):
     self.assertRaises(ValueError,
-      lambda: self.redash.new_visualization(EXPECTED_QUERY_ID, VizType.CHART))
-    self.assertRaises(ValueError,
-      lambda: self.redash.new_visualization(EXPECTED_QUERY_ID, VizType.COHORT))
-    self.assertRaises(ValueError,
-      lambda: self.redash.new_visualization(EXPECTED_QUERY_ID, "boop"))
+      lambda: self.redash.create_new_visualization(EXPECTED_QUERY_ID, VizType.CHART))
 
-  def test_new_viz(self):
+  def test_new_visualization_throws_for_missing_cohort_data(self):
+    self.assertRaises(ValueError,
+      lambda: self.redash.create_new_visualization(EXPECTED_QUERY_ID, VizType.COHORT))
+
+  def test_new_visualization_throws_for_unexpected_visualization_type(self):
+    self.assertRaises(ValueError,
+      lambda: self.redash.create_new_visualization(EXPECTED_QUERY_ID, "boop"))
+
+  def test_new_viz_returns_expected_query_id(self):
     self.mock_requests_post.return_value = self.get_mock_response(
       content=json.dumps(QUERY_ID_RESPONSE))
 
-    query_id = self.redash.new_visualization(EXPECTED_QUERY_ID, VizType.COHORT, time_interval=TIME_INTERVAL)
+    query_id = self.redash.create_new_visualization(
+      EXPECTED_QUERY_ID, VizType.COHORT, time_interval=TIME_INTERVAL)
+
     self.assertEqual(query_id, EXPECTED_QUERY_ID)
     self.assertEqual(self.mock_requests_post.call_count, 1)
 
-  def test_make_viz_options(self):
-    options = self.redash.make_viz_options(viz_type=VizType.COHORT, time_interval=TIME_INTERVAL)
+  def test_format_cohort_options_correctly(self):
+    options = self.redash.make_visualization_options(
+      viz_type=VizType.COHORT, time_interval=TIME_INTERVAL)
     self.assertItemsEqual(options, COHORT_OPTIONS)
 
-    options = self.redash.make_viz_options(ChartType.LINE, VizType.CHART, COLUMN_MAPPING)
+  def test_format_chart_options_correctly(self):
+    options = self.redash.make_visualization_options(
+      ChartType.LINE, VizType.CHART, COLUMN_MAPPING)
     self.assertItemsEqual(options, CHART_OPTIONS)
 
-  def test_slug(self):
+  def test_make_correct_slug(self):
     produced_slug = self.redash.get_slug(DASH_NAME)
     self.assertEqual(produced_slug, EXPECTED_SLUG)
 
   def test_new_dashboard_exists(self):
     self.mock_requests_get.return_value = self.get_mock_response(
       content=json.dumps(QUERY_ID_RESPONSE))
-    query_id = self.redash.new_dashboard(DASH_NAME)
-    self.assertEqual(query_id, EXPECTED_QUERY_ID)
 
+    query_id = self.redash.create_new_dashboard(DASH_NAME)
+
+    self.assertEqual(query_id, EXPECTED_QUERY_ID)
     self.assertEqual(self.mock_requests_get.call_count, 1)
     self.assertEqual(self.mock_requests_post.call_count, 0)
 
   def test_new_dashboard_doesnt_exist(self):
-    self.mock_requests_get.return_value = self.get_mock_response(404)
+    self.mock_requests_get.return_value = self.get_mock_response(status=404)
     self.mock_requests_post.return_value = self.get_mock_response(
       content=json.dumps(QUERY_ID_RESPONSE))
 
-    query_id = self.redash.new_dashboard(DASH_NAME)
-    self.assertEqual(query_id, EXPECTED_QUERY_ID)
+    query_id = self.redash.create_new_dashboard(DASH_NAME)
 
+    self.assertEqual(query_id, EXPECTED_QUERY_ID)
     self.assertEqual(self.mock_requests_get.call_count, 1)
     self.assertEqual(self.mock_requests_post.call_count, 1)
 
-  def test_get_widget_from_dash(self):
+  def test_get_widget_from_dash_returns_correctly_flattened_widgets(self):
     self.mock_requests_get.return_value = self.get_mock_response(
       content=json.dumps(WIDGETS_RESPONSE))
+
     widget_list = self.redash.get_widget_from_dash(DASH_NAME)
 
     self.assertEqual(widget_list, FLAT_WIDGETS)
