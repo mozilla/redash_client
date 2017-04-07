@@ -110,25 +110,14 @@ class RedashClient(object):
   def create_new_visualization(self, query_id, viz_type=VizType.CHART, title="",
                                chart_type=None, column_mapping=None, series_options=None,
                                time_interval=None, stacking=False):
-    """ Create a new Redash Visualization.
 
-    Arguments:
-
-    query_id -- the id returned when calling create_new_query()
-    viz_type (optional) -- one of the VizType constants (CHART|COHORT)
-    title (optional) -- title of your visualization
-    chart_type (optional) -- one of the ChartType constants (BAR|PIE|LINE|SCATTER|AREA)
-      - applies only to VizType.CHART
-    column_mapping (optional) -- a dict of which field names to use for the x and
-      y axis. (e.g. {"event":"x","count":"y","type":"series"})
-      - applies only to VizType.CHART
-    time_interval (optional) -- one of "daily", "weekly", "monthly"
-      - applies only to VizType.COHORT
-    """
-
+    # Note: ChartType is one of BAR|PIE|LINE|SCATTER|AREA and
+    # column_mapping is a dict of which field names to use for the x and
+    # y axis. (e.g. {"event":"x","count":"y","type":"series"})
     if viz_type == VizType.CHART:
       if chart_type == None or column_mapping == None:
         raise ValueError("chart_type and column_mapping values required for a Chart visualization")
+    # Note: time_interval is one of "daily", "weekly", "monthly"
     elif viz_type == VizType.COHORT:
       if time_interval == None:
         raise ValueError("time_interval value required for a Cohort visualization")
@@ -156,14 +145,6 @@ class RedashClient(object):
       .replace(" ", "-")
 
   def create_new_dashboard(self, name):
-    """
-    Create a new Redash dashboard. If a dashboard with the given name
-    already exists, don't create a new one
-
-    Keyword arguments:
-
-    name -- a title for the dashboard
-    """
 
     slug = self.get_slug(name)
 
