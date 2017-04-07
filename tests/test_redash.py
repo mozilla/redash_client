@@ -1,8 +1,8 @@
 import mock
 import json
 import unittest
+
 from testdata import *
-from custom_timer import CustomTimer
 from redash_client import RedashClient
 from constants import VizType, ChartType
 
@@ -55,33 +55,31 @@ class TestRedashClient(unittest.TestCase):
     self.assertEqual(self.mock_requests_post.call_count, 1)
 
   def test_late_response_query_results_are_correct(self):
-    self.assertEqual(self.redash._retry_count, self.redash.MAX_RETRY_COUNT)
+    self.server_calls = 0
 
-    self.mock_requests_post.return_value = self.get_mock_response(
-      content=json.dumps(QUERY_RESULTS_NOT_READY_RESPONSE))
+    def simulate_server_calls(url, data):
+      response = QUERY_RESULTS_NOT_READY_RESPONSE
+      if self.server_calls >= 2:
+        response = QUERY_RESULTS_RESPONSE
 
-    t = CustomTimer(0, self.redash.get_query_results, ["SELECT * FROM test", 5])
-    t.start()
+      self.server_calls += 1
+      return self.get_mock_response(content=json.dumps(response))
 
-    self.mock_requests_post.return_value = self.get_mock_response(
-      content=json.dumps(QUERY_RESULTS_RESPONSE))
+    self.mock_requests_post.side_effect = simulate_server_calls
 
-    rows = t.join()
+    rows = self.redash.get_query_results("SELECT * FROM test", 5)
 
     self.assertEqual(rows, EXPECTED_ROWS)
+    self.assertEqual(self.mock_requests_post.call_count, 3)
 
   def test_query_results_not_available(self):
-    self.assertEqual(self.redash._retry_count, self.redash.MAX_RETRY_COUNT)
-
     self.mock_requests_post.return_value = self.get_mock_response(
       content=json.dumps(QUERY_RESULTS_NOT_READY_RESPONSE))
 
-    t = CustomTimer(0, self.redash.get_query_results, ["SELECT * FROM test", 5])
-    t.start()
-    rows = t.join()
+    rows = self.redash.get_query_results("SELECT * FROM test", 5)
 
     self.assertEqual(rows, [])
-    self.assertEqual(self.mock_requests_post.call_count, 6)
+    self.assertEqual(self.mock_requests_post.call_count, 5)
 
   def test_new_visualization_throws_for_missing_chart_data(self):
     self.assertRaises(ValueError,
