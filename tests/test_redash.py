@@ -30,9 +30,6 @@ class TestRedashClient(unittest.TestCase):
 
     return mock_response
 
-  def test_init(self):
-    self.assertEqual(self.redash.BASE_URL, "https://sql.telemetry.mozilla.org/api")
-
   def test_create_new_query_returns_expected_ids(self):
     self.mock_requests_post.return_value = self.get_mock_response(
       content=json.dumps(QUERY_ID_RESPONSE))
