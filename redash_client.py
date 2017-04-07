@@ -3,40 +3,48 @@ import string
 import requests
 import itertools
 import sched, time
+from urlparse import urljoin
+from urllib import urlencode
 
 from custom_timer import CustomTimer
 from constants import VizType, ChartType
 
 class RedashClient(object):
-  BASE_URL = "https://sql.telemetry.mozilla.org/api"
+  BASE_URL = "https://sql.telemetry.mozilla.org/api/"
   MAX_RETRY_COUNT = 5
 
   def __init__(self, api_key):
     self._api_key = api_key
+    self._url_params = urlencode({"api_key":self._api_key})
     self._retry_count = self.MAX_RETRY_COUNT
 
   def create_new_query(self, name, sql_query, data_source_id, description=None):
+    url_path = "queries?{0}".format(self._url_params)
+    query_url = urljoin(self.BASE_URL, url_path)
+
     query_id = requests.post(
-      self.BASE_URL + "/queries?api_key=" + self._api_key,
+      query_url,
       json.dumps({"name": name,
                   "query": sql_query,
                   "data_source_id": data_source_id,
                   "description": description})
     ).json()["id"]
 
-    table_id = requests.get(
-      self.BASE_URL + "/queries/" + str(query_id) + "?api_key=" + self._api_key
-    ).json()["visualizations"][0]["id"]
+    url_path = "queries/{0}?{1}".format(str(query_id), self._url_params)
+    query_url = urljoin(self.BASE_URL, url_path)
+    table_id = requests.get(query_url).json()["visualizations"][0]["id"]
 
-    requests.post(
-      self.BASE_URL + "/queries/" + str(query_id) + "/refresh?api_key=" + self._api_key
-    ).json()
+    url_path = "queries/{0}/refresh?{1}".format(str(query_id), self._url_params)
+    query_url = urljoin(self.BASE_URL, url_path)
+    requests.post(query_url).json()
 
     return query_id, table_id
 
   def get_query_results(self, sql_query, data_source_id):
+    url_path = "query_results?{0}".format(self._url_params)
+    query_url = urljoin(self.BASE_URL, url_path)
     response = requests.post(
-      self.BASE_URL + "/query_results?api_key=" + self._api_key,
+      query_url,
       data = json.dumps({"query": sql_query, "data_source_id": data_source_id}),
     ).json()
 
@@ -107,8 +115,10 @@ class RedashClient(object):
       raise ValueError("VizType must be one of: VizType.CHART, VizType.COHORT")
 
     options = self.make_visualization_options(chart_type, viz_type, column_mapping, series_options, time_interval, stacking)
+    url_path = "visualizations?{0}".format(self._url_params)
+    query_url = urljoin(self.BASE_URL, url_path)
     return requests.post(
-      self.BASE_URL + "/visualizations?api_key=" + self._api_key,
+      query_url,
       data = json.dumps({
         "type": viz_type,
         "name": title,
@@ -136,39 +146,45 @@ class RedashClient(object):
     slug = self.get_slug(name)
 
     # Check if dashboard exists
+    url_path = "dashboards/{0}?{1}".format(slug, self._url_params)
+    query_url = urljoin(self.BASE_URL, url_path)
     dash = requests.get(
-      self.BASE_URL + "/dashboards/" + slug + "?api_key=" + self._api_key,
+      query_url,
       json.dumps({"name": name})
     )
 
     # If dashboard doesn't exist, create a new one.
     if dash.status_code == 404:
+      url_path = "dashboards?{0}".format(self._url_params)
+      query_url = urljoin(self.BASE_URL, url_path)
       return requests.post(
-        self.BASE_URL + "/dashboards?api_key=" + self._api_key,
-        data = json.dumps({"name": name}),
+        query_url,
+        data = json.dumps({"name": name})
       ).json()["id"]
 
     return dash.json()["id"]
 
   def publish_dashboard(self, dash_id):
-    requests.post(
-      self.BASE_URL + "/dashboards/" + str(dash_id) + "?api_key=" + self._api_key,
-      data = json.dumps({"is_draft": False})
-    )
+    url_path = "dashboards/{0}?{1}".format(str(dash_id), self._url_params)
+    query_url = urljoin(self.BASE_URL, url_path)
+    requests.post(query_url, data = json.dumps({"is_draft": False}))
 
   def remove_visualization(self, viz_id):
-    requests.delete(
-      self.BASE_URL + "/widgets/" + str(viz_id) + "?api_key=" + self._api_key
-    )
+    url_path = "widgets/{0}?{1}".format(str(viz_id), self._url_params)
+    query_url = urljoin(self.BASE_URL, url_path)
+    requests.delete(query_url)
 
   def delete_query(self, query_id):
-    requests.delete(
-      self.BASE_URL + "/queries/" + str(query_id) + "?api_key=" + self._api_key
-    )
+    url_path = "queries/{0}?{1}".format(str(query_id), self._url_params)
+    query_url = urljoin(self.BASE_URL, url_path)
+    requests.delete(query_url)
 
   def add_visualization_to_dashboard(self, dash_id, viz_id, viz_width):
+    url_path = "widgets?{0}".format(self._url_params)
+    query_url = urljoin(self.BASE_URL, url_path)
+
     requests.post(
-      self.BASE_URL + "/widgets?api_key=" + self._api_key,
+      query_url,
       data = json.dumps({
         "dashboard_id": dash_id,
         "visualization_id": viz_id,
@@ -179,20 +195,26 @@ class RedashClient(object):
     )
 
   def update_query_schedule(self, query_id, schedule):
+    url_path = "queries/{0}?{1}".format(str(query_id), self._url_params)
+    query_url = urljoin(self.BASE_URL, url_path)
+
     requests.post(
-      self.BASE_URL + "/queries/" + str(query_id) + "?api_key=" + self._api_key,
+      query_url,
       data = json.dumps({"schedule": schedule, "id": query_id})
     )
 
   def get_widget_from_dash(self, name):
     slug = self.get_slug(name)
 
+    url_path = "dashboards/{0}?{1}".format(slug, self._url_params)
+    query_url = urljoin(self.BASE_URL, url_path)
+
     # Note: row_arr is in the form:
     # [[{}, {}], [{}], ...]
     #
     # Where each sub-array represents a row of widgets in a redash dashboard
     row_arr = requests.get(
-      self.BASE_URL + "/dashboards/" + slug + "?api_key=" + self._api_key,
+      query_url,
       data = json.dumps({"name": name}),
     ).json()["widgets"]
 
