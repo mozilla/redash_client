@@ -20,6 +20,38 @@ class RedashClient(object):
     self._api_key = api_key
     self._url_params = urlencode({"api_key":self._api_key})
 
+  def get_slug(self, name):
+    return name \
+      .lower() \
+      .replace("/", " ") \
+      .translate(None, string.punctuation) \
+      .replace(" ", "-")
+
+  def make_visualization_options(self, chart_type=None, viz_type=None, column_mapping=None,
+                                 series_options=None, time_interval=None, stacking=None):
+
+    if viz_type == VizType.COHORT:
+      return {
+        "timeInterval": time_interval
+      }
+
+    # It's a chart viz type.
+    options = {
+      "globalSeriesType": chart_type,
+      "sortX":True,
+      "legend": {"enabled":True},
+      "yAxis": [{"type": "linear"}, {"type": "linear", "opposite":True}],
+      "xAxis": {"type": "datetime","labels": {"enabled":True}},
+      "seriesOptions": series_options,
+      "columnMapping": column_mapping,
+      "bottomMargin":50
+    }
+
+    options["series"] = { "stacking": "normal" if stacking else None }
+    options["seriesOptions"] = series_options if series_options else {}
+
+    return options
+
   def create_new_query(self, name, sql_query, data_source_id, description=None):
     url_path = "queries?{0}".format(self._url_params)
     query_url = urljoin(self.BASE_URL, url_path)
@@ -82,31 +114,6 @@ class RedashClient(object):
     rows = result.get('query_result', {}).get('data', {}).get('rows', [])
     return rows
 
-  def make_visualization_options(self, chart_type=None, viz_type=None, column_mapping=None,
-                                 series_options=None, time_interval=None, stacking=None):
-
-    if viz_type == VizType.COHORT:
-      return {
-        "timeInterval": time_interval
-      }
-
-    # It's a chart viz type.
-    options = {
-      "globalSeriesType": chart_type,
-      "sortX":True,
-      "legend": {"enabled":True},
-      "yAxis": [{"type": "linear"}, {"type": "linear", "opposite":True}],
-      "xAxis": {"type": "datetime","labels": {"enabled":True}},
-      "seriesOptions": series_options,
-      "columnMapping": column_mapping,
-      "bottomMargin":50
-    }
-
-    options["series"] = { "stacking": "normal" if stacking else None }
-    options["seriesOptions"] = series_options if series_options else {}
-
-    return options
-
   def create_new_visualization(self, query_id, viz_type=VizType.CHART, title="",
                                chart_type=None, column_mapping=None, series_options=None,
                                time_interval=None, stacking=False):
@@ -136,13 +143,6 @@ class RedashClient(object):
     })
 
     return requests.post(query_url, new_visualization_args).json()["id"]
-
-  def get_slug(self, name):
-    return name \
-      .lower() \
-      .replace("/", " ") \
-      .translate(None, string.punctuation) \
-      .replace(" ", "-")
 
   def create_new_dashboard(self, name):
 
