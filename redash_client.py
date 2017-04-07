@@ -1,4 +1,5 @@
 import json
+import time
 import string
 import requests
 import itertools
@@ -6,17 +7,18 @@ import sched, time
 from urlparse import urljoin
 from urllib import urlencode
 
-from custom_timer import CustomTimer
 from constants import VizType, ChartType
 
 class RedashClient(object):
   BASE_URL = "https://sql.telemetry.mozilla.org/api/"
   MAX_RETRY_COUNT = 5
 
+  class RedashClientException(Exception):
+    pass
+
   def __init__(self, api_key):
     self._api_key = api_key
     self._url_params = urlencode({"api_key":self._api_key})
-    self._retry_count = self.MAX_RETRY_COUNT
 
   def create_new_query(self, name, sql_query, data_source_id, description=None):
     url_path = "queries?{0}".format(self._url_params)
@@ -53,20 +55,32 @@ class RedashClient(object):
       "data_source_id": data_source_id
     })
 
-    response = requests.post(query_url, get_query_results_args).json()
-
     # If this query is still not uploaded, we'll get a job ID. Let's retry in 1 second.
-    if ("job" in response.keys()):
-      if self._retry_count == 0:
-        self._retry_count = self.MAX_RETRY_COUNT
-        return []
-      else:
-        self._retry_count -= 1
-        t = CustomTimer(1, self.get_query_results, [sql_query, data_source_id])
-        t.start()
-        return t.join()
-    else:
-      return response["query_result"]["data"]["rows"]
+    for attempt in xrange(self.MAX_RETRY_COUNT):
+      try:
+        response = requests.post(query_url, get_query_results_args)
+      except requests.RequestException:
+        raise self.RedashClientException(
+            ('Unable to communicate with redash: {error}').format(error=e))
+
+      if response.status_code != 200:
+        raise self.RedashClientException(
+            ('Error status returned: {error_code} {error_message}').format(
+                error_code=response.status_code,
+                error_message=response.content,
+              ))
+      try:
+        result = json.loads(response.content)
+        if "job" not in result:
+          break
+      except ValueError:
+        raise self.RedashClientException(
+            ('Unable to parse JSON response: {error}').format(error=e))
+
+      time.sleep(1)
+
+    rows = result.get('query_result', {}).get('data', {}).get('rows', [])
+    return rows
 
   def make_visualization_options(self, chart_type=None, viz_type=None, column_mapping=None,
                                  series_options=None, time_interval=None, stacking=None):
