@@ -4,8 +4,8 @@ import unittest
 import requests
 
 from testdata import *
-from redash_client import RedashClient
-from constants import VizType, ChartType
+from src.redash_client import RedashClient
+from src.constants import VizType, ChartType
 
 
 class TestRedashClient(unittest.TestCase):
