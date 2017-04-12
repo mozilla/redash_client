@@ -82,11 +82,11 @@ class ActivityStreamExperimentDashboard(SummaryDashboard):
       ", ".join(["'{}'".format(event) for event in event["event_list"]])
     query_string, fields = event_query(event_string, self._start_date,
       self._experiment_id, self._addon_versions, events_table)
-
+    
     query_name = "{0} Rate".format(event_name)
     if event_query != event_rate:
       query_name = "Average {0} Per User".format(event_name)
-
+    
     return query_name, query_string, fields
 
   def add_event_graphs(self, events_list, event_query=event_rate, events_table=None):
@@ -146,10 +146,10 @@ class ActivityStreamExperimentDashboard(SummaryDashboard):
         ttable_row = self.get_ttable_data_for_query(event_query_name, query_string, "event_rate")
         values["rows"].append(ttable_row)
 
-    query_string, fields = disable_rate(self._start_date, self._experiment_id, self._addon_versions)
-    disable_ttable_row = self.get_ttable_data_for_query(self.DISABLE_TITLE, query_string, "disable_rate")
-    if len(disable_ttable_row) > 0:
-      values.append(disable_ttable_row)
+    #query_string, fields = disable_rate(self._start_date, self._experiment_id, self._addon_versions)
+    #disable_ttable_row = self.get_ttable_data_for_query(self.DISABLE_TITLE, query_string, "disable_rate")
+    #if len(disable_ttable_row) > 0:
+    #  values.append(disable_ttable_row)
 
     query_string = upload_as_json("experiments", self._experiment_id, values)
     query_id, table_id = self.redash.create_new_query(query_name, query_string,

@@ -65,7 +65,7 @@ def event_per_user(event, start_date, experiment_id, addon_versions, events_tabl
         AND stats.experiment_id = '{2}'
         AND stats.addon_version IN ({3})
         GROUP BY 1, 2),
-
+        
     control_client_events AS
         (SELECT stats.date, stats.client_id, COALESCE(COUNT(DISTINCT events.session_id), 0) AS count
         FROM activity_stream_stats_daily AS stats
@@ -77,7 +77,7 @@ def event_per_user(event, start_date, experiment_id, addon_versions, events_tabl
         AND (stats.experiment_id = 'n/a' OR stats.experiment_id IS NULL)
         AND stats.addon_version IN ({3})
         GROUP BY 1, 2)
-
+        
     SELECT exp_client_events.date, 'experiment' AS type, AVG(exp_client_events.count::FLOAT) AS event_rate
     FROM exp_client_events
     GROUP BY 1
