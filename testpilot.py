@@ -8,7 +8,8 @@ if __name__ == '__main__':
     "Summary": "@testpilot-addon",
     "Min Vid": "@min-vid",
     "Cliqz": "testpilot@cliqz.com",
-    "Pulse": "pulse@mozilla.com"
+    "Pulse": "pulse@mozilla.com",
+    "Snooze Tabs": "snoozetabs@mozilla.com"
   }
 
   for exp_name in test_pilot_experiments:
@@ -20,7 +21,7 @@ if __name__ == '__main__':
     )
 
     dash.add_mau_dau()
-    dash.add_retention_graph(RetentionType.DAILY)
+    dash.add_retention_graph(RetentionType.WEEKLY)
     dash.add_events_weekly()
     dash.update_refresh_schedule(3600)
     #dash.remove_all_graphs()
