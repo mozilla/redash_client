@@ -6,7 +6,8 @@ from utils import upload_as_json
 import statsmodels.stats.power as smp
 from constants import VizType, ChartType, VizWidth, TtableSchema
 from samples.SummaryDashboard import SummaryDashboard
-from templates import retention_diff, disable_rate
+from templates import retention_diff, disable_rate, event_rate, event_per_user
+
 
 class ActivityStreamExperimentDashboard(SummaryDashboard):
   TTABLE_DESCRIPTION = "Smaller p-values (e.g. <= 0.05) indicate a high probability that the \
@@ -58,9 +59,9 @@ class ActivityStreamExperimentDashboard(SummaryDashboard):
       return
 
     query_string, fields = disable_rate(self._start_date, self._experiment_id, self._addon_versions)
-    query_id, table_id = self.redash.new_query(self.DISABLE_TITLE, query_string, self.TILES_DATA_SOURCE_ID)
-    viz_id = self.redash.new_visualization(query_id, VizType.CHART, "", ChartType.LINE, {fields[0]: "x", fields[1]: "y", fields[2]: "series"})
-    self.redash.append_viz_to_dash(self._dash_id, viz_id, VizWidth.REGULAR)
+    query_id, table_id = self.redash.create_new_query(self.DISABLE_TITLE, query_string, self.TILES_DATA_SOURCE_ID)
+    viz_id = self.redash.create_new_visualization(query_id, VizType.CHART, "", ChartType.LINE, {fields[0]: "x", fields[1]: "y", fields[2]: "series"})
+    self.redash.add_visualization_to_dashboard(self._dash_id, viz_id, VizWidth.REGULAR)
 
   def add_retention_diff(self):
     query_name = "Daily Retention Difference (Experiment - Control)"
@@ -68,13 +69,44 @@ class ActivityStreamExperimentDashboard(SummaryDashboard):
       return
 
     query_string, fields = retention_diff(self._start_date, self._experiment_id, self._addon_versions)
-    query_id, table_id = self.redash.new_query(query_name, query_string, self.TILES_DATA_SOURCE_ID)
-    viz_id = self.redash.new_visualization(query_id, VizType.COHORT, time_interval="daily")
-    self.redash.append_viz_to_dash(self._dash_id, viz_id, VizWidth.WIDE)
+    query_id, table_id = self.redash.create_new_query(query_name, query_string, self.TILES_DATA_SOURCE_ID)
+    viz_id = self.redash.create_new_visualization(query_id, VizType.COHORT, time_interval="daily")
+    self.redash.add_visualization_to_dashboard(self._dash_id, viz_id, VizWidth.WIDE)
+
+  def _get_event_query_data(self, event, event_query=event_rate, events_table=None):
+    if events_table is None:
+      events_table = self._events_table
+
+    event_name = event.capitalize() if type(event) == str else event["event_name"]
+    event_string = "'{}'".format(event) if type(event) == str else \
+      ", ".join(["'{}'".format(event) for event in event["event_list"]])
+    query_string, fields = event_query(event_string, self._start_date,
+      self._experiment_id, self._addon_versions, events_table)
+
+    query_name = "{0} Rate".format(event_name)
+    if event_query != event_rate:
+      query_name = "Average {0} Per User".format(event_name)
+
+    return query_name, query_string, fields
+
+  def add_event_graphs(self, events_list, event_query=event_rate, events_table=None):
+    chart_names = self.get_chart_names()
+    for event in events_list:
+      query_name, query_string, fields = self._get_event_query_data(event, event_query, events_table)
+
+      # Don't add graphs that already exist
+      if query_name in chart_names:
+        continue
+
+      query_id, table_id = self.redash.create_new_query(query_name, query_string, self.TILES_DATA_SOURCE_ID)
+      viz_id = self.redash.create_new_visualization(query_id, VizType.CHART, "", ChartType.LINE, {fields[0]: "x", fields[1]: "y", fields[2]: "series"})
+      self.redash.add_visualization_to_dashboard(self._dash_id, viz_id, VizWidth.REGULAR)
+
+  def add_events_per_user(self, events_list, events_table=None):
+    self.add_event_graphs(events_list, event_per_user)
 
   def get_ttable_data_for_query(self, label, query_string, column_name):
     data = self.redash.get_query_results(query_string, self.TILES_DATA_SOURCE_ID)
-
     if data is None:
       return []
 
@@ -109,9 +141,10 @@ class ActivityStreamExperimentDashboard(SummaryDashboard):
       if event in self.MASGA_EVENTS:
         table = "activity_stream_masga"
 
-      event_query_name, query_string, fields = self._get_event_query_data(event, table)
-      ttable_row = self.get_ttable_data_for_query(event_query_name, query_string, "event_rate")
-      values["rows"].append(ttable_row)
+      for event_query in [event_rate, event_per_user]:
+        event_query_name, query_string, fields = self._get_event_query_data(event, event_query, table)
+        ttable_row = self.get_ttable_data_for_query(event_query_name, query_string, "event_rate")
+        values["rows"].append(ttable_row)
 
     query_string, fields = disable_rate(self._start_date, self._experiment_id, self._addon_versions)
     disable_ttable_row = self.get_ttable_data_for_query(self.DISABLE_TITLE, query_string, "disable_rate")
@@ -119,6 +152,6 @@ class ActivityStreamExperimentDashboard(SummaryDashboard):
       values.append(disable_ttable_row)
 
     query_string = upload_as_json("experiments", self._experiment_id, values)
-    query_id, table_id = self.redash.new_query(query_name, query_string,
+    query_id, table_id = self.redash.create_new_query(query_name, query_string,
       self.URL_FETCHER_DATA_SOURCE_ID, self.TTABLE_DESCRIPTION)
-    self.redash.append_viz_to_dash(self._dash_id, table_id, VizWidth.WIDE)
+    self.redash.add_visualization_to_dashboard(self._dash_id, table_id, VizWidth.WIDE)
