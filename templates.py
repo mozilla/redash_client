@@ -38,6 +38,7 @@ def event_rate(event, start_date, experiment_id, addon_versions, events_table):
     FROM experiment_session_counts_per_day AS a
     LEFT JOIN experiment_events_by_day AS b
     ON a.date = b.date
+    AND a.session_id = b.session_id
     GROUP BY 1
     ORDER BY 1)
 
@@ -47,8 +48,45 @@ def event_rate(event, start_date, experiment_id, addon_versions, events_table):
     FROM control_session_counts_per_day AS a
     LEFT JOIN control_events_by_day AS b
     ON a.date = b.date
+    AND a.session_id = b.session_id
     GROUP BY 1
     ORDER BY 1)""".format(event, start_date, experiment_id, addon_versions, events_table), ["date", "event_rate", "type"]
+
+def event_per_user(event, start_date, experiment_id, addon_versions, events_table):
+  return """
+    WITH exp_client_events AS
+        (SELECT stats.date, stats.client_id, COALESCE(COUNT(DISTINCT events.session_id), 0) AS count
+        FROM activity_stream_stats_daily AS stats
+        LEFT JOIN {4} AS events
+        ON stats.date = events.date
+        AND stats.client_id = events.client_id
+        WHERE (event IS NULL OR event IN ({0}))
+        AND stats.date >= '{1}'
+        AND stats.experiment_id = '{2}'
+        AND stats.addon_version IN ({3})
+        GROUP BY 1, 2),
+
+    control_client_events AS
+        (SELECT stats.date, stats.client_id, COALESCE(COUNT(DISTINCT events.session_id), 0) AS count
+        FROM activity_stream_stats_daily AS stats
+        LEFT JOIN {4} AS events
+        ON stats.date = events.date
+        AND stats.client_id = events.client_id
+        WHERE (event IS NULL OR event IN ({0}))
+        AND stats.date >= '{1}'
+        AND (stats.experiment_id = 'n/a' OR stats.experiment_id IS NULL)
+        AND stats.addon_version IN ({3})
+        GROUP BY 1, 2)
+
+    SELECT exp_client_events.date, 'experiment' AS type, AVG(exp_client_events.count::FLOAT) AS event_rate
+    FROM exp_client_events
+    GROUP BY 1
+
+    UNION ALL
+
+    SELECT control_client_events.date, 'control' AS type, AVG(control_client_events.count::FLOAT) AS event_rate
+    FROM control_client_events
+    GROUP BY 1""".format(event, start_date, experiment_id, addon_versions, events_table), ["date", "event_rate", "type"]
 
 def disable_rate(start_date, experiment_id, addon_versions):
   return """
