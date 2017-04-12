@@ -58,7 +58,6 @@ from samples.ActivityStreamExperimentDashboard import ActivityStreamExperimentDa
 
 if __name__ == '__main__':
   api_key = os.environ["REDASH_API_KEY"]
-  gservice_email = os.environ["GSERVICE_EMAIL"]
   dash = ActivityStreamExperimentDashboard(
     api_key,
     "Deduped Combined Frecency",
@@ -68,8 +67,9 @@ if __name__ == '__main__':
   )
 
   dash.add_retention_diff()
-  dash.add_event_graphs()
+  dash.add_event_graphs(dash.DEFAULT_EVENTS)
+  dash.add_event_graphs(dash.MASGA_EVENTS, events_table="activity_stream_masga")
+  dash.add_events_per_user(dash.DEFAULT_EVENTS)
   dash.add_disable_graph()
-  dash.add_ttable(gservice_email)
-  dash.update_refresh_schedule(900)
-  #dash.remove_all_graphs()
+  dash.add_ttable()
+  dash.update_refresh_schedule(86400)
