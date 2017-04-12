@@ -7,4 +7,6 @@ install:
   - pip install --only-binary=numpy,scipy numpy scipy
   - pip install -r test_requirements.txt
 script:
-  - nosetests
+  - make test
+after_success:
+  - coveralls
