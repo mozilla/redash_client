@@ -1,12 +1,15 @@
 import mock
 import json
 import unittest
+import requests
 
 from testdata import *
 from redash_client import RedashClient
 from constants import VizType, ChartType
 
+
 class TestRedashClient(unittest.TestCase):
+
   def setUp(self):
     api_key = "test_key"
     self.redash = RedashClient(api_key)
@@ -20,15 +23,47 @@ class TestRedashClient(unittest.TestCase):
     self.addCleanup(mock_requests_get_patcher.stop)
 
   def get_mock_response(self, status=200, content='{}'):
-    def json_function():
-      return json.loads(content)
-
     mock_response = mock.Mock()
     mock_response.status_code = status
     mock_response.content = content
-    mock_response.json = json_function
 
     return mock_response
+
+  def test_request_exception_thrown(self):
+    ERROR_STRING = "FAIL"
+
+    def server_call_raising_exception(url, data):
+      raise requests.RequestException(ERROR_STRING)
+
+    self.mock_requests_post.side_effect = server_call_raising_exception
+
+    url = "www.test.com"
+    self.assertRaisesRegexp(
+      self.redash.RedashClientException,
+      "Unable to communicate with redash: {0}".format(ERROR_STRING),
+      lambda: self.redash._make_request(None, url, args={}))
+
+  def test_failed_request_throws(self):
+    STATUS = 404
+    ERROR_STRING = "FAIL"
+    self.mock_requests_post.return_value = self.get_mock_response(STATUS, ERROR_STRING)
+
+    url = "www.test.com"
+    self.assertRaisesRegexp(
+      self.redash.RedashClientException,
+      "Error status returned: {0} {1}".format(STATUS, ERROR_STRING),
+      lambda: self.redash._make_request(None, url, args={}))
+
+  def test_failed_to_load_content_json(self):
+    BAD_JSON = "boop beep _ epic json fail"
+    JSON_ERROR = "No JSON object could be decoded"
+    self.mock_requests_post.return_value = self.get_mock_response(content=BAD_JSON)
+
+    url = "www.test.com"
+    self.assertRaisesRegexp(
+      self.redash.RedashClientException,
+      "Unable to parse JSON response: {0}".format(JSON_ERROR),
+      lambda: self.redash._make_request(None, url, args={}))
 
   def test_create_new_query_returns_expected_ids(self):
     self.mock_requests_post.return_value = self.get_mock_response(

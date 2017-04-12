@@ -54,23 +54,26 @@ class RedashClient(object):
     return options
 
   def _make_request(self, request_function, url, args={}):
+    if not request_function:
+      request_function = requests.post
+
     try:
       response = request_function(url, args)
-    except requests.RequestException:
+    except requests.RequestException as e:
       raise self.RedashClientException(
-          ('Unable to communicate with redash: {error}').format(error=e))
+          ("Unable to communicate with redash: {error}").format(error=e), e)
 
     if response.status_code != 200:
       raise self.RedashClientException(
-          ('Error status returned: {error_code} {error_message}').format(
+          ("Error status returned: {error_code} {error_message}").format(
               error_code=response.status_code,
               error_message=response.content,
             ), response.status_code)
     try:
       return json.loads(response.content), response
-    except ValueError:
+    except ValueError as e:
       raise self.RedashClientException(
-          ('Unable to parse JSON response: {error}').format(error=e))
+          ("Unable to parse JSON response: {error}").format(error=e))
 
   def _get_new_query_id(self, name, sql_query, data_source_id, description):
     url_path = "queries?{0}".format(self._url_params)
