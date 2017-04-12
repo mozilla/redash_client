@@ -18,7 +18,7 @@ class ActivityStreamExperimentDashboard(SummaryDashboard):
 
   # These are either strings representing both the measurement name
   # event being measured or a key value pair: {<measurement_name>: <events>}
-  DEFAULT_EVENTS = ["CLICK", "SEARCH", "BLOCK", "DELETE", "BOOKMARK_ADD",
+  DEFAULT_EVENTS = ["CLICK", "SEARCH", "BLOCK", "DELETE", "BOOKMARK_ADD", "CLEAR_HISTORY",
     {"event_name": "Positive Interactions", "event_list": ['CLICK', 'BOOKMARK_ADD', 'SEARCH']}]
   MASGA_EVENTS = ["HIDE_LOADER", "SHOW_LOADER", "MISSING_IMAGE", "SLOW_ADDON_DETECTED"]
   ALPHA_ERROR = 0.005
