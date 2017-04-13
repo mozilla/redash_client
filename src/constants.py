@@ -22,7 +22,7 @@ class ChartType:
   SCATTER = "scatter"
   AREA = "area"
 
-TtableSchema = [
+TTableSchema = [
   {
     "name": "Metric",
     "type": "string",

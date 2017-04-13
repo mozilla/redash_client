@@ -4,7 +4,7 @@ import statistics
 from scipy import stats
 from utils import upload_as_json
 import statsmodels.stats.power as smp
-from constants import VizType, ChartType, VizWidth, TtableSchema
+from constants import VizType, ChartType, VizWidth, TTableSchema
 from samples.SummaryDashboard import SummaryDashboard
 from templates import retention_diff, disable_rate, event_rate, event_per_user
 
@@ -133,7 +133,7 @@ class ActivityStreamExperimentDashboard(SummaryDashboard):
     if query_name in self.get_chart_names():
       return
 
-    values = { "columns": TtableSchema, "rows": [] }
+    values = { "columns": TTableSchema, "rows": [] }
 
     # Create the t-table
     for event in self.DEFAULT_EVENTS + self.MASGA_EVENTS:
