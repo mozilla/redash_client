@@ -67,10 +67,12 @@ class RedashClient(object):
               error_message=response.content,
             ), response.status_code)
     try:
-      return json.loads(response.content), response
+      json_result = json.loads(response.content), response
     except ValueError as e:
       raise self.RedashClientException(
           ("Unable to parse JSON response: {error}").format(error=e))
+
+    return json_result
 
   def _get_new_query_id(self, name, sql_query, data_source_id, description):
     url_path = "queries?{0}".format(self._url_params)
