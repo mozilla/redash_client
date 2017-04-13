@@ -38,53 +38,55 @@ class TestRedashClient(unittest.TestCase):
 
     url = "www.test.com"
     self.assertRaisesRegexp(
-      self.redash.RedashClientException,
-      "Unable to communicate with redash: {0}".format(ERROR_STRING),
-      lambda: self.redash._make_request(None, url, args={}))
+        self.redash.RedashClientException,
+        "Unable to communicate with redash: {0}".format(ERROR_STRING),
+        lambda: self.redash._make_request(None, url, args={}))
 
   def test_failed_request_throws(self):
     STATUS = 404
     ERROR_STRING = "FAIL"
-    self.mock_requests_post.return_value = self.get_mock_response(STATUS, ERROR_STRING)
+    self.mock_requests_post.return_value = self.get_mock_response(
+        STATUS, ERROR_STRING)
 
     url = "www.test.com"
     self.assertRaisesRegexp(
-      self.redash.RedashClientException,
-      "Error status returned: {0} {1}".format(STATUS, ERROR_STRING),
-      lambda: self.redash._make_request(None, url, args={}))
+        self.redash.RedashClientException,
+        "Error status returned: {0} {1}".format(STATUS, ERROR_STRING),
+        lambda: self.redash._make_request(None, url, args={}))
 
   def test_failed_to_load_content_json(self):
     BAD_JSON = "boop beep _ epic json fail"
     JSON_ERROR = "No JSON object could be decoded"
-    self.mock_requests_post.return_value = self.get_mock_response(content=BAD_JSON)
+    self.mock_requests_post.return_value = self.get_mock_response(
+        content=BAD_JSON)
 
     url = "www.test.com"
     self.assertRaisesRegexp(
-      self.redash.RedashClientException,
-      "Unable to parse JSON response: {0}".format(JSON_ERROR),
-      lambda: self.redash._make_request(None, url, args={}))
+        self.redash.RedashClientException,
+        "Unable to parse JSON response: {0}".format(JSON_ERROR),
+        lambda: self.redash._make_request(None, url, args={}))
 
   def test_create_new_query_returns_expected_ids(self):
     EXPECTED_QUERY_ID = "query_id123"
     EXPECTED_VIZ_ID = "viz_id123"
     QUERY_ID_RESPONSE = {
-      "id": EXPECTED_QUERY_ID
+        "id": EXPECTED_QUERY_ID
     }
 
     VISUALIZATION_LIST_RESPONSE = {
-      "visualizations": [{
-        "id": EXPECTED_VIZ_ID
-      }]
+        "visualizations": [{
+            "id": EXPECTED_VIZ_ID
+        }]
     }
 
     self.mock_requests_post.return_value = self.get_mock_response(
-      content=json.dumps(QUERY_ID_RESPONSE))
+        content=json.dumps(QUERY_ID_RESPONSE))
     self.mock_requests_get.return_value = self.get_mock_response(
-      content=json.dumps(VISUALIZATION_LIST_RESPONSE))
+        content=json.dumps(VISUALIZATION_LIST_RESPONSE))
 
     query_id, table_id = self.redash.create_new_query(
-      "Dash Name",
-      "SELECT * FROM test", 5)
+        "Dash Name",
+        "SELECT * FROM test", 5)
 
     self.assertEqual(query_id, EXPECTED_QUERY_ID)
     self.assertEqual(table_id, EXPECTED_VIZ_ID)
@@ -93,24 +95,23 @@ class TestRedashClient(unittest.TestCase):
 
   def test_immediate_query_results_are_correct(self):
     EXPECTED_ROWS = [{
-      "col1": 123,
-      "col2": 456,
-    },
-    {
-      "col1": 789,
-      "col2": 123,
+        "col1": 123,
+        "col2": 456,
+    }, {
+        "col1": 789,
+        "col2": 123,
     }]
 
     QUERY_RESULTS_RESPONSE = {
-      "query_result": {
-        "data": {
-          "rows": EXPECTED_ROWS
+        "query_result": {
+            "data": {
+                "rows": EXPECTED_ROWS
+            }
         }
-      }
     }
 
     self.mock_requests_post.return_value = self.get_mock_response(
-      content=json.dumps(QUERY_RESULTS_RESPONSE))
+        content=json.dumps(QUERY_RESULTS_RESPONSE))
 
     rows = self.redash.get_query_results("SELECT * FROM test", 5)
 
@@ -119,26 +120,26 @@ class TestRedashClient(unittest.TestCase):
 
   def test_late_response_query_results_are_correct(self):
     EXPECTED_ROWS = [{
-      "col1": 123,
-      "col2": 456,
-    },
-    {
-      "col1": 789,
-      "col2": 123,
+        "col1": 123,
+        "col2": 456,
+    }, {
+        "col1": 789,
+        "col2": 123,
     }]
 
     QUERY_RESULTS_RESPONSE = {
-      "query_result": {
-        "data": {
-          "rows": EXPECTED_ROWS
+        "query_result": {
+            "data": {
+                "rows": EXPECTED_ROWS
+            }
         }
-      }
     }
     QUERY_RESULTS_NOT_READY_RESPONSE = {
-      "job": {}
+        "job": {}
     }
 
     self.server_calls = 0
+
     def simulate_server_calls(url, data):
       response = QUERY_RESULTS_NOT_READY_RESPONSE
       if self.server_calls >= 2:
@@ -156,11 +157,11 @@ class TestRedashClient(unittest.TestCase):
 
   def test_query_results_not_available(self):
     QUERY_RESULTS_NOT_READY_RESPONSE = {
-      "job": {}
+        "job": {}
     }
 
     self.mock_requests_post.return_value = self.get_mock_response(
-      content=json.dumps(QUERY_RESULTS_NOT_READY_RESPONSE))
+        content=json.dumps(QUERY_RESULTS_NOT_READY_RESPONSE))
 
     rows = self.redash.get_query_results("SELECT * FROM test", 5)
 
@@ -171,32 +172,35 @@ class TestRedashClient(unittest.TestCase):
     EXPECTED_QUERY_ID = "query_id123"
 
     self.assertRaises(ValueError,
-      lambda: self.redash.create_new_visualization(EXPECTED_QUERY_ID, VizType.CHART))
+                      lambda: self.redash.create_new_visualization(
+                          EXPECTED_QUERY_ID, VizType.CHART))
 
   def test_new_visualization_throws_for_missing_cohort_data(self):
     EXPECTED_QUERY_ID = "query_id123"
 
     self.assertRaises(ValueError,
-      lambda: self.redash.create_new_visualization(EXPECTED_QUERY_ID, VizType.COHORT))
+                      lambda: self.redash.create_new_visualization(
+                          EXPECTED_QUERY_ID, VizType.COHORT))
 
   def test_new_visualization_throws_for_unexpected_visualization_type(self):
     EXPECTED_QUERY_ID = "query_id123"
 
     self.assertRaises(ValueError,
-      lambda: self.redash.create_new_visualization(EXPECTED_QUERY_ID, "boop"))
+                      lambda: self.redash.create_new_visualization(
+                          EXPECTED_QUERY_ID, "boop"))
 
   def test_new_viz_returns_expected_query_id(self):
     EXPECTED_QUERY_ID = "query_id123"
     QUERY_ID_RESPONSE = {
-      "id": EXPECTED_QUERY_ID
+        "id": EXPECTED_QUERY_ID
     }
     TIME_INTERVAL = "weekly"
 
     self.mock_requests_post.return_value = self.get_mock_response(
-      content=json.dumps(QUERY_ID_RESPONSE))
+        content=json.dumps(QUERY_ID_RESPONSE))
 
     query_id = self.redash.create_new_visualization(
-      EXPECTED_QUERY_ID, VizType.COHORT, time_interval=TIME_INTERVAL)
+        EXPECTED_QUERY_ID, VizType.COHORT, time_interval=TIME_INTERVAL)
 
     self.assertEqual(query_id, EXPECTED_QUERY_ID)
     self.assertEqual(self.mock_requests_post.call_count, 1)
@@ -204,29 +208,29 @@ class TestRedashClient(unittest.TestCase):
   def test_format_cohort_options_correctly(self):
     TIME_INTERVAL = "weekly"
     COHORT_OPTIONS = {
-      "timeInterval": TIME_INTERVAL
+        "timeInterval": TIME_INTERVAL
     }
 
     options = self.redash.make_visualization_options(
-      viz_type=VizType.COHORT, time_interval=TIME_INTERVAL)
+        viz_type=VizType.COHORT, time_interval=TIME_INTERVAL)
     self.assertItemsEqual(options, COHORT_OPTIONS)
 
   def test_format_chart_options_correctly(self):
     COLUMN_MAPPING = {"date": "x", "event_rate": "y", "type": "series"}
     CHART_OPTIONS = {
-      "globalSeriesType": ChartType.LINE,
-      "sortX":True,
-      "legend": {"enabled":True},
-      "yAxis": [{"type": "linear"}, {"type": "linear", "opposite":True}],
-      "series": { "stacking":  None },
-      "xAxis": {"type": "datetime","labels": {"enabled":True}},
-      "seriesOptions": {},
-      "columnMapping": COLUMN_MAPPING,
-      "bottomMargin":50
+        "globalSeriesType": ChartType.LINE,
+        "sortX": True,
+        "legend": {"enabled": True},
+        "yAxis": [{"type": "linear"}, {"type": "linear", "opposite": True}],
+        "series": {"stacking": None},
+        "xAxis": {"type": "datetime", "labels": {"enabled": True}},
+        "seriesOptions": {},
+        "columnMapping": COLUMN_MAPPING,
+        "bottomMargin": 50
     }
 
     options = self.redash.make_visualization_options(
-      ChartType.LINE, VizType.CHART, COLUMN_MAPPING)
+        ChartType.LINE, VizType.CHART, COLUMN_MAPPING)
     self.assertItemsEqual(options, CHART_OPTIONS)
 
   def test_make_correct_slug(self):
@@ -240,11 +244,11 @@ class TestRedashClient(unittest.TestCase):
     DASH_NAME = "Activity Stream A/B Testing: Beep Meep"
     EXPECTED_QUERY_ID = "query_id123"
     QUERY_ID_RESPONSE = {
-      "id": EXPECTED_QUERY_ID
+        "id": EXPECTED_QUERY_ID
     }
 
     self.mock_requests_get.return_value = self.get_mock_response(
-      content=json.dumps(QUERY_ID_RESPONSE))
+        content=json.dumps(QUERY_ID_RESPONSE))
 
     query_id = self.redash.create_new_dashboard(DASH_NAME)
 
@@ -256,12 +260,12 @@ class TestRedashClient(unittest.TestCase):
     DASH_NAME = "Activity Stream A/B Testing: Beep Meep"
     EXPECTED_QUERY_ID = "query_id123"
     QUERY_ID_RESPONSE = {
-      "id": EXPECTED_QUERY_ID
+        "id": EXPECTED_QUERY_ID
     }
 
     self.mock_requests_get.return_value = self.get_mock_response(status=404)
     self.mock_requests_post.return_value = self.get_mock_response(
-      content=json.dumps(QUERY_ID_RESPONSE))
+        content=json.dumps(QUERY_ID_RESPONSE))
 
     query_id = self.redash.create_new_dashboard(DASH_NAME)
 
@@ -274,56 +278,54 @@ class TestRedashClient(unittest.TestCase):
     EXPECTED_QUERY_ID = "query_id123"
     EXPECTED_QUERY_ID2 = "query_id456"
     EXPECTED_QUERY_ID3 = "query_id789"
-    FLAT_WIDGETS = [
-    {
-      "visualization": {
-        "query": {
-          "id": EXPECTED_QUERY_ID
+    FLAT_WIDGETS = [{
+        "visualization": {
+            "query": {
+                "id": EXPECTED_QUERY_ID
+            }
         }
-      }
-    },
-    {
-      "visualization": {
-        "query": {
-          "id": EXPECTED_QUERY_ID2
+    }, {
+        "visualization": {
+            "query": {
+                "id": EXPECTED_QUERY_ID2
+            }
         }
-      }
-    },
-    {
-      "visualization": {
-        "query": {
-          "id": EXPECTED_QUERY_ID3
+    }, {
+        "visualization": {
+            "query": {
+                "id": EXPECTED_QUERY_ID3
+            }
         }
-      }
     }]
 
     WIDGETS_RESPONSE = {
-      "widgets":[[{
-        "visualization": {
-          "query": {
-              "id": EXPECTED_QUERY_ID
-          }
-        }}],
-        [{"visualization": {
-          "query": {
-            "id": EXPECTED_QUERY_ID2
-          }
-        }},
-        {"visualization": {
-          "query": {
-            "id": EXPECTED_QUERY_ID3
-          }
-        }}
-      ]]
+        "widgets": [[{
+            "visualization": {
+                "query": {
+                    "id": EXPECTED_QUERY_ID
+                }
+            }}],
+            [{"visualization": {
+                "query": {
+                    "id": EXPECTED_QUERY_ID2
+                }
+            }},
+            {"visualization": {
+                "query": {
+                    "id": EXPECTED_QUERY_ID3
+                }
+            }}
+        ]]
     }
 
     self.mock_requests_get.return_value = self.get_mock_response(
-      content=json.dumps(WIDGETS_RESPONSE))
+        content=json.dumps(WIDGETS_RESPONSE))
 
     widget_list = self.redash.get_widget_from_dash(DASH_NAME)
 
     self.assertEqual(widget_list, FLAT_WIDGETS)
     self.assertEqual(self.mock_requests_get.call_count, 1)
+
 
 if __name__ == '__main__':
   unittest.main()
