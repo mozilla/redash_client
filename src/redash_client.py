@@ -4,6 +4,7 @@ import string
 import requests
 import itertools
 import sched, time
+from slugify import slugify
 from urlparse import urljoin
 from urllib import urlencode
 
@@ -22,11 +23,7 @@ class RedashClient(object):
     self._url_params = urlencode({"api_key":self._api_key})
 
   def get_slug(self, name):
-    return name \
-      .lower() \
-      .replace("/", " ") \
-      .translate(None, string.punctuation) \
-      .replace(" ", "-")
+    return slugify(name)
 
   def make_visualization_options(self, chart_type=None, viz_type=None, column_mapping=None,
                                  series_options=None, time_interval=None, stacking=None):
