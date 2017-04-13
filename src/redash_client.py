@@ -253,4 +253,11 @@ class RedashClient(object):
     row_arr = json_result.get("widgets", [])
 
     # Return a flattened list of all widgets
-    return list(itertools.chain.from_iterable(map(lambda row: [row[0]] if len(row) == 1 else [row[0], row[1]], row_arr)))
+    widgets = []
+    for row in row_arr:
+      if len(row) == 1:
+        widgets.append(row[0])
+      else:
+        widgets += [row[0], row[1]]
+
+    return widgets
