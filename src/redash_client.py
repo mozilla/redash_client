@@ -28,25 +28,25 @@ class RedashClient(object):
   def make_visualization_options(self, chart_type=None, viz_type=None, column_mapping=None,
                                  series_options=None, time_interval=None, stacking=None):
 
+    # See the API doc for more details about visualization options:
+    # https://people-mozilla.org/~ashort/redash_docs/api.html
     if viz_type == VizType.COHORT:
       return {
-        "timeInterval": time_interval
+        "timeInterval": time_interval,
       }
 
     # It's a chart viz type.
     options = {
-      "globalSeriesType": chart_type,
-      "sortX":True,
-      "legend": {"enabled":True},
-      "yAxis": [{"type": "linear"}, {"type": "linear", "opposite":True}],
-      "xAxis": {"type": "datetime","labels": {"enabled":True}},
-      "seriesOptions": series_options,
+      "bottomMargin":50,
       "columnMapping": column_mapping,
-      "bottomMargin":50
+      "globalSeriesType": chart_type,
+      "legend": {"enabled":True},
+      "series": { "stacking": "normal" if stacking else None },
+      "seriesOptions": series_options if series_options else {},
+      "sortX":True,
+      "xAxis": {"type": "datetime","labels": {"enabled":True}},
+      "yAxis": [{"type": "linear"}, {"type": "linear", "opposite":True}],
     }
-
-    options["series"] = { "stacking": "normal" if stacking else None }
-    options["seriesOptions"] = series_options if series_options else {}
 
     return options
 
