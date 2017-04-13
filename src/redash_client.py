@@ -82,7 +82,7 @@ class RedashClient(object):
       "name": name,
       "query": sql_query,
       "data_source_id": data_source_id,
-      "description": description
+      "description": description,
     })
 
     json_result, response = self._make_request(requests.post, query_url, new_query_args)
@@ -124,7 +124,7 @@ class RedashClient(object):
 
     get_query_results_args = json.dumps({
       "query": sql_query,
-      "data_source_id": data_source_id
+      "data_source_id": data_source_id,
     })
 
     # If this query is still not uploaded, we'll get a job ID. Let's retry in 1 second.
@@ -166,7 +166,7 @@ class RedashClient(object):
       "type": viz_type,
       "name": title,
       "options": options,
-      "query_id": query_id
+      "query_id": query_id,
     })
 
     json_result, response = self._make_request(
@@ -224,7 +224,7 @@ class RedashClient(object):
       "visualization_id": viz_id,
       "width": viz_width,
       "options":{},
-      "text":""
+      "text":"",
     })
 
     self._make_request(requests.post, query_url, add_visualization_args)
