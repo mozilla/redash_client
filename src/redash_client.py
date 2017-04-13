@@ -1,9 +1,6 @@
 import json
 import time
-import string
 import requests
-import itertools
-import sched, time
 from slugify import slugify
 from urlparse import urljoin
 from urllib import urlencode
@@ -20,32 +17,33 @@ class RedashClient(object):
 
   def __init__(self, api_key):
     self._api_key = api_key
-    self._url_params = urlencode({"api_key":self._api_key})
+    self._url_params = urlencode({"api_key": self._api_key})
 
   def get_slug(self, name):
     return slugify(name)
 
-  def make_visualization_options(self, chart_type=None, viz_type=None, column_mapping=None,
-                                 series_options=None, time_interval=None, stacking=None):
+  def make_visualization_options(self, chart_type=None, viz_type=None,
+                                 column_mapping=None, series_options=None,
+                                 time_interval=None, stacking=None):
 
     # See the API doc for more details about visualization options:
     # https://people-mozilla.org/~ashort/redash_docs/api.html
     if viz_type == VizType.COHORT:
       return {
-        "timeInterval": time_interval,
+          "timeInterval": time_interval,
       }
 
     # It's a chart viz type.
     options = {
-      "bottomMargin":50,
-      "columnMapping": column_mapping,
-      "globalSeriesType": chart_type,
-      "legend": {"enabled":True},
-      "series": { "stacking": "normal" if stacking else None },
-      "seriesOptions": series_options if series_options else {},
-      "sortX":True,
-      "xAxis": {"type": "datetime","labels": {"enabled":True}},
-      "yAxis": [{"type": "linear"}, {"type": "linear", "opposite":True}],
+        "bottomMargin": 50,
+        "columnMapping": column_mapping,
+        "globalSeriesType": chart_type,
+        "legend": {"enabled": True},
+        "series": {"stacking": "normal" if stacking else None},
+        "seriesOptions": series_options if series_options else {},
+        "sortX": True,
+        "xAxis": {"type": "datetime", "labels": {"enabled": True}},
+        "yAxis": [{"type": "linear"}, {"type": "linear", "opposite": True}],
     }
 
     return options
@@ -65,7 +63,7 @@ class RedashClient(object):
           ("Error status returned: {error_code} {error_message}").format(
               error_code=response.status_code,
               error_message=response.content,
-            ), response.status_code)
+          ), response.status_code)
     try:
       json_result = json.loads(response.content), response
     except ValueError as e:
@@ -79,13 +77,14 @@ class RedashClient(object):
     query_url = urljoin(self.BASE_URL, url_path)
 
     new_query_args = json.dumps({
-      "name": name,
-      "query": sql_query,
-      "data_source_id": data_source_id,
-      "description": description,
+        "name": name,
+        "query": sql_query,
+        "data_source_id": data_source_id,
+        "description": description,
     })
 
-    json_result, response = self._make_request(requests.post, query_url, new_query_args)
+    json_result, response = self._make_request(
+        requests.post, query_url, new_query_args)
 
     query_id = json_result.get("id", None)
     return query_id
@@ -102,8 +101,10 @@ class RedashClient(object):
 
     return table_id
 
-  def create_new_query(self, name, sql_query, data_source_id, description=None):
-    query_id = self._get_new_query_id(name, sql_query, data_source_id, description)
+  def create_new_query(self, name, sql_query,
+                       data_source_id, description=None):
+    query_id = self._get_new_query_id(
+        name, sql_query, data_source_id, description)
 
     # If we can't get a query ID, the query has no table. Exit now.
     if not query_id:
@@ -112,7 +113,8 @@ class RedashClient(object):
     table_id = self._get_table_id(query_id)
 
     # Refresh our new query so it becomes available
-    url_path = "queries/{0}/refresh?{1}".format(str(query_id), self._url_params)
+    url_path = "queries/{0}/refresh?{1}".format(
+        str(query_id), self._url_params)
     query_url = urljoin(self.BASE_URL, url_path)
     self._make_request(requests.post, query_url)
 
@@ -123,38 +125,44 @@ class RedashClient(object):
     query_url = urljoin(self.BASE_URL, url_path)
 
     get_query_results_args = json.dumps({
-      "query": sql_query,
-      "data_source_id": data_source_id,
+        "query": sql_query,
+        "data_source_id": data_source_id,
     })
 
-    # If this query is still not uploaded, we'll get a job ID. Let's retry in 1 second.
+    # If this query is still not uploaded, we'll get a job ID.
+    # Let's retry in 1 second.
     for attempt in xrange(self.MAX_RETRY_COUNT):
       json_response, response = self._make_request(
-        requests.post, query_url, get_query_results_args)
+          requests.post, query_url, get_query_results_args)
       if "job" not in json_response:
         break
 
       time.sleep(1)
 
-    rows = json_response.get('query_result', {}).get('data', {}).get('rows', [])
+    rows = json_response.get(
+        "query_result", {}).get("data", {}).get("rows", [])
     return rows
 
-  def create_new_visualization(self, query_id, viz_type=VizType.CHART, title="",
-                               chart_type=None, column_mapping=None, series_options=None,
-                               time_interval=None, stacking=False):
+  def create_new_visualization(self, query_id, viz_type=VizType.CHART,
+                               title="", chart_type=None, column_mapping=None,
+                               series_options=None, time_interval=None,
+                               stacking=False):
 
-    allowed_time_intervals = [TimeInterval.DAILY, TimeInterval.WEEKLY, TimeInterval.MONTHLY]
-
-    # Note: ChartType is one of BAR|PIE|LINE|SCATTER|AREA and
-    # column_mapping is a dict of which field names to use for the x and
+    # Note: column_mapping is a dict of which field names to use for the x and
     # y axis. (e.g. {"event":"x","count":"y","type":"series"})
-    if viz_type == VizType.CHART and (chart_type == None or column_mapping == None):
+    if viz_type == VizType.CHART and (
+       chart_type not in ChartType.allowed_chart_types or
+       column_mapping is None):
+
       raise ValueError(("chart_type and column_mapping "
-          "values required for a Chart visualization"))
+                        "values required for a Chart visualization"))
 
     # Note: time_interval is one of "daily", "weekly", "monthly"
-    if viz_type == VizType.COHORT and time_interval not in allowed_time_intervals:
-      raise ValueError("time_interval value required for a Cohort visualization")
+    if (viz_type == VizType.COHORT and
+       time_interval not in TimeInterval.allowed_time_intervals):
+
+      raise ValueError(("time_interval value required for "
+                        "a Cohort visualization"))
 
     if viz_type != VizType.CHART and viz_type != VizType.COHORT:
       raise ValueError("VizType must be one of: VizType.CHART, VizType.COHORT")
@@ -163,16 +171,18 @@ class RedashClient(object):
     query_url = urljoin(self.BASE_URL, url_path)
 
     options = self.make_visualization_options(
-      chart_type, viz_type, column_mapping, series_options, time_interval, stacking)
+        chart_type, viz_type, column_mapping,
+        series_options, time_interval, stacking)
+
     new_visualization_args = json.dumps({
-      "type": viz_type,
-      "name": title,
-      "options": options,
-      "query_id": query_id,
+        "type": viz_type,
+        "name": title,
+        "options": options,
+        "query_id": query_id,
     })
 
     json_result, response = self._make_request(
-      requests.post, query_url, new_visualization_args)
+        requests.post, query_url, new_visualization_args)
     visualization_id = json_result.get("id", None)
     return visualization_id
 
@@ -187,14 +197,15 @@ class RedashClient(object):
 
     try:
       json_result, response = self._make_request(
-        requests.get, query_url, new_dashboard_args)
+          requests.get, query_url, new_dashboard_args)
     except self.RedashClientException as ex:
       server_error_code = ex.args[1]
       if server_error_code == 404:
         url_path = "dashboards?{0}".format(self._url_params)
         query_url = urljoin(self.BASE_URL, url_path)
 
-        json_result, response = self._make_request(requests.post, query_url, new_dashboard_args)
+        json_result, response = self._make_request(
+            requests.post, query_url, new_dashboard_args)
 
     dashboard_id = json_result.get("id", None)
     return dashboard_id
@@ -222,11 +233,11 @@ class RedashClient(object):
     query_url = urljoin(self.BASE_URL, url_path)
 
     add_visualization_args = json.dumps({
-      "dashboard_id": dash_id,
-      "visualization_id": viz_id,
-      "width": viz_width,
-      "options":{},
-      "text":"",
+        "dashboard_id": dash_id,
+        "visualization_id": viz_id,
+        "width": viz_width,
+        "options": {},
+        "text": "",
     })
 
     self._make_request(requests.post, query_url, add_visualization_args)
@@ -251,7 +262,8 @@ class RedashClient(object):
 
     get_widget_args = json.dumps({"name": name})
 
-    json_result, response = self._make_request(requests.get, query_url, get_widget_args)
+    json_result, response = self._make_request(
+        requests.get, query_url, get_widget_args)
     row_arr = json_result.get("widgets", [])
 
     # Return a flattened list of all widgets
