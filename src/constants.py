@@ -1,6 +1,11 @@
 class RetentionType:
-  DAILY = 'day'
-  WEEKLY = 'week'
+  DAILY = "day"
+  WEEKLY = "week"
+
+class TimeInterval:
+  DAILY = "daily"
+  WEEKLY = "weekly"
+  MONTHLY = "monthly"
 
 class VizType:
   CHART = "CHART"

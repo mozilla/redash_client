@@ -8,7 +8,7 @@ from slugify import slugify
 from urlparse import urljoin
 from urllib import urlencode
 
-from constants import VizType, ChartType
+from constants import VizType, ChartType, TimeInterval
 
 
 class RedashClient(object):
@@ -143,18 +143,20 @@ class RedashClient(object):
                                chart_type=None, column_mapping=None, series_options=None,
                                time_interval=None, stacking=False):
 
+    allowed_time_intervals = [TimeInterval.DAILY, TimeInterval.WEEKLY, TimeInterval.MONTHLY]
+
     # Note: ChartType is one of BAR|PIE|LINE|SCATTER|AREA and
     # column_mapping is a dict of which field names to use for the x and
     # y axis. (e.g. {"event":"x","count":"y","type":"series"})
-    if viz_type == VizType.CHART:
-      if chart_type == None or column_mapping == None:
-        raise ValueError(("chart_type and column_mapping "
-            "values required for a Chart visualization"))
+    if viz_type == VizType.CHART and (chart_type == None or column_mapping == None):
+      raise ValueError(("chart_type and column_mapping "
+          "values required for a Chart visualization"))
+
     # Note: time_interval is one of "daily", "weekly", "monthly"
-    elif viz_type == VizType.COHORT:
-      if time_interval == None:
-        raise ValueError("time_interval value required for a Cohort visualization")
-    else:
+    if viz_type == VizType.COHORT and time_interval not in allowed_time_intervals:
+      raise ValueError("time_interval value required for a Cohort visualization")
+
+    if viz_type != VizType.CHART and viz_type != VizType.COHORT:
       raise ValueError("VizType must be one of: VizType.CHART, VizType.COHORT")
 
     url_path = "visualizations?{0}".format(self._url_params)
