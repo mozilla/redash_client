@@ -2,19 +2,19 @@ from redash_client import RedashClient
 from templates import retention, all_events_weekly, active_users
 from constants import VizWidth, VizType, RetentionType, ChartType
 
+
 class SummaryDashboard(object):
   TILES_DATA_SOURCE_ID = 5
   DAILY_RETENTION_TITLE = "Daily Retention"
   EVENTS_WEEKLY_TITLE = "Weely Events"
   MAU_DAU_TITLE = "Engagement"
 
-  def __init__(self, api_key, dash_name, events_table_name, start_date):
-    self._api_key = api_key
+  def __init__(self, redash_client, dash_name, events_table_name, start_date):
     self._dash_name = dash_name
     self._events_table = events_table_name
     self._start_date = start_date
 
-    self.redash = RedashClient(api_key)
+    self.redash = redash_client
     self._dash_id = self.redash.create_new_dashboard(self._dash_name)
     self.redash.publish_dashboard(self._dash_id)
 

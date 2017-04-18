@@ -25,9 +25,9 @@ class ActivityStreamExperimentDashboard(SummaryDashboard):
   URL_FETCHER_DATA_SOURCE_ID = 28
   DISABLE_TITLE = "Disable Rate"
 
-  def __init__(self, api_key, dash_name, exp_id, addon_versions, start_date=None, end_date=None):
+  def __init__(self, redash_client, dash_name, exp_id, addon_versions, start_date=None, end_date=None):
     super(ActivityStreamExperimentDashboard, self).__init__(
-      api_key,
+      redash_client,
       "Activity Stream A/B Testing: " + dash_name,
       "activity_stream_events_daily",
       start_date)

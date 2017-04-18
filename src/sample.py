@@ -58,8 +58,10 @@ from samples.ActivityStreamExperimentDashboard import ActivityStreamExperimentDa
 
 if __name__ == '__main__':
   api_key = os.environ["REDASH_API_KEY"]
+  redash_client = RedashClient(api_key)
+
   dash = ActivityStreamExperimentDashboard(
-    api_key,
+    redash_client,
     "Screenshots Long Cache",
     "exp-014-screenshotsasync",
     ['1.8.0'],

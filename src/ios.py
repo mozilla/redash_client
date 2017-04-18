@@ -4,9 +4,10 @@ from samples.SummaryDashboard import SummaryDashboard
 
 if __name__ == '__main__':
   api_key = os.environ["REDASH_API_KEY"]
+  redash_client = RedashClient(api_key)
 
   dash = SummaryDashboard(
-    api_key,
+    redash_client,
     "Firefox iOS: Metrics Summary",
     "activity_stream_mobile_events_daily",
     "02/17/2017"

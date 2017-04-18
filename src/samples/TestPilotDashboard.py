@@ -1,9 +1,9 @@
 from samples.SummaryDashboard import SummaryDashboard
 
 class TestPilotDashboard(SummaryDashboard):
-  def __init__(self, api_key, dash_name, addon_id, start_date):
+  def __init__(self, redash_client, dash_name, addon_id, start_date):
     super(TestPilotDashboard, self).__init__(
-      api_key,
+      redash_client,
       dash_name,
       "ping_centre_test_pilot",
       start_date)
