@@ -5,7 +5,7 @@ from slugify import slugify
 from urlparse import urljoin
 from urllib import urlencode
 
-from constants import VizType, ChartType, TimeInterval
+from constants import VizType, VizWidth, ChartType, TimeInterval
 
 
 class RedashClient(object):
@@ -229,6 +229,10 @@ class RedashClient(object):
     self._make_request(requests.delete, query_url)
 
   def add_visualization_to_dashboard(self, dash_id, viz_id, viz_width):
+    if viz_width != VizWidth.REGULAR and viz_width != VizWidth.WIDE:
+      raise ValueError(("viz_width should be one of "
+                        "VizWidth.WIDE or VizWidth.REGULAR"))
+
     url_path = "widgets?{0}".format(self._url_params)
     query_url = urljoin(self.BASE_URL, url_path)
 

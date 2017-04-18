@@ -4,7 +4,7 @@ import unittest
 import requests
 
 from src.redash_client import RedashClient
-from src.constants import VizType, ChartType
+from src.constants import VizType, ChartType, VizWidth
 
 
 class TestRedashClient(unittest.TestCase):
@@ -20,6 +20,10 @@ class TestRedashClient(unittest.TestCase):
     mock_requests_get_patcher = mock.patch('redash_client.requests.get')
     self.mock_requests_get = mock_requests_get_patcher.start()
     self.addCleanup(mock_requests_get_patcher.stop)
+
+    mock_requests_delete_patcher = mock.patch('redash_client.requests.delete')
+    self.mock_requests_delete = mock_requests_delete_patcher.start()
+    self.addCleanup(mock_requests_delete_patcher.stop)
 
   def get_mock_response(self, status=200, content='{}'):
     mock_response = mock.Mock()
@@ -92,6 +96,23 @@ class TestRedashClient(unittest.TestCase):
     self.assertEqual(table_id, EXPECTED_VIZ_ID)
     self.assertEqual(self.mock_requests_get.call_count, 1)
     self.assertEqual(self.mock_requests_post.call_count, 2)
+
+  def test_create_new_query_returns_none(self):
+    QUERY_FAULTY_RESPONSE = {
+        "some_bad_response": "boop"
+    }
+
+    self.mock_requests_post.return_value = self.get_mock_response(
+        content=json.dumps(QUERY_FAULTY_RESPONSE))
+
+    query_id, table_id = self.redash.create_new_query(
+        "Dash Name",
+        "SELECT * FROM test", 5)
+
+    self.assertEqual(query_id, None)
+    self.assertEqual(table_id, None)
+    self.assertEqual(self.mock_requests_post.call_count, 1)
+    self.assertEqual(self.mock_requests_get.call_count, 0)
 
   def test_immediate_query_results_are_correct(self):
     EXPECTED_ROWS = [{
@@ -272,6 +293,56 @@ class TestRedashClient(unittest.TestCase):
     self.assertEqual(query_id, EXPECTED_QUERY_ID)
     self.assertEqual(self.mock_requests_get.call_count, 1)
     self.assertEqual(self.mock_requests_post.call_count, 1)
+
+  def test_publish_dashboard_success(self):
+    self.mock_requests_post.return_value = self.get_mock_response()
+
+    self.redash.publish_dashboard(dash_id=1234)
+
+    self.assertEqual(self.mock_requests_post.call_count, 1)
+    self.assertEqual(self.mock_requests_get.call_count, 0)
+
+  def test_remove_visualization_success(self):
+    self.mock_requests_delete.return_value = self.get_mock_response()
+
+    self.redash.remove_visualization(viz_id=1234)
+
+    self.assertEqual(self.mock_requests_post.call_count, 0)
+    self.assertEqual(self.mock_requests_get.call_count, 0)
+    self.assertEqual(self.mock_requests_delete.call_count, 1)
+
+  def test_delete_query_success(self):
+    self.mock_requests_delete.return_value = self.get_mock_response()
+
+    self.redash.delete_query(query_id=1234)
+
+    self.assertEqual(self.mock_requests_post.call_count, 0)
+    self.assertEqual(self.mock_requests_get.call_count, 0)
+    self.assertEqual(self.mock_requests_delete.call_count, 1)
+
+  def test_add_visualization_to_dashboard_success(self):
+    self.mock_requests_post.return_value = self.get_mock_response()
+
+    self.redash.add_visualization_to_dashboard(
+        dash_id=1234, viz_id=5678, viz_width=VizWidth.WIDE)
+
+    self.assertEqual(self.mock_requests_post.call_count, 1)
+    self.assertEqual(self.mock_requests_get.call_count, 0)
+    self.assertEqual(self.mock_requests_delete.call_count, 0)
+
+  def test_add_visualization_to_dashboard_throws(self):
+    self.assertRaises(ValueError,
+                      lambda: self.redash.add_visualization_to_dashboard(
+                          dash_id=1234, viz_id=5678, viz_width="meep"))
+
+  def test_update_query_schedule_success(self):
+    self.mock_requests_post.return_value = self.get_mock_response()
+
+    self.redash.update_query_schedule(query_id=1234, schedule=86400)
+
+    self.assertEqual(self.mock_requests_post.call_count, 1)
+    self.assertEqual(self.mock_requests_get.call_count, 0)
+    self.assertEqual(self.mock_requests_delete.call_count, 0)
 
   def test_get_widget_from_dash_returns_correctly_flattened_widgets(self):
     DASH_NAME = "Activity Stream A/B Testing: Beep Meep"
