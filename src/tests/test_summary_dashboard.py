@@ -84,3 +84,37 @@ class TestSummaryDashboard(unittest.TestCase):
     self.assertEqual(self.mock_requests_post.call_count, 2)
     self.assertEqual(self.mock_requests_get.call_count, 2)
     self.assertEqual(self.mock_requests_delete.call_count, 0)
+
+  def test_get_chart_names_success(self):
+    EXPECTED_QUERY_NAME = "query_name123"
+    EXPECTED_QUERY_NAME2 = "query_name456"
+    EXPECTED_QUERY_NAME3 = "query_name789"
+    WIDGETS_RESPONSE = {
+        "widgets": [[{
+            "visualization": {
+                "query": {
+                    "name": EXPECTED_QUERY_NAME
+                }
+            }}],
+            [{"visualization": {
+                "query": {
+                    "name": EXPECTED_QUERY_NAME2
+                }
+            }},
+            {"visualization": {
+                "query": {
+                    "name": EXPECTED_QUERY_NAME3
+                }
+            }}
+        ]]
+    }
+    EXPECTED_SET = set([EXPECTED_QUERY_NAME,
+                        EXPECTED_QUERY_NAME2,
+                        EXPECTED_QUERY_NAME3])
+
+    self.mock_requests_get.return_value = self.get_mock_response(
+        content=json.dumps(WIDGETS_RESPONSE))
+
+    chart_names = self.dash.get_chart_names()
+
+    self.assertEqual(chart_names, EXPECTED_SET)

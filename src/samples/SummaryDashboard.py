@@ -34,7 +34,17 @@ class SummaryDashboard(object):
 
   def get_chart_names(self):
     widgets = self.redash.get_widget_from_dash(self._dash_name)
-    return set([widget["visualization"]["query"]["name"] for widget in widgets])
+
+    chart_names = set()
+    for widget in widgets:
+      widget_name = widget.get("visualization", {}).get("query", {}).get("name", None)
+
+      if not widget_name:
+        continue
+
+      chart_names.add(widget_name)
+
+    return chart_names
 
   def remove_all_graphs(self):
     widgets = self.redash.get_widget_from_dash(self._dash_name)
