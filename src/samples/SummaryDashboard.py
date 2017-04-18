@@ -9,6 +9,9 @@ class SummaryDashboard(object):
   EVENTS_WEEKLY_TITLE = "Weely Events"
   MAU_DAU_TITLE = "Engagement"
 
+  class SummaryDashboardException(Exception):
+    pass
+
   def __init__(self, redash_client, dash_name, events_table_name, start_date):
     self._dash_name = dash_name
     self._events_table = events_table_name
@@ -20,8 +23,14 @@ class SummaryDashboard(object):
 
   def update_refresh_schedule(self, seconds_to_refresh):
     widgets = self.redash.get_widget_from_dash(self._dash_name)
+
     for widget in widgets:
-      self.redash.update_query_schedule(widget["visualization"]["query"]["id"], seconds_to_refresh)
+      widget_id = widget.get("visualization", {}).get("query", {}).get("id", None)
+
+      if not widget_id:
+        continue
+
+      self.redash.update_query_schedule(widget_id, seconds_to_refresh)
 
   def get_chart_names(self):
     widgets = self.redash.get_widget_from_dash(self._dash_name)
