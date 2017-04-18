@@ -396,7 +396,3 @@ class TestRedashClient(unittest.TestCase):
 
     self.assertEqual(widget_list, FLAT_WIDGETS)
     self.assertEqual(self.mock_requests_get.call_count, 1)
-
-
-if __name__ == '__main__':
-  unittest.main()
