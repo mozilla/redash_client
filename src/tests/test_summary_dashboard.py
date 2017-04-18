@@ -118,3 +118,42 @@ class TestSummaryDashboard(unittest.TestCase):
     chart_names = self.dash.get_chart_names()
 
     self.assertEqual(chart_names, EXPECTED_SET)
+
+  def test_remove_all_graphs_success(self):
+    EXPECTED_QUERY_ID = "query_id123"
+    EXPECTED_QUERY_ID2 = "query_id456"
+    EXPECTED_QUERY_ID3 = "query_id789"
+    WIDGETS_RESPONSE = {
+        "widgets": [[{
+            "id": EXPECTED_QUERY_ID,
+            "visualization": {
+                "query": {
+                    "id": EXPECTED_QUERY_ID
+                }
+            }}], [{
+                "id": EXPECTED_QUERY_ID2,
+                "visualization": {
+                    "query": {
+                        "id": EXPECTED_QUERY_ID2
+                    }
+                }
+            }, {
+                "id": EXPECTED_QUERY_ID3,
+                "visualization": {
+                    "query": {
+                        "id": EXPECTED_QUERY_ID3
+                    }
+                }
+            }
+        ]]
+    }
+
+    self.mock_requests_delete.return_value = self.get_mock_response()
+    self.mock_requests_get.return_value = self.get_mock_response(
+        content=json.dumps(WIDGETS_RESPONSE))
+
+    self.dash.remove_all_graphs()
+
+    self.assertEqual(self.mock_requests_post.call_count, 1)
+    self.assertEqual(self.mock_requests_get.call_count, 2)
+    self.assertEqual(self.mock_requests_delete.call_count, 6)

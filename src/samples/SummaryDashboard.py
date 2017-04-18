@@ -48,9 +48,15 @@ class SummaryDashboard(object):
 
   def remove_all_graphs(self):
     widgets = self.redash.get_widget_from_dash(self._dash_name)
+
     for widget in widgets:
-      self.redash.remove_visualization(widget["id"])
-      self.redash.delete_query(widget["visualization"]["query"]["id"])
+      widget_id = widget.get("id", None)
+      if widget_id != None:
+        self.redash.remove_visualization(widget_id)
+
+      query_id = widget.get("visualization", {}).get("query", {}).get("id", None)
+      if query_id != None:
+        self.redash.delete_query(query_id)
 
   def add_mau_dau(self, where_clause=""):
     if self.MAU_DAU_TITLE in self.get_chart_names():
