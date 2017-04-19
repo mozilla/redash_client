@@ -5,6 +5,7 @@ from constants import VizWidth, VizType, RetentionType, ChartType, TimeInterval
 class SummaryDashboard(object):
   TILES_DATA_SOURCE_ID = 5
   DAILY_RETENTION_TITLE = "Daily Retention"
+  WEEKLY_RETENTION_TITLE = "Weekly Retention"
   EVENTS_WEEKLY_TITLE = "Weely Events"
   MAU_DAU_TITLE = "Engagement"
   MAU_DAU_SERIES_OPTIONS = {
@@ -130,7 +131,11 @@ class SummaryDashboard(object):
         self._dash_id, viz_id, VizWidth.WIDE)
 
   def add_retention_graph(self, retention_type, where_clause=""):
-    if self.DAILY_RETENTION_TITLE in self.get_chart_names():
+    current_charts = self.get_chart_names()
+    if ((retention_type == RetentionType.DAILY and
+        self.DAILY_RETENTION_TITLE in current_charts) or
+        (retention_type == RetentionType.WEEKLY and
+         self.WEEKLY_RETENTION_TITLE in current_charts)):
       return
 
     time_interval = TimeInterval.WEEKLY

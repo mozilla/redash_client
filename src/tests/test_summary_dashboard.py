@@ -2,6 +2,7 @@ import mock
 import json
 import unittest
 
+from src.constants import RetentionType
 from src.redash_client import RedashClient
 from src.samples.SummaryDashboard import SummaryDashboard
 from templates import active_users
@@ -243,5 +244,129 @@ class TestSummaryDashboard(unittest.TestCase):
     #     6) Create second visualization
     #     7) Append second visualization to dashboard
     self.assertEqual(self.mock_requests_post.call_count, 7)
+    self.assertEqual(self.mock_requests_get.call_count, 3)
+    self.assertEqual(self.mock_requests_delete.call_count, 0)
+
+  def test_retention_graphs_exist_makes_no_request(self):
+    WIDGETS_RESPONSE = {
+        "widgets": [[{
+            "visualization": {
+                "query": {
+                    "name": self.dash.WEEKLY_RETENTION_TITLE,
+                },
+            },
+        }]]
+    }
+
+    self.mock_requests_get.return_value = self.get_mock_response(
+        content=json.dumps(WIDGETS_RESPONSE))
+
+    self.dash.add_retention_graph(RetentionType.WEEKLY)
+
+    # Only 1 each for post and get to set up the dashboard
+    # Then one get for looking up chart names
+    self.assertEqual(self.mock_requests_post.call_count, 1)
+    self.assertEqual(self.mock_requests_get.call_count, 2)
+    self.assertEqual(self.mock_requests_delete.call_count, 0)
+
+  def test_retention_graph_makes_expected_calls(self):
+    EXPECTED_QUERY_ID = "query_id123"
+    QUERY_ID_RESPONSE = {
+        "id": EXPECTED_QUERY_ID
+    }
+    POST_RESPONSES = [
+        self.get_mock_response(
+            content=json.dumps(QUERY_ID_RESPONSE)),
+        self.get_mock_response(),
+        self.get_mock_response(
+            content=json.dumps(QUERY_ID_RESPONSE)),
+        self.get_mock_response(),
+    ]
+
+    self.server_calls = 0
+
+    def post_server(url, data):
+      response = POST_RESPONSES[self.server_calls]
+      self.server_calls += 1
+      return response
+
+    self.mock_requests_get.return_value = self.get_mock_response()
+    self.mock_requests_post.side_effect = post_server
+
+    self.dash.add_retention_graph(RetentionType.WEEKLY)
+
+    # GET calls:
+    #     1) Create dashboard
+    #     2) Get dashboard widgets
+    #     3) Get table ID
+    # POST calls:
+    #     1) Create dashboard
+    #     2) Create query
+    #     3) Refresh query
+    #     4) Create visualization
+    #     5) Append visualization to dashboard
+    self.assertEqual(self.mock_requests_post.call_count, 5)
+    self.assertEqual(self.mock_requests_get.call_count, 3)
+    self.assertEqual(self.mock_requests_delete.call_count, 0)
+
+  def test_weekly_events_graph_exist_makes_no_request(self):
+    WIDGETS_RESPONSE = {
+        "widgets": [[{
+            "visualization": {
+                "query": {
+                    "name": self.dash.EVENTS_WEEKLY_TITLE,
+                },
+            },
+        }]]
+    }
+
+    self.mock_requests_get.return_value = self.get_mock_response(
+        content=json.dumps(WIDGETS_RESPONSE))
+
+    self.dash.add_events_weekly()
+
+    # Only 1 each for post and get to set up the dashboard
+    # Then one get for looking up chart names
+    self.assertEqual(self.mock_requests_post.call_count, 1)
+    self.assertEqual(self.mock_requests_get.call_count, 2)
+    self.assertEqual(self.mock_requests_delete.call_count, 0)
+
+  def test_weekly_events_graph_makes_expected_calls(self):
+    EXPECTED_QUERY_ID = "query_id123"
+    QUERY_ID_RESPONSE = {
+        "id": EXPECTED_QUERY_ID
+    }
+    POST_RESPONSES = [
+        self.get_mock_response(
+            content=json.dumps(QUERY_ID_RESPONSE)),
+        self.get_mock_response(),
+        self.get_mock_response(
+            content=json.dumps(QUERY_ID_RESPONSE)),
+        self.get_mock_response(),
+    ]
+
+    self.server_calls = 0
+
+    def post_server(url, data):
+      response = POST_RESPONSES[self.server_calls]
+      self.server_calls += 1
+      return response
+
+    self.mock_requests_get.return_value = self.get_mock_response()
+    self.mock_requests_post.side_effect = post_server
+
+    self.dash.add_events_weekly()
+
+    # GET calls:
+    #     1) Create dashboard
+    #     2) Get dashboard widgets
+    #     3) Get table ID
+    # POST calls:
+    #     1) Create dashboard
+    #     2) Create query
+    #     3) Refresh query
+    #     4) Create visualization
+    #     5) Append visualization to dashboard
+    self.assertEqual(self.mock_requests_post.call_count, 5)
     self.assertEqual(self.mock_requests_get.call_count, 3)
     self.assertEqual(self.mock_requests_delete.call_count, 0)
