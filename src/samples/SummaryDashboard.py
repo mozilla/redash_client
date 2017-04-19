@@ -102,54 +102,85 @@ class SummaryDashboard(object):
     }
     return mau_dau_column_mapping, engagement_ratio_column_mapping
 
+  def _add_query_to_dashboard(self, query_title, query_string,
+                              data_source, visualization_width,
+                              visualization_type=VizType.CHART,
+                              visualization_name="", chart_type=None,
+                              column_mapping=None, series_options=None,
+                              time_interval=None, stacking=True):
+
+    query_id, table_id = self.redash.create_new_query(
+        query_title, query_string, data_source)
+    viz_id = self.redash.create_new_visualization(
+        query_id,
+        visualization_type,
+        visualization_name,
+        chart_type,
+        column_mapping,
+        series_options,
+        time_interval,
+        stacking,
+    )
+    self.redash.add_visualization_to_dashboard(
+        self._dash_id, viz_id, visualization_width)
+
   def add_mau_dau(self, where_clause=""):
     if self.MAU_DAU_TITLE in self.get_chart_names():
       return
 
     query_string, fields = active_users(
         self._events_table, self._start_date, where_clause)
-    query_id, table_id = self.redash.create_new_query(
-        self.MAU_DAU_TITLE, query_string, self.TILES_DATA_SOURCE_ID)
 
     mau_dau_mapping, er_mapping = self._get_mau_dau_column_mappings(fields)
 
     # Make the MAU/WAU/DAU graph
-    viz_id = self.redash.create_new_visualization(
-        query_id,
+    self._add_query_to_dashboard(
+        self.MAU_DAU_TITLE,
+        query_string,
+        self.TILES_DATA_SOURCE_ID,
+        VizWidth.WIDE,
         VizType.CHART,
         "",
         ChartType.AREA,
         mau_dau_mapping,
-        series_options=self.MAU_DAU_SERIES_OPTIONS)
-    self.redash.add_visualization_to_dashboard(
-        self._dash_id, viz_id, VizWidth.WIDE)
+        series_options=self.MAU_DAU_SERIES_OPTIONS,
+    )
 
     # Make the engagement ratio graph
-    viz_id = self.redash.create_new_visualization(
-        query_id, VizType.CHART, "", ChartType.LINE, er_mapping)
-    self.redash.add_visualization_to_dashboard(
-        self._dash_id, viz_id, VizWidth.WIDE)
+    self._add_query_to_dashboard(
+        self.MAU_DAU_TITLE,
+        query_string,
+        self.TILES_DATA_SOURCE_ID,
+        VizWidth.WIDE,
+        VizType.CHART,
+        "",
+        ChartType.LINE,
+        er_mapping,
+    )
 
   def add_retention_graph(self, retention_type, where_clause=""):
-    current_charts = self.get_chart_names()
-    if ((retention_type == RetentionType.DAILY and
-        self.DAILY_RETENTION_TITLE in current_charts) or
-        (retention_type == RetentionType.WEEKLY and
-         self.WEEKLY_RETENTION_TITLE in current_charts)):
-      return
-
     time_interval = TimeInterval.WEEKLY
+    graph_title = self.WEEKLY_RETENTION_TITLE
+
     if retention_type == RetentionType.DAILY:
       time_interval = TimeInterval.DAILY
+      graph_title = self.DAILY_RETENTION_TITLE
+
+    current_charts = self.get_chart_names()
+    if graph_title in current_charts:
+      return
 
     query_string, fields = retention(
         self._events_table, retention_type, self._start_date, where_clause)
-    query_id, table_id = self.redash.create_new_query(
-        self.DAILY_RETENTION_TITLE, query_string, self.TILES_DATA_SOURCE_ID)
-    viz_id = self.redash.create_new_visualization(
-        query_id, VizType.COHORT, time_interval=time_interval)
-    self.redash.add_visualization_to_dashboard(
-        self._dash_id, viz_id, VizWidth.WIDE)
+
+    self._add_query_to_dashboard(
+        graph_title,
+        query_string,
+        self.TILES_DATA_SOURCE_ID,
+        VizWidth.WIDE,
+        VizType.COHORT,
+        time_interval=time_interval,
+    )
 
   def add_events_weekly(self, where_clause="", event_column="event_type"):
     if self.EVENTS_WEEKLY_TITLE in self.get_chart_names():
@@ -164,15 +195,14 @@ class SummaryDashboard(object):
         fields[2]: "series",
     }
 
-    query_id, table_id = self.redash.create_new_query(
-        self.EVENTS_WEEKLY_TITLE, query_string, self.TILES_DATA_SOURCE_ID)
-    viz_id = self.redash.create_new_visualization(
-        query_id,
+    self._add_query_to_dashboard(
+        self.EVENTS_WEEKLY_TITLE,
+        query_string,
+        self.TILES_DATA_SOURCE_ID,
+        VizWidth.WIDE,
         VizType.CHART,
         "",
         ChartType.BAR,
         column_mapping,
-        stacking=True,
+        stacking=True
     )
-    self.redash.add_visualization_to_dashboard(
-        self._dash_id, viz_id, VizWidth.WIDE)

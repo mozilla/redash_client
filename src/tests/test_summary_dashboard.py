@@ -206,22 +206,15 @@ class TestSummaryDashboard(unittest.TestCase):
     QUERY_ID_RESPONSE = {
         "id": EXPECTED_QUERY_ID
     }
-    POST_RESPONSES = [
-        self.get_mock_response(
-            content=json.dumps(QUERY_ID_RESPONSE)),
-        self.get_mock_response(),
-        self.get_mock_response(
-            content=json.dumps(QUERY_ID_RESPONSE)),
-        self.get_mock_response(),
-        self.get_mock_response(
-            content=json.dumps(QUERY_ID_RESPONSE)),
-        self.get_mock_response(),
-    ]
 
     self.server_calls = 0
 
     def post_server(url, data):
-      response = POST_RESPONSES[self.server_calls]
+      response = self.get_mock_response()
+      if self.server_calls % 2 == 0 or self.server_calls == 0:
+        response = self.get_mock_response(
+            content=json.dumps(QUERY_ID_RESPONSE))
+
       self.server_calls += 1
       return response
 
@@ -233,17 +226,20 @@ class TestSummaryDashboard(unittest.TestCase):
     # GET calls:
     #     1) Create dashboard
     #     2) Get dashboard widgets
-    #     3) Get table ID
+    #     3) Get first table ID
+    #     4) Get second table ID
     # POST calls:
     #     1) Create dashboard
-    #     2) Create query
-    #     3) Refresh query
-    #     4) Create first visualization
-    #     5) Append first visualization to dashboard
-    #     6) Create second visualization
-    #     7) Append second visualization to dashboard
-    self.assertEqual(self.mock_requests_post.call_count, 7)
-    self.assertEqual(self.mock_requests_get.call_count, 3)
+    #     2) Create first query
+    #     3) Refresh first query
+    #     4) Create second query
+    #     5) Refresh second query
+    #     6) Create first visualization
+    #     7) Append first visualization to dashboard
+    #     8) Create second visualization
+    #     9) Append second visualization to dashboard
+    self.assertEqual(self.mock_requests_post.call_count, 9)
+    self.assertEqual(self.mock_requests_get.call_count, 4)
     self.assertEqual(self.mock_requests_delete.call_count, 0)
 
   def test_retention_graphs_exist_makes_no_request(self):
@@ -273,19 +269,15 @@ class TestSummaryDashboard(unittest.TestCase):
     QUERY_ID_RESPONSE = {
         "id": EXPECTED_QUERY_ID
     }
-    POST_RESPONSES = [
-        self.get_mock_response(
-            content=json.dumps(QUERY_ID_RESPONSE)),
-        self.get_mock_response(),
-        self.get_mock_response(
-            content=json.dumps(QUERY_ID_RESPONSE)),
-        self.get_mock_response(),
-    ]
 
     self.server_calls = 0
 
     def post_server(url, data):
-      response = POST_RESPONSES[self.server_calls]
+      response = self.get_mock_response()
+      if self.server_calls % 2 == 0 or self.server_calls == 0:
+        response = self.get_mock_response(
+            content=json.dumps(QUERY_ID_RESPONSE))
+
       self.server_calls += 1
       return response
 
@@ -335,19 +327,15 @@ class TestSummaryDashboard(unittest.TestCase):
     QUERY_ID_RESPONSE = {
         "id": EXPECTED_QUERY_ID
     }
-    POST_RESPONSES = [
-        self.get_mock_response(
-            content=json.dumps(QUERY_ID_RESPONSE)),
-        self.get_mock_response(),
-        self.get_mock_response(
-            content=json.dumps(QUERY_ID_RESPONSE)),
-        self.get_mock_response(),
-    ]
 
     self.server_calls = 0
 
     def post_server(url, data):
-      response = POST_RESPONSES[self.server_calls]
+      response = self.get_mock_response()
+      if self.server_calls % 2 == 0 or self.server_calls == 0:
+        response = self.get_mock_response(
+            content=json.dumps(QUERY_ID_RESPONSE))
+
       self.server_calls += 1
       return response
 
