@@ -100,7 +100,7 @@ class TestSummaryDashboard(unittest.TestCase):
             }}],
             [{"visualization": {
                 "query": {
-                    "name": EXPECTED_QUERY_NAME2
+                    "not_a_name": EXPECTED_QUERY_NAME2
                 }
             }},
             {"visualization": {
@@ -111,7 +111,6 @@ class TestSummaryDashboard(unittest.TestCase):
         ]]
     }
     EXPECTED_SET = set([EXPECTED_QUERY_NAME,
-                        EXPECTED_QUERY_NAME2,
                         EXPECTED_QUERY_NAME3])
 
     self.mock_requests_get.return_value = self.get_mock_response(
@@ -293,7 +292,7 @@ class TestSummaryDashboard(unittest.TestCase):
     self.mock_requests_get.return_value = self.get_mock_response()
     self.mock_requests_post.side_effect = post_server
 
-    self.dash.add_retention_graph(RetentionType.WEEKLY)
+    self.dash.add_retention_graph(RetentionType.DAILY)
 
     # GET calls:
     #     1) Create dashboard
