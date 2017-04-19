@@ -209,7 +209,7 @@ def all_events_weekly(events_table, start_date, where_clause, event_column):
   LEFT JOIN event_counts
   ON weekly_events.week = event_counts.week""".format(events_table, start_date, where_clause, event_column), ["week", "rate", event_column]
 
-def active_users(events_table, start_date, where_clause):
+def active_users(events_table, start_date, where_clause=""):
   return """
     WITH weekly AS
     (SELECT day, COUNT(DISTINCT client_id) AS dist_clients

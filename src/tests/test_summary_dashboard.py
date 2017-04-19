@@ -4,6 +4,7 @@ import unittest
 
 from src.redash_client import RedashClient
 from src.samples.SummaryDashboard import SummaryDashboard
+from templates import active_users
 
 
 class TestSummaryDashboard(unittest.TestCase):
@@ -157,3 +158,90 @@ class TestSummaryDashboard(unittest.TestCase):
     self.assertEqual(self.mock_requests_post.call_count, 1)
     self.assertEqual(self.mock_requests_get.call_count, 2)
     self.assertEqual(self.mock_requests_delete.call_count, 6)
+
+  def test_mau_dau_column_mapping_returns_correct_mappings(self):
+    EXPECTED_MAU_DAU_MAPPING = {
+        "date": "x",
+        "dau": "y",
+        "wau": "y",
+        "mau": "y",
+    }
+    EXPECTED_ENGAGEMENT_RATIO_MAPPING = {
+        "date": "x",
+        "weekly_engagement": "y",
+        "monthly_engagement": "y",
+    }
+
+    query_string, fields = active_users(
+        self.dash._events_table, self.dash._start_date)
+    mau_mapping, er_mapping = self.dash._get_mau_dau_column_mappings(fields)
+
+    self.assertEqual(mau_mapping, EXPECTED_MAU_DAU_MAPPING)
+    self.assertEqual(er_mapping, EXPECTED_ENGAGEMENT_RATIO_MAPPING)
+
+  def test_mau_dau_graphs_exist_makes_no_request(self):
+    WIDGETS_RESPONSE = {
+        "widgets": [[{
+            "visualization": {
+                "query": {
+                    "name": self.dash.MAU_DAU_TITLE,
+                },
+            },
+        }]]
+    }
+
+    self.mock_requests_get.return_value = self.get_mock_response(
+        content=json.dumps(WIDGETS_RESPONSE))
+
+    self.dash.add_mau_dau()
+
+    # Only 1 each for post and get to set up the dashboard
+    # Then one get for looking up chart names
+    self.assertEqual(self.mock_requests_post.call_count, 1)
+    self.assertEqual(self.mock_requests_get.call_count, 2)
+    self.assertEqual(self.mock_requests_delete.call_count, 0)
+
+  def test_mau_dau_graphs_make_expected_calls(self):
+    EXPECTED_QUERY_ID = "query_id123"
+    QUERY_ID_RESPONSE = {
+        "id": EXPECTED_QUERY_ID
+    }
+    POST_RESPONSES = [
+        self.get_mock_response(
+            content=json.dumps(QUERY_ID_RESPONSE)),
+        self.get_mock_response(),
+        self.get_mock_response(
+            content=json.dumps(QUERY_ID_RESPONSE)),
+        self.get_mock_response(),
+        self.get_mock_response(
+            content=json.dumps(QUERY_ID_RESPONSE)),
+        self.get_mock_response(),
+    ]
+
+    self.server_calls = 0
+
+    def post_server(url, data):
+      response = POST_RESPONSES[self.server_calls]
+      self.server_calls += 1
+      return response
+
+    self.mock_requests_get.return_value = self.get_mock_response()
+    self.mock_requests_post.side_effect = post_server
+
+    self.dash.add_mau_dau()
+
+    # GET calls:
+    #     1) Create dashboard
+    #     2) Get dashboard widgets
+    #     3) Get table ID
+    # POST calls:
+    #     1) Create dashboard
+    #     2) Create query
+    #     3) Refresh query
+    #     4) Create first visualization
+    #     5) Append first visualization to dashboard
+    #     6) Create second visualization
+    #     7) Append second visualization to dashboard
+    self.assertEqual(self.mock_requests_post.call_count, 7)
+    self.assertEqual(self.mock_requests_get.call_count, 3)
+    self.assertEqual(self.mock_requests_delete.call_count, 0)
