@@ -7,7 +7,7 @@ from src.samples.SummaryDashboard import SummaryDashboard
 
 class AppTest(unittest.TestCase):
 
-  def get_summary_dashboard(self, api_key):
+  def get_dashboard(self, api_key):
     EVENTS_TABLE_NAME = "activity_stream_mobile_events_daily"
     START_DATE = "02/17/2017"
     DASH_NAME = "Firefox iOS: Metrics Summary"
@@ -40,7 +40,7 @@ class AppTest(unittest.TestCase):
     self.mock_requests_delete = mock_requests_delete_patcher.start()
     self.addCleanup(mock_requests_delete_patcher.stop)
 
-    self.dash = self.get_summary_dashboard(API_KEY)
+    self.dash = self.get_dashboard(API_KEY)
 
   def get_mock_response(self, status=200, content='{}'):
     mock_response = mock.Mock()

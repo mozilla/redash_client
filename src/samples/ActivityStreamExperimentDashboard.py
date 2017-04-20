@@ -23,7 +23,7 @@ class ActivityStreamExperimentDashboard(SummaryDashboard):
   DEFAULT_EVENTS = ["CLICK", "SEARCH", "BLOCK", "DELETE", "BOOKMARK_ADD",
                     "CLEAR_HISTORY", {
                         "event_name": "Positive Interactions",
-                        "event_list": ['CLICK', 'BOOKMARK_ADD', 'SEARCH']}]
+                        "event_list": ["CLICK", "BOOKMARK_ADD", "SEARCH"]}]
   MASGA_EVENTS = ["HIDE_LOADER", "SHOW_LOADER", "MISSING_IMAGE",
                   "SLOW_ADDON_DETECTED"]
   ALPHA_ERROR = 0.005
