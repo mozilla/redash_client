@@ -1,13 +1,13 @@
 import mock
 import json
-import unittest
 import requests
 
+from src.tests.base import AppTest
 from src.redash_client import RedashClient
 from src.constants import VizType, ChartType, VizWidth
 
 
-class TestRedashClient(unittest.TestCase):
+class TestRedashClient(AppTest):
 
   def setUp(self):
     api_key = "test_key"
@@ -24,13 +24,6 @@ class TestRedashClient(unittest.TestCase):
     mock_requests_delete_patcher = mock.patch("redash_client.requests.delete")
     self.mock_requests_delete = mock_requests_delete_patcher.start()
     self.addCleanup(mock_requests_delete_patcher.stop)
-
-  def get_mock_response(self, status=200, content='{}'):
-    mock_response = mock.Mock()
-    mock_response.status_code = status
-    mock_response.content = content
-
-    return mock_response
 
   def test_request_exception_thrown(self):
     ERROR_STRING = "FAIL"
