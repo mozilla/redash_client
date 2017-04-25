@@ -157,24 +157,10 @@ class TestSummaryDashboard(AppTest):
     self.assertEqual(self.mock_requests_delete.call_count, 0)
 
   def test_mau_dau_graphs_make_expected_calls(self):
-    EXPECTED_QUERY_ID = "query_id123"
-    QUERY_ID_RESPONSE = {
-        "id": EXPECTED_QUERY_ID
-    }
-
     self.server_calls = 0
 
-    def post_server(url, data):
-      response = self.get_mock_response()
-      if self.server_calls % 2 == 0 or self.server_calls == 0:
-        response = self.get_mock_response(
-            content=json.dumps(QUERY_ID_RESPONSE))
-
-      self.server_calls += 1
-      return response
-
     self.mock_requests_get.return_value = self.get_mock_response()
-    self.mock_requests_post.side_effect = post_server
+    self.mock_requests_post.side_effect = self.post_server
 
     self.dash.add_mau_dau()
 
@@ -220,24 +206,10 @@ class TestSummaryDashboard(AppTest):
     self.assertEqual(self.mock_requests_delete.call_count, 0)
 
   def test_retention_graph_makes_expected_calls(self):
-    EXPECTED_QUERY_ID = "query_id123"
-    QUERY_ID_RESPONSE = {
-        "id": EXPECTED_QUERY_ID
-    }
-
     self.server_calls = 0
 
-    def post_server(url, data):
-      response = self.get_mock_response()
-      if self.server_calls % 2 == 0 or self.server_calls == 0:
-        response = self.get_mock_response(
-            content=json.dumps(QUERY_ID_RESPONSE))
-
-      self.server_calls += 1
-      return response
-
     self.mock_requests_get.return_value = self.get_mock_response()
-    self.mock_requests_post.side_effect = post_server
+    self.mock_requests_post.side_effect = self.post_server
 
     self.dash.add_retention_graph(RetentionType.DAILY)
 
@@ -278,24 +250,10 @@ class TestSummaryDashboard(AppTest):
     self.assertEqual(self.mock_requests_delete.call_count, 0)
 
   def test_weekly_events_graph_makes_expected_calls(self):
-    EXPECTED_QUERY_ID = "query_id123"
-    QUERY_ID_RESPONSE = {
-        "id": EXPECTED_QUERY_ID
-    }
-
     self.server_calls = 0
 
-    def post_server(url, data):
-      response = self.get_mock_response()
-      if self.server_calls % 2 == 0 or self.server_calls == 0:
-        response = self.get_mock_response(
-            content=json.dumps(QUERY_ID_RESPONSE))
-
-      self.server_calls += 1
-      return response
-
     self.mock_requests_get.return_value = self.get_mock_response()
-    self.mock_requests_post.side_effect = post_server
+    self.mock_requests_post.side_effect = self.post_server
 
     self.dash.add_events_weekly()
 

@@ -1,4 +1,5 @@
 import mock
+import json
 import unittest
 
 from src.redash_client import RedashClient
@@ -6,6 +7,20 @@ from src.samples.SummaryDashboard import SummaryDashboard
 
 
 class AppTest(unittest.TestCase):
+
+  def post_server(self, url, data):
+    EXPECTED_QUERY_ID = "query_id123"
+    QUERY_ID_RESPONSE = {
+        "id": EXPECTED_QUERY_ID
+    }
+
+    response = self.get_mock_response()
+    if self.server_calls % 2 == 0 or self.server_calls == 0:
+      response = self.get_mock_response(
+          content=json.dumps(QUERY_ID_RESPONSE))
+
+    self.server_calls += 1
+    return response
 
   def get_dashboard(self, api_key):
     EVENTS_TABLE_NAME = "activity_stream_mobile_events_daily"
