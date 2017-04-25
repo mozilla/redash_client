@@ -3,7 +3,7 @@ import statistics
 from scipy import stats
 from utils import upload_as_json
 import statsmodels.stats.power as smp
-from constants import VizType, ChartType, VizWidth, TTableSchema
+from constants import VizType, ChartType, VizWidth, TTableSchema, TimeInterval
 from samples.SummaryDashboard import SummaryDashboard
 from templates import retention_diff, disable_rate, event_rate, event_per_user
 
@@ -44,7 +44,7 @@ class ActivityStreamExperimentDashboard(SummaryDashboard):
     addon_version_list = []
     for version in addon_versions:
       addon_version_list.append("'{}'".format(version))
-    self.addon_versions = ", ".join(addon_version_list)
+    self._addon_versions = ", ".join(addon_version_list)
 
   def _compute_pooled_stddev(self, control_std, exp_std,
                              control_vals, exp_vals):
@@ -56,7 +56,7 @@ class ActivityStreamExperimentDashboard(SummaryDashboard):
                          pow(exp_std, 2) * exp_len_sub_1)
     pooled_stddev_denom = control_len_sub_1 + exp_len_sub_1
 
-    pooled_stddev = math.sqrt(pooled_stddev_num / pooled_stddev_denom)
+    pooled_stddev = math.sqrt(pooled_stddev_num / float(pooled_stddev_denom))
     return pooled_stddev
 
   def _power_and_ttest(self, control_vals, exp_vals):
@@ -76,38 +76,11 @@ class ActivityStreamExperimentDashboard(SummaryDashboard):
         nobs1=len(control_vals),
         ratio=len(exp_vals) / float(len(control_vals)),
         alpha=self.ALPHA_ERROR, alternative='two-sided')
-    p_val = stats.ttest_ind(control_vals, exp_vals, equal_var=False)[1]
+
+    ttest_result = stats.ttest_ind(control_vals, exp_vals, equal_var=False)
+    p_val = None if len(ttest_result) < 2 else ttest_result[1]
+
     return power, p_val, exp_mean - control_mean
-
-  def add_disable_graph(self):
-    if self.DISABLE_TITLE in self.get_chart_names():
-      return
-
-    query_string, fields = disable_rate(
-        self._start_date, self._experiment_id, self._addon_versions)
-
-    mapping = {fields[0]: "x", fields[1]: "y", fields[2]: "series"}
-
-    query_id, table_id = self.redash.create_new_query(
-        self.DISABLE_TITLE, query_string, self.TILES_DATA_SOURCE_ID)
-    viz_id = self.redash.create_new_visualization(
-        query_id, VizType.CHART, "", ChartType.LINE, mapping)
-    self.redash.add_visualization_to_dashboard(
-        self._dash_id, viz_id, VizWidth.REGULAR)
-
-  def add_retention_diff(self):
-    query_name = "Daily Retention Difference (Experiment - Control)"
-    if query_name in self.get_chart_names():
-      return
-
-    query_string, fields = retention_diff(
-        self._start_date, self._experiment_id, self._addon_versions)
-    query_id, table_id = self.redash.create_new_query(
-        query_name, query_string, self.TILES_DATA_SOURCE_ID)
-    viz_id = self.redash.create_new_visualization(
-        query_id, VizType.COHORT, time_interval="daily")
-    self.redash.add_visualization_to_dashboard(
-        self._dash_id, viz_id, VizWidth.WIDE)
 
   def _get_event_query_data(self, event, event_query=event_rate,
                             events_table=None):
@@ -137,6 +110,66 @@ class ActivityStreamExperimentDashboard(SummaryDashboard):
 
     return query_name, query_string, fields
 
+  def _get_ttable_data_for_query(self, label, query_string, column_name):
+    data = self.redash.get_query_results(
+        query_string, self.TILES_DATA_SOURCE_ID)
+    if data is None:
+      return {}
+
+    control_vals = []
+    exp_vals = []
+    for row in data:
+      if row["type"] == "experiment":
+        exp_vals.append(row[column_name])
+      else:
+        control_vals.append(row[column_name])
+
+    power, p_val, mean_diff = self._power_and_ttest(control_vals, exp_vals)
+    return {
+        "Metric": label,
+        "Alpha Error": self.ALPHA_ERROR,
+        "Power": power,
+        "Two-Tailed P-value (ttest)": p_val,
+        "Experiment Mean - Control Mean": mean_diff
+    }
+
+  def add_disable_graph(self):
+    if self.DISABLE_TITLE in self.get_chart_names():
+      return
+
+    query_string, fields = disable_rate(
+        self._start_date, self._experiment_id, self._addon_versions)
+
+    mapping = {fields[0]: "x", fields[1]: "y", fields[2]: "series"}
+
+    self._add_query_to_dashboard(
+        self.DISABLE_TITLE,
+        query_string,
+        self.TILES_DATA_SOURCE_ID,
+        VizWidth.REGULAR,
+        VizType.CHART,
+        "",
+        ChartType.LINE,
+        mapping,
+    )
+
+  def add_retention_diff(self):
+    query_name = "Daily Retention Difference (Experiment - Control)"
+    if query_name in self.get_chart_names():
+      return
+
+    query_string, fields = retention_diff(
+        self._start_date, self._experiment_id, self._addon_versions)
+
+    self._add_query_to_dashboard(
+        query_name,
+        query_string,
+        self.TILES_DATA_SOURCE_ID,
+        VizWidth.WIDE,
+        VizType.COHORT,
+        time_interval=TimeInterval.DAILY,
+    )
+
   def add_event_graphs(self, events_list,
                        event_query=event_rate, events_table=None):
     chart_names = self.get_chart_names()
@@ -160,29 +193,6 @@ class ActivityStreamExperimentDashboard(SummaryDashboard):
   def add_events_per_user(self, events_list, events_table=None):
     self.add_event_graphs(events_list, event_per_user)
 
-  def get_ttable_data_for_query(self, label, query_string, column_name):
-    data = self.redash.get_query_results(
-        query_string, self.TILES_DATA_SOURCE_ID)
-    if data is None:
-      return []
-
-    control_vals = []
-    exp_vals = []
-    for row in data:
-      if row["type"] == "experiment":
-        exp_vals.append(row[column_name])
-      else:
-        control_vals.append(row[column_name])
-
-    power, p_val, mean_diff = self._power_and_ttest(control_vals, exp_vals)
-    return {
-        "Metric": label,
-        "Alpha Error": self.ALPHA_ERROR,
-        "Power": power,
-        "Two-Tailed P-value (ttest)": p_val,
-        "Experiment Mean - Control Mean": mean_diff
-    }
-
   def add_ttable(self):
     # Don't add a table if it already exists
     query_name = "Statistical Analysis"
@@ -200,8 +210,12 @@ class ActivityStreamExperimentDashboard(SummaryDashboard):
       for event_query in [event_rate, event_per_user]:
         event_query_name, query_string, fields = self._get_event_query_data(
             event, event_query, table)
-        ttable_row = self.get_ttable_data_for_query(
+        ttable_row = self._get_ttable_data_for_query(
             event_query_name, query_string, "event_rate")
+
+        if len(ttable_row) == 0:
+          continue
+
         values["rows"].append(ttable_row)
 
     query_string = upload_as_json("experiments", self._experiment_id, values)
