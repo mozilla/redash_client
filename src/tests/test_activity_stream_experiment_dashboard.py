@@ -107,7 +107,7 @@ class TestActivityStreamExperimentDashboard(AppTest):
     for i in xrange(len(fields)):
       self.assertEqual(fields[i], EXPECTED_FIELDS[i])
 
-  def get_ttable_data_for_non_existent_query(self):
+  def test_get_ttable_data_for_non_existent_query(self):
     QUERY_RESULTS_RESPONSE = {}
 
     self.mock_requests_post.return_value = self.get_mock_response(
@@ -117,6 +117,45 @@ class TestActivityStreamExperimentDashboard(AppTest):
         "beep", "meep", "boop")
 
     self.assertEqual(ttable_row, {})
+
+  def test_ttable_row_data_is_correct(self):
+    EXPECTED_LABEL = "beep"
+    EXPECTED_ROWS = []
+    EXPECTED_MEAN_DIFFERENCE = -4
+
+    for i in xrange(12):
+      EXPECTED_ROWS.append({
+          "date": 123,
+          "event_rate": (i % 3) + 1,
+          "type": "experiment"
+      })
+      EXPECTED_ROWS.append({
+          "date": 123,
+          "event_rate": ((i * 2) % 6) + 4,  # 4, 6, 8
+          "type": "control"
+      })
+
+    QUERY_RESULTS_RESPONSE = {
+        "query_result": {
+            "data": {
+                "rows": EXPECTED_ROWS
+            }
+        }
+    }
+
+    self.mock_requests_post.return_value = self.get_mock_response(
+        content=json.dumps(QUERY_RESULTS_RESPONSE))
+
+    ttable_row = self.dash._get_ttable_data_for_query(
+        EXPECTED_LABEL, "meep", "event_rate")
+
+    self.assertEqual(len(ttable_row), 5)
+    self.assertEqual(ttable_row["Metric"], EXPECTED_LABEL)
+    self.assertEqual(ttable_row["Alpha Error"], self.dash.ALPHA_ERROR)
+    self.assertTrue(0.5 <= ttable_row["Power"] <= 1)
+    self.assertTrue(0 <= ttable_row["Two-Tailed P-value (ttest)"] <= 0.05)
+    self.assertEqual(
+        ttable_row["Experiment Mean - Control Mean"], EXPECTED_MEAN_DIFFERENCE)
 
   def test_add_disable_graph_makes_correct_calls(self):
     self.server_calls = 0
@@ -160,4 +199,28 @@ class TestActivityStreamExperimentDashboard(AppTest):
     #     5) Append visualization to dashboard
     self.assertEqual(self.mock_requests_post.call_count, 5)
     self.assertEqual(self.mock_requests_get.call_count, 3)
+    self.assertEqual(self.mock_requests_delete.call_count, 0)
+
+  def test_add_event_graphs_makes_correct_calls(self):
+    self.server_calls = 0
+
+    self.mock_requests_get.return_value = self.get_mock_response()
+    self.mock_requests_post.side_effect = self.post_server
+
+    self.dash.add_event_graphs([])
+
+    # GET calls:
+    #     1) Create dashboard
+    #     2) Get dashboard widgets
+    #     3) Get table ID
+    #     4) Repeat 3 seven times
+    # POST calls:
+    #     1) Create dashboard
+    #     2) Create query
+    #     3) Refresh query
+    #     4) Create visualization
+    #     5) Append visualization to dashboard
+    #     6) Repeat 2-5 seven times
+    self.assertEqual(self.mock_requests_post.call_count, 29)
+    self.assertEqual(self.mock_requests_get.call_count, 9)
     self.assertEqual(self.mock_requests_delete.call_count, 0)

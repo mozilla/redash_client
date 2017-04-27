@@ -113,7 +113,8 @@ class ActivityStreamExperimentDashboard(SummaryDashboard):
   def _get_ttable_data_for_query(self, label, query_string, column_name):
     data = self.redash.get_query_results(
         query_string, self.TILES_DATA_SOURCE_ID)
-    if data is None:
+
+    if data is None or len(data) == 0:
       return {}
 
     control_vals = []
@@ -172,6 +173,10 @@ class ActivityStreamExperimentDashboard(SummaryDashboard):
 
   def add_event_graphs(self, events_list,
                        event_query=event_rate, events_table=None):
+
+    if events_list is None or len(events_list) == 0:
+      events_list = self.DEFAULT_EVENTS
+
     chart_names = self.get_chart_names()
     for event in events_list:
       query_name, query_string, fields = self._get_event_query_data(
@@ -183,12 +188,16 @@ class ActivityStreamExperimentDashboard(SummaryDashboard):
 
       mapping = {fields[0]: "x", fields[1]: "y", fields[2]: "series"}
 
-      query_id, table_id = self.redash.create_new_query(
-          query_name, query_string, self.TILES_DATA_SOURCE_ID)
-      viz_id = self.redash.create_new_visualization(
-          query_id, VizType.CHART, "", ChartType.LINE, mapping)
-      self.redash.add_visualization_to_dashboard(
-          self._dash_id, viz_id, VizWidth.REGULAR)
+      self._add_query_to_dashboard(
+          query_name,
+          query_string,
+          self.TILES_DATA_SOURCE_ID,
+          VizWidth.REGULAR,
+          VizType.CHART,
+          "",
+          ChartType.LINE,
+          mapping,
+      )
 
   def add_events_per_user(self, events_list, events_table=None):
     self.add_event_graphs(events_list, event_per_user)
