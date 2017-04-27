@@ -6,8 +6,6 @@ bucket = "telemetry-public-analysis-2"
 client = boto3.client('s3', 'us-west-2')
 transfer = S3Transfer(client)
 
-#filename = "test.json"
-
 def upload_as_json(directory_name, filename, data):
   path = "activity-stream/" + directory_name + "/"
   s3_key = path + filename
