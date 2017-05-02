@@ -3,10 +3,8 @@ import mock
 import json
 import statistics
 
-from utils import upload_as_json
 from src.templates import event_rate
 from src.tests.base import AppTest
-from constants import TTableSchema
 from samples.ActivityStreamExperimentDashboard import (
     ActivityStreamExperimentDashboard)
 
@@ -227,23 +225,6 @@ class TestActivityStreamExperimentDashboard(AppTest):
     self.assertEqual(self.mock_requests_post.call_count, 29)
     self.assertEqual(self.mock_requests_get.call_count, 9)
     self.assertEqual(self.mock_requests_delete.call_count, 0)
-
-  def test_upload_as_json_return_val(self):
-    DIRECTORY_NAME = "experiments"
-    FILENAME = "test_file_name"
-    DATA = {"columns": TTableSchema, "rows": []}
-
-    EXPECTED_S3_KEY = "activity-stream/" + DIRECTORY_NAME + "/" + FILENAME
-    EXPECTED_BASE_URL = "https://analysis-output.telemetry.mozilla.org/"
-
-    mock_boto_transfer_patcher = mock.patch("utils.transfer.upload_file")
-    mock_boto_transfer_patcher.start()
-
-    query_string = upload_as_json(DIRECTORY_NAME, FILENAME, DATA)
-
-    self.assertEqual(query_string, EXPECTED_BASE_URL + EXPECTED_S3_KEY)
-
-    mock_boto_transfer_patcher.stop()
 
   def test_add_ttable_makes_correct_calls(self):
     mock_boto_transfer_patcher = mock.patch("utils.transfer.upload_file")
