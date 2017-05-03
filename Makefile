@@ -1,6 +1,7 @@
 lint:
 	flake8 src/constants.py
 	flake8 src/redash_client.py
+	flake8 src/utils.py
 	flake8 src/samples/SummaryDashboard.py
 	flake8 src/samples/ActivityStreamExperimentDashboard.py
 	flake8 src/tests/base.py

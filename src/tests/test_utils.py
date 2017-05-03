@@ -1,9 +1,10 @@
 import mock
 import json
+import tempfile
 
 from src.tests.base import AppTest
 from constants import TTableSchema
-from utils import upload_as_json, download_experiment_definition
+from utils import upload_as_json, read_experiment_definition
 
 
 class TestUtils(AppTest):
@@ -26,11 +27,11 @@ class TestUtils(AppTest):
     mock_boto_transfer_patcher.stop()
 
   def test_download_experiment_definition_non_json_return_val(self):
-    mock_boto_transfer_patcher = mock.patch("utils.transfer.download_file")
+    mock_boto_transfer_patcher = mock.patch("utils.s3.get_object")
     mock_transfer = mock_boto_transfer_patcher.start()
     mock_transfer.return_value = "fail"
 
-    json_result = download_experiment_definition()
+    json_result = read_experiment_definition()
 
     self.assertEqual(json_result, {})
 
@@ -39,12 +40,20 @@ class TestUtils(AppTest):
   def test_download_experiment_definition_json_return_val(self):
     EXPECTED_JSON = json.dumps({"experiment1": "some_value"})
 
-    mock_boto_download_patcher = mock.patch("utils.transfer.download_file")
+    mock_boto_download_patcher = mock.patch("utils.s3.get_object")
     mock_download = mock_boto_download_patcher.start()
-    mock_download.return_value = EXPECTED_JSON
 
-    json_result = download_experiment_definition()
+    # Make a temp file for returning
+    temp_file = tempfile.mkstemp()
+    file_handle = open(temp_file[1], "w+")
+    file_handle.write(EXPECTED_JSON)
+    file_handle.seek(0)
+
+    mock_download.return_value = {"Body": file_handle}
+
+    json_result = read_experiment_definition()
 
     self.assertEqual(json_result, json.loads(EXPECTED_JSON))
 
     mock_boto_download_patcher.stop()
+    file_handle.close()
