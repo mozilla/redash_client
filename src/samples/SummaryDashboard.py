@@ -53,20 +53,23 @@ class SummaryDashboard(object):
 
       self.redash.update_query_schedule(widget_id, seconds_to_refresh)
 
-  def get_chart_names(self):
+  def get_query_ids_and_names(self):
     widgets = self.redash.get_widget_from_dash(self._dash_name)
 
-    chart_names = set()
+    data = {}
     for widget in widgets:
       widget_name = widget.get(
           "visualization", {}).get("query", {}).get("name", None)
 
+      widget_id = widget.get(
+          "visualization", {}).get("query", {}).get("id", None)
+
       if not widget_name:
         continue
 
-      chart_names.add(widget_name)
+      data[widget_name] = widget_id
 
-    return chart_names
+    return data
 
   def remove_all_graphs(self):
     widgets = self.redash.get_widget_from_dash(self._dash_name)
@@ -125,7 +128,7 @@ class SummaryDashboard(object):
         self._dash_id, viz_id, visualization_width)
 
   def add_mau_dau(self, where_clause=""):
-    if self.MAU_DAU_TITLE in self.get_chart_names():
+    if self.MAU_DAU_TITLE in self.get_query_ids_and_names():
       return
 
     query_string, fields = active_users(
@@ -166,7 +169,7 @@ class SummaryDashboard(object):
       time_interval = TimeInterval.DAILY
       graph_title = self.DAILY_RETENTION_TITLE
 
-    current_charts = self.get_chart_names()
+    current_charts = self.get_query_ids_and_names()
     if graph_title in current_charts:
       return
 
@@ -183,7 +186,7 @@ class SummaryDashboard(object):
     )
 
   def add_events_weekly(self, where_clause="", event_column="event_type"):
-    if self.EVENTS_WEEKLY_TITLE in self.get_chart_names():
+    if self.EVENTS_WEEKLY_TITLE in self.get_query_ids_and_names():
       return
 
     query_string, fields = all_events_weekly(

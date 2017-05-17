@@ -135,7 +135,7 @@ class ActivityStreamExperimentDashboard(SummaryDashboard):
     }
 
   def add_disable_graph(self):
-    if self.DISABLE_TITLE in self.get_chart_names():
+    if self.DISABLE_TITLE in self.get_query_ids_and_names():
       return
 
     query_string, fields = disable_rate(
@@ -156,7 +156,7 @@ class ActivityStreamExperimentDashboard(SummaryDashboard):
 
   def add_retention_diff(self):
     query_name = "Daily Retention Difference (Experiment - Control)"
-    if query_name in self.get_chart_names():
+    if query_name in self.get_query_ids_and_names():
       return
 
     query_string, fields = retention_diff(
@@ -177,7 +177,7 @@ class ActivityStreamExperimentDashboard(SummaryDashboard):
     if events_list is None or len(events_list) == 0:
       events_list = self.DEFAULT_EVENTS
 
-    chart_names = self.get_chart_names()
+    chart_data = self.get_query_ids_and_names()
     for event in events_list:
       query_name, query_string, fields = self._get_event_query_data(
           event, event_query, events_table)
@@ -205,7 +205,7 @@ class ActivityStreamExperimentDashboard(SummaryDashboard):
   def add_ttable(self):
     # Don't add a table if it already exists
     query_name = "Statistical Analysis"
-    if query_name in self.get_chart_names():
+    if query_name in self.get_query_ids_and_names():
       return
 
     values = {"columns": TTableSchema, "rows": []}

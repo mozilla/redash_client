@@ -42,7 +42,7 @@ class TestSummaryDashboard(AppTest):
     self.assertEqual(self.mock_requests_get.call_count, 2)
     self.assertEqual(self.mock_requests_delete.call_count, 0)
 
-  def test_get_chart_names_success(self):
+  def test_get_chart_data_success(self):
     EXPECTED_QUERY_NAME = "query_name123"
     EXPECTED_QUERY_NAME2 = "query_name456"
     EXPECTED_QUERY_NAME3 = "query_name789"
@@ -50,30 +50,36 @@ class TestSummaryDashboard(AppTest):
         "widgets": [[{
             "visualization": {
                 "query": {
-                    "name": EXPECTED_QUERY_NAME
+                    "name": EXPECTED_QUERY_NAME,
+                    "id": 1
                 }
             }}],
             [{"visualization": {
                 "query": {
-                    "not_a_name": EXPECTED_QUERY_NAME2
+                    "not_a_name": EXPECTED_QUERY_NAME2,
+                    "id": 2
                 }
             }},
             {"visualization": {
                 "query": {
-                    "name": EXPECTED_QUERY_NAME3
+                    "name": EXPECTED_QUERY_NAME3,
+                    "id": 3
                 }
             }}
         ]]
     }
-    EXPECTED_SET = set([EXPECTED_QUERY_NAME,
-                        EXPECTED_QUERY_NAME3])
+    EXPECTED_NAMES = [EXPECTED_QUERY_NAME, EXPECTED_QUERY_NAME3]
+    EXPECTED_IDS = [1, 3]
 
     self.mock_requests_get.return_value = self.get_mock_response(
         content=json.dumps(WIDGETS_RESPONSE))
 
-    chart_names = self.dash.get_chart_names()
+    data_dict = self.dash.get_query_ids_and_names()
 
-    self.assertEqual(chart_names, EXPECTED_SET)
+    self.assertEqual(len(data_dict), 2)
+    for name in data_dict:
+      self.assertTrue(name in EXPECTED_NAMES)
+      self.assertTrue(data_dict[name] in EXPECTED_IDS)
 
   def test_remove_all_graphs_success(self):
     EXPECTED_QUERY_ID = "query_id123"
