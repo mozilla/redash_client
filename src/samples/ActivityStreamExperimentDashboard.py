@@ -173,17 +173,27 @@ class ActivityStreamExperimentDashboard(SummaryDashboard):
 
   def add_event_graphs(self, events_list,
                        event_query=event_rate, events_table=None):
-
     if events_list is None or len(events_list) == 0:
       events_list = self.DEFAULT_EVENTS
 
     chart_data = self.get_query_ids_and_names()
     for event in events_list:
+      GRAPH_DESCRIPTION = (
+          "Percent of sessions with at least "
+          "one occurance of {0}").format(event)
+
       query_name, query_string, fields = self._get_event_query_data(
           event, event_query, events_table)
 
-      # Don't add graphs that already exist
-      if query_name in chart_names:
+      # Update graphs if they already exist.
+      if query_name in chart_data:
+        self.redash.update_query(
+            chart_data[query_name],
+            query_name,
+            query_string,
+            self.TILES_DATA_SOURCE_ID,
+            GRAPH_DESCRIPTION,
+        )
         continue
 
       mapping = {fields[0]: "x", fields[1]: "y", fields[2]: "series"}
@@ -194,7 +204,7 @@ class ActivityStreamExperimentDashboard(SummaryDashboard):
           self.TILES_DATA_SOURCE_ID,
           VizWidth.REGULAR,
           VizType.CHART,
-          "",
+          GRAPH_DESCRIPTION,
           ChartType.LINE,
           mapping,
       )
