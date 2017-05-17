@@ -254,6 +254,21 @@ class RedashClient(object):
 
     self._make_request(requests.post, query_url, update_query_args)
 
+  def update_query(self, query_id, name, sql_query,
+                   data_source_id, description):
+    url_path = "queries/{0}?{1}".format(str(query_id), self._url_params)
+    query_url = urljoin(self.BASE_URL, url_path)
+
+    update_query_args = json.dumps({
+        "data_source_id": data_source_id,
+        "query": sql_query,
+        "name": name,
+        "description": description,
+        "id": query_id
+    })
+
+    self._make_request(requests.post, query_url, update_query_args)
+
   def get_widget_from_dash(self, name):
     slug = self.get_slug(name)
     url_path = "dashboards/{0}?{1}".format(slug, self._url_params)

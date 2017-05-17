@@ -337,6 +337,21 @@ class TestRedashClient(AppTest):
     self.assertEqual(self.mock_requests_get.call_count, 0)
     self.assertEqual(self.mock_requests_delete.call_count, 0)
 
+  def test_update_query_string_success(self):
+    self.mock_requests_post.return_value = self.get_mock_response()
+
+    self.redash.update_query(
+        query_id=1234,
+        name="Test",
+        sql_query="SELECT * FROM table",
+        data_source_id=5,
+        description="",
+    )
+
+    self.assertEqual(self.mock_requests_post.call_count, 1)
+    self.assertEqual(self.mock_requests_get.call_count, 0)
+    self.assertEqual(self.mock_requests_delete.call_count, 0)
+
   def test_get_widget_from_dash_returns_correctly_flattened_widgets(self):
     DASH_NAME = "Activity Stream A/B Testing: Beep Meep"
     EXPECTED_QUERY_ID = "query_id123"
