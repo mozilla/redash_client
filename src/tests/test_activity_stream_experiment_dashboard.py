@@ -246,8 +246,8 @@ class TestActivityStreamExperimentDashboard(AppTest):
     #     2) Create query
     #     3) Refresh query
     #     4) Append visualization to dashboard
-    #     5) Get T-Table data for 22 rows
-    self.assertEqual(self.mock_requests_post.call_count, 26)
+    #     5) Get T-Table data for 20 rows
+    self.assertEqual(self.mock_requests_post.call_count, 24)
     self.assertEqual(self.mock_requests_get.call_count, 3)
     self.assertEqual(self.mock_requests_delete.call_count, 0)
 

@@ -25,8 +25,7 @@ class ActivityStreamExperimentDashboard(SummaryDashboard):
                     "CLEAR_HISTORY", {
                         "event_name": "Positive Interactions",
                         "event_list": ["CLICK", "BOOKMARK_ADD", "SEARCH"]}]
-  MASGA_EVENTS = ["HIDE_LOADER", "SHOW_LOADER", "MISSING_IMAGE",
-                  "SLOW_ADDON_DETECTED"]
+  MASGA_EVENTS = ["HIDE_LOADER", "SHOW_LOADER", "MISSING_IMAGE"]
   ALPHA_ERROR = 0.005
   URL_FETCHER_DATA_SOURCE_ID = 28
   DISABLE_TITLE = "Disable Rate"
