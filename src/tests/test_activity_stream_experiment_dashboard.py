@@ -1,6 +1,7 @@
 import math
 import mock
 import json
+import time
 import statistics
 
 from src.templates import event_rate
@@ -13,6 +14,7 @@ class TestActivityStreamExperimentDashboard(AppTest):
 
   ADDON_VERSIONS = ["1.8.0", "1.9.0"]
   START_DATE = "02/17/2017"
+  END_DATE = time.strftime("%m/%d/%y")
   DASH_PREFIX = "Activity Stream A/B Testing: {0}"
   DASH_NAME = "Screenshots Long Cache"
   EXPERIMENT_ID = "exp-014-screenshotsasync"
@@ -35,6 +37,7 @@ class TestActivityStreamExperimentDashboard(AppTest):
     self.assertEqual(
         self.dash._dash_name, self.DASH_PREFIX.format(self.DASH_NAME))
     self.assertEqual(self.dash._start_date, self.START_DATE)
+    self.assertEqual(self.dash._end_date, self.END_DATE)
     self.assertEqual(self.dash._addon_versions, "'1.8.0', '1.9.0'")
 
     self.assertEqual(self.mock_requests_post.call_count, 1)
@@ -72,6 +75,7 @@ class TestActivityStreamExperimentDashboard(AppTest):
     EXPECTED_QUERY_STRING, EXPECTED_FIELDS = event_rate(
         "'{}'".format(EVENT),
         self.START_DATE,
+        self.END_DATE,
         self.EXPERIMENT_ID,
         self.dash._addon_versions,
         self.dash._events_table)
@@ -95,6 +99,7 @@ class TestActivityStreamExperimentDashboard(AppTest):
     EXPECTED_QUERY_STRING, EXPECTED_FIELDS = event_rate(
         EVENT_LIST_STRING,
         self.START_DATE,
+        self.END_DATE,
         self.EXPERIMENT_ID,
         self.dash._addon_versions,
         self.dash._events_table)

@@ -1,3 +1,5 @@
+import time
+
 from templates import retention, all_events_weekly, active_users
 from constants import VizWidth, VizType, RetentionType, ChartType, TimeInterval
 
@@ -32,10 +34,12 @@ class SummaryDashboard(object):
   class SummaryDashboardException(Exception):
     pass
 
-  def __init__(self, redash_client, dash_name, events_table_name, start_date):
+  def __init__(self, redash_client, dash_name, events_table_name,
+               start_date, end_date=None):
     self._dash_name = dash_name
     self._events_table = events_table_name
     self._start_date = start_date
+    self._end_date = end_date if end_date else time.strftime("%m/%d/%y")
 
     self.redash = redash_client
     self._dash_id = self.redash.create_new_dashboard(self._dash_name)

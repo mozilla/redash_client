@@ -36,10 +36,9 @@ class ActivityStreamExperimentDashboard(SummaryDashboard):
         redash_client,
         "Activity Stream A/B Testing: " + dash_name,
         "activity_stream_events_daily",
-        start_date)
+        start_date, end_date)
 
     self._experiment_id = exp_id
-    self._end_date = end_date
 
     addon_version_list = []
     for version in addon_versions:
@@ -100,6 +99,7 @@ class ActivityStreamExperimentDashboard(SummaryDashboard):
     query_string, fields = event_query(
         event_string,
         self._start_date,
+        self._end_date,
         self._experiment_id,
         self._addon_versions,
         events_table)
