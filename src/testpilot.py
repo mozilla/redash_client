@@ -1,6 +1,5 @@
 import os
 from constants import RetentionType
-from samples.TestPilotDashboard import TestPilotDashboard
 
 if __name__ == '__main__':
   api_key = os.environ["REDASH_API_KEY"]
@@ -15,15 +14,17 @@ if __name__ == '__main__':
   }
 
   for exp_name in test_pilot_experiments:
-    dash = TestPilotDashboard(
+    where_clause = "AND addon_id = '{0}'".format(test_pilot_experiments[exp_name])
+
+    dash = SummaryDashboard(
       redash_client,
       "Test Pilot: {0}".format(exp_name),
-      test_pilot_experiments[exp_name],
+      "ping_centre_test_pilot"
       "02/13/2017"
     )
 
-    dash.add_mau_dau()
-    dash.add_retention_graph(RetentionType.WEEKLY)
-    dash.add_events_weekly()
+    dash.add_mau_dau(where_clause)
+    dash.add_retention_graph(RetentionType.WEEKLY, where_clause)
+    dash.add_events_weekly(where_clause)
     dash.update_refresh_schedule(3600)
     #dash.remove_all_graphs()
