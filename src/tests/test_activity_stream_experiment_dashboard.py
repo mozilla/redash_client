@@ -252,10 +252,20 @@ class TestActivityStreamExperimentDashboard(AppTest):
     self.assertEqual(self.mock_requests_delete.call_count, 0)
 
   def test_add_event_graphs_makes_correct_calls(self):
-    self.server_calls = 0
+    WIDGETS_RESPONSE = {
+        "widgets": [[{
+            "visualization": {
+                "query": {
+                    "name": "Click Rate",
+                },
+            },
+        }]]
+    }
 
-    self.mock_requests_get.return_value = self.get_mock_response()
+    self.server_calls = 0
     self.mock_requests_post.side_effect = self.post_server
+    self.mock_requests_get.return_value = self.get_mock_response(
+        content=json.dumps(WIDGETS_RESPONSE))
 
     self.dash.add_event_graphs([])
 
@@ -263,19 +273,94 @@ class TestActivityStreamExperimentDashboard(AppTest):
     #     1) Create dashboard
     #     2) Get dashboard widgets
     #     3) Get table ID
-    #     4) Repeat 3 seven times
+    #     4) Repeat 3 six times
     # POST calls:
     #     1) Create dashboard
     #     2) Create query
     #     3) Refresh query
     #     4) Create visualization
     #     5) Append visualization to dashboard
-    #     6) Repeat 2-5 seven times
+    #     6) Repeat 2-5 six times
+    #     7) Do 1 graph update
+    self.assertEqual(self.mock_requests_post.call_count, 25)
+    self.assertEqual(self.mock_requests_get.call_count, 7)
+    self.assertEqual(self.mock_requests_delete.call_count, 0)
+
+  def test_add_events_per_user(self):
+    self.server_calls = 0
+    self.mock_requests_post.side_effect = self.post_server
+    self.mock_requests_get.return_value = self.get_mock_response()
+
+    self.dash.add_events_per_user([])
+
+    # GET calls:
+    #     1) Create dashboard
+    #     2) Get dashboard widgets
+    #     3) Get table ID
+    #     4) Repeat 3 six times
+    # POST calls:
+    #     1) Create dashboard
+    #     2) Create query
+    #     3) Refresh query
+    #     4) Create visualization
+    #     5) Append visualization to dashboard
+    #     6) Repeat 2-5 six times
+    #     7) Do 1 graph update
     self.assertEqual(self.mock_requests_post.call_count, 29)
     self.assertEqual(self.mock_requests_get.call_count, 9)
     self.assertEqual(self.mock_requests_delete.call_count, 0)
 
   def test_add_ttable_makes_correct_calls(self):
+    EXPECTED_ROWS = [{
+        "event_rate": 123,
+        "type": "experiment",
+    }, {
+        "event_rate": 789,
+        "type": "control",
+    }, {
+        "event_rate": 1233,
+        "type": "experiment",
+    }, {
+        "event_rate": 7819,
+        "type": "control",
+    }]
+
+    QUERY_RESULTS_RESPONSE = {
+        "query_result": {
+            "data": {
+                "rows": EXPECTED_ROWS
+            }
+        }
+    }
+
+    mock_boto_transfer_patcher = mock.patch("utils.transfer.upload_file")
+    mock_boto_transfer_patcher.start()
+
+    self.server_calls = 0
+
+    self.mock_requests_get.return_value = self.get_mock_response()
+    self.mock_requests_post.return_value = self.get_mock_response(
+        content=json.dumps(QUERY_RESULTS_RESPONSE))
+
+    self.dash.add_ttable()
+
+    # GET calls:
+    #     1) Create dashboard
+    #     2) Get dashboard widgets
+    #     3) Get table ID
+    # POST calls:
+    #     1) Create dashboard
+    #     2) Create query
+    #     3) Refresh query
+    #     4) Append visualization to dashboard
+    #     5) Get T-Table data for 19 rows
+    self.assertEqual(self.mock_requests_post.call_count, 23)
+    self.assertEqual(self.mock_requests_get.call_count, 2)
+    self.assertEqual(self.mock_requests_delete.call_count, 0)
+
+    mock_boto_transfer_patcher.stop()
+
+  def test_ttable_with_no_rows(self):
     mock_boto_transfer_patcher = mock.patch("utils.transfer.upload_file")
     mock_boto_transfer_patcher.start()
 
