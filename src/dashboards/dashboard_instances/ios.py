@@ -1,6 +1,8 @@
 import os
+
 from constants import RetentionType
-from samples.SummaryDashboard import SummaryDashboard
+from dashboards.SummaryDashboard import SummaryDashboard
+
 
 if __name__ == '__main__':
   api_key = os.environ["REDASH_API_KEY"]

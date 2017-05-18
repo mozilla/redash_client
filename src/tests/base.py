@@ -3,7 +3,7 @@ import json
 import unittest
 
 from src.redash_client import RedashClient
-from src.samples.SummaryDashboard import SummaryDashboard
+from src.dashboards.SummaryDashboard import SummaryDashboard
 
 
 class AppTest(unittest.TestCase):

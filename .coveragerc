@@ -1,0 +1,3 @@
+[report]
+omit =
+    */src/dashboards/dashboard_instances/*

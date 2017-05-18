@@ -1,4 +1,6 @@
 import os
+
+from src.redash_client import RedashClient
 from samples.ActivityStreamExperimentDashboard import ActivityStreamExperimentDashboard
 
 '''
@@ -46,7 +48,7 @@ from samples.ActivityStreamExperimentDashboard import ActivityStreamExperimentDa
 '''
     "Metadata Long Cache",
     "exp-015-metadatalongcache",
-    ['1.8.0'],
+    ['1.8.0', '1.9.0'],
     "04/06/17"
 '''
 '''
@@ -54,6 +56,24 @@ from samples.ActivityStreamExperimentDashboard import ActivityStreamExperimentDa
     "exp-014-screenshotsasync",
     ['1.8.0'],
     "04/06/17"
+'''
+'''
+    "Pocket",
+    "exp-021-pocketstories",
+    ['1.10.1'],
+    "05/02/17"
+'''
+'''
+    "Metadata No Service",
+    "exp-018-metadata-no-service",
+    ['1.10.0', '1.10.1'],
+    "05/01/17"
+'''
+'''
+    "Metadata Local Refresh",
+    "exp-019-metadata-local-refresh",
+    ['1.10.0', '1.10.1'],
+    "05/01/17"
 '''
 
 if __name__ == '__main__':
@@ -62,10 +82,10 @@ if __name__ == '__main__':
 
   dash = ActivityStreamExperimentDashboard(
     redash_client,
-    "Screenshots Long Cache",
-    "exp-014-screenshotsasync",
-    ['1.8.0'],
-    "04/06/17"
+    "Pocket",
+    "exp-021-pocketstories",
+    ['1.10.1', '1.11.0'],
+    "05/02/17"
   )
 
   #dash.add_retention_diff()
@@ -73,6 +93,6 @@ if __name__ == '__main__':
   dash.add_event_graphs(dash.MASGA_EVENTS, events_table="activity_stream_masga")
   dash.add_events_per_user(dash.DEFAULT_EVENTS)
   #dash.add_disable_graph()
-  dash.add_ttable()
+  #dash.add_ttable()
   dash.update_refresh_schedule(86400)
   #dash.remove_all_graphs()

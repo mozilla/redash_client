@@ -6,7 +6,7 @@ import statistics
 
 from src.templates import event_rate
 from src.tests.base import AppTest
-from samples.ActivityStreamExperimentDashboard import (
+from dashboards.ActivityStreamExperimentDashboard import (
     ActivityStreamExperimentDashboard)
 
 
