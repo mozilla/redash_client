@@ -185,6 +185,28 @@ class TestActivityStreamExperimentDashboard(AppTest):
     self.assertEqual(self.mock_requests_get.call_count, 3)
     self.assertEqual(self.mock_requests_delete.call_count, 0)
 
+  def test_disable_graph_exist_makes_no_request(self):
+    WIDGETS_RESPONSE = {
+        "widgets": [[{
+            "visualization": {
+                "query": {
+                    "name": self.dash.DISABLE_TITLE,
+                },
+            },
+        }]]
+    }
+
+    self.mock_requests_get.return_value = self.get_mock_response(
+        content=json.dumps(WIDGETS_RESPONSE))
+
+    self.dash.add_disable_graph()
+
+    # Only 1 each for post and get to set up the dashboard
+    # Then one get for looking up chart names
+    self.assertEqual(self.mock_requests_post.call_count, 1)
+    self.assertEqual(self.mock_requests_get.call_count, 2)
+    self.assertEqual(self.mock_requests_delete.call_count, 0)
+
   def test_add_retention_diff_makes_correct_calls(self):
     self.server_calls = 0
 
@@ -205,6 +227,28 @@ class TestActivityStreamExperimentDashboard(AppTest):
     #     5) Append visualization to dashboard
     self.assertEqual(self.mock_requests_post.call_count, 5)
     self.assertEqual(self.mock_requests_get.call_count, 3)
+    self.assertEqual(self.mock_requests_delete.call_count, 0)
+
+  def test_retention_diff_graph_exist_makes_no_request(self):
+    WIDGETS_RESPONSE = {
+        "widgets": [[{
+            "visualization": {
+                "query": {
+                    "name": self.dash.RETENTION_DIFF_TITLE,
+                },
+            },
+        }]]
+    }
+
+    self.mock_requests_get.return_value = self.get_mock_response(
+        content=json.dumps(WIDGETS_RESPONSE))
+
+    self.dash.add_retention_diff()
+
+    # Only 1 each for post and get to set up the dashboard
+    # Then one get for looking up chart names
+    self.assertEqual(self.mock_requests_post.call_count, 1)
+    self.assertEqual(self.mock_requests_get.call_count, 2)
     self.assertEqual(self.mock_requests_delete.call_count, 0)
 
   def test_add_event_graphs_makes_correct_calls(self):
@@ -257,3 +301,25 @@ class TestActivityStreamExperimentDashboard(AppTest):
     self.assertEqual(self.mock_requests_delete.call_count, 0)
 
     mock_boto_transfer_patcher.stop()
+
+  def test_statistical_analysis_graph_exist_makes_no_request(self):
+    WIDGETS_RESPONSE = {
+        "widgets": [[{
+            "visualization": {
+                "query": {
+                    "name": self.dash.T_TABLE_TITLE,
+                },
+            },
+        }]]
+    }
+
+    self.mock_requests_get.return_value = self.get_mock_response(
+        content=json.dumps(WIDGETS_RESPONSE))
+
+    self.dash.add_ttable()
+
+    # Only 1 each for post and get to set up the dashboard
+    # Then one get for looking up chart names
+    self.assertEqual(self.mock_requests_post.call_count, 1)
+    self.assertEqual(self.mock_requests_get.call_count, 2)
+    self.assertEqual(self.mock_requests_delete.call_count, 0)

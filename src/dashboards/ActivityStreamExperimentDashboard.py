@@ -29,6 +29,8 @@ class ActivityStreamExperimentDashboard(SummaryDashboard):
   ALPHA_ERROR = 0.005
   URL_FETCHER_DATA_SOURCE_ID = 28
   DISABLE_TITLE = "Disable Rate"
+  RETENTION_DIFF_TITLE = "Daily Retention Difference (Experiment - Control)"
+  T_TABLE_TITLE = "Statistical Analysis"
 
   def __init__(self, redash_client, dash_name, exp_id,
                addon_versions, start_date=None, end_date=None):
@@ -155,15 +157,14 @@ class ActivityStreamExperimentDashboard(SummaryDashboard):
     )
 
   def add_retention_diff(self):
-    query_name = "Daily Retention Difference (Experiment - Control)"
-    if query_name in self.get_query_ids_and_names():
+    if self.RETENTION_DIFF_TITLE in self.get_query_ids_and_names():
       return
 
     query_string, fields = retention_diff(
         self._start_date, self._experiment_id, self._addon_versions)
 
     self._add_query_to_dashboard(
-        query_name,
+        self.RETENTION_DIFF_TITLE,
         query_string,
         self.TILES_DATA_SOURCE_ID,
         VizWidth.WIDE,
@@ -214,8 +215,7 @@ class ActivityStreamExperimentDashboard(SummaryDashboard):
 
   def add_ttable(self):
     # Don't add a table if it already exists
-    query_name = "Statistical Analysis"
-    if query_name in self.get_query_ids_and_names():
+    if self.T_TABLE_TITLE in self.get_query_ids_and_names():
       return
 
     values = {"columns": TTableSchema, "rows": []}
@@ -239,7 +239,7 @@ class ActivityStreamExperimentDashboard(SummaryDashboard):
 
     query_string = upload_as_json("experiments", self._experiment_id, values)
     query_id, table_id = self.redash.create_new_query(
-        query_name,
+        self.T_TABLE_TITLE,
         query_string,
         self.URL_FETCHER_DATA_SOURCE_ID,
         self.TTABLE_DESCRIPTION,
