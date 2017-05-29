@@ -1,7 +1,7 @@
 import os
 
 from src.redash_client import RedashClient
-from samples.ActivityStreamExperimentDashboard import ActivityStreamExperimentDashboard
+from src.dashboards.ActivityStreamExperimentDashboard import ActivityStreamExperimentDashboard
 
 '''
     "Deduped Combined Frecency",

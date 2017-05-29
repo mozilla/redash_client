@@ -1,12 +1,14 @@
 import math
 import statistics
 from scipy import stats
-
-from utils import upload_as_json
 import statsmodels.stats.power as smp
-from constants import VizType, ChartType, VizWidth, TTableSchema, TimeInterval
-from dashboards.SummaryDashboard import SummaryDashboard
-from templates import retention_diff, disable_rate, event_rate, event_per_user
+
+from src.utils import upload_as_json
+from src.constants import (
+    VizType, ChartType, VizWidth, TTableSchema, TimeInterval)
+from src.dashboards.SummaryDashboard import SummaryDashboard
+from src.templates import (
+    retention_diff, disable_rate, event_rate, event_per_user)
 
 
 class ActivityStreamExperimentDashboard(SummaryDashboard):

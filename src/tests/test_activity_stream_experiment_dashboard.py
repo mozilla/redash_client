@@ -6,7 +6,7 @@ import statistics
 
 from src.templates import event_rate
 from src.tests.base import AppTest
-from dashboards.ActivityStreamExperimentDashboard import (
+from src.dashboards.ActivityStreamExperimentDashboard import (
     ActivityStreamExperimentDashboard)
 
 
@@ -333,7 +333,7 @@ class TestActivityStreamExperimentDashboard(AppTest):
         }
     }
 
-    mock_boto_transfer_patcher = mock.patch("utils.transfer.upload_file")
+    mock_boto_transfer_patcher = mock.patch("src.utils.transfer.upload_file")
     mock_boto_transfer_patcher.start()
 
     self.server_calls = 0
@@ -361,7 +361,7 @@ class TestActivityStreamExperimentDashboard(AppTest):
     mock_boto_transfer_patcher.stop()
 
   def test_ttable_with_no_rows(self):
-    mock_boto_transfer_patcher = mock.patch("utils.transfer.upload_file")
+    mock_boto_transfer_patcher = mock.patch("src.utils.transfer.upload_file")
     mock_boto_transfer_patcher.start()
 
     self.server_calls = 0

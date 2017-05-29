@@ -1,7 +1,7 @@
 import os
 
-from constants import RetentionType
-from dashboards.SummaryDashboard import SummaryDashboard
+from src.constants import RetentionType
+from src.dashboards.SummaryDashboard import SummaryDashboard
 
 
 if __name__ == '__main__':

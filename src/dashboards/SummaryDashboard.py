@@ -1,7 +1,8 @@
 import time
 
-from templates import retention, all_events_weekly, active_users
-from constants import VizWidth, VizType, RetentionType, ChartType, TimeInterval
+from src.templates import retention, all_events_weekly, active_users
+from src.constants import (
+    VizWidth, VizType, RetentionType, ChartType, TimeInterval)
 
 
 class SummaryDashboard(object):
