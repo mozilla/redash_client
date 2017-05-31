@@ -69,10 +69,13 @@ class SummaryDashboard(object):
       widget_id = widget.get(
           "visualization", {}).get("query", {}).get("id", None)
 
+      widget_query = widget.get(
+          "visualization", {}).get("query", {}).get("query", None)
+
       if not widget_name:
         continue
 
-      data[widget_name] = widget_id
+      data[widget_name] = {"id": widget_id, "query": widget_query}
 
     return data
 

@@ -124,6 +124,28 @@ class TestActivityStreamExperimentDashboard(AppTest):
 
     self.assertEqual(ttable_row, {})
 
+  def test_ttable_not_made_for_non_matching_graph(self):
+    BAD_ROW = [{
+        "some_weird_row": "beep",
+        "event_rate": 5
+    }]
+
+    QUERY_RESULTS_RESPONSE = {
+        "query_result": {
+            "data": {
+                "rows": BAD_ROW
+            }
+        }
+    }
+
+    self.mock_requests_post.return_value = self.get_mock_response(
+        content=json.dumps(QUERY_RESULTS_RESPONSE))
+
+    ttable_row = self.dash._get_ttable_data_for_query(
+        "beep", "meep", "event_rate")
+
+    self.assertEqual(len(ttable_row), 0)
+
   def test_ttable_row_data_is_correct(self):
     EXPECTED_LABEL = "beep"
     EXPECTED_ROWS = []
@@ -311,6 +333,16 @@ class TestActivityStreamExperimentDashboard(AppTest):
     self.assertEqual(self.mock_requests_delete.call_count, 0)
 
   def test_add_ttable_makes_correct_calls(self):
+    WIDGETS_RESPONSE = {
+        "widgets": [[{
+            "visualization": {
+                "query": {
+                    "name": "Some table",
+                },
+            },
+        }]]
+    }
+
     EXPECTED_ROWS = [{
         "event_rate": 123,
         "type": "experiment",
@@ -338,7 +370,8 @@ class TestActivityStreamExperimentDashboard(AppTest):
 
     self.server_calls = 0
 
-    self.mock_requests_get.return_value = self.get_mock_response()
+    self.mock_requests_get.return_value = self.get_mock_response(
+        content=json.dumps(WIDGETS_RESPONSE))
     self.mock_requests_post.return_value = self.get_mock_response(
         content=json.dumps(QUERY_RESULTS_RESPONSE))
 
@@ -347,26 +380,37 @@ class TestActivityStreamExperimentDashboard(AppTest):
     # GET calls:
     #     1) Create dashboard
     #     2) Get dashboard widgets
-    #     3) Get table ID
     # POST calls:
     #     1) Create dashboard
-    #     2) Create query
-    #     3) Refresh query
+    #     2) Get Ttable data for 1 row
+    #     3) Create query
     #     4) Append visualization to dashboard
-    #     5) Get T-Table data for 19 rows
-    self.assertEqual(self.mock_requests_post.call_count, 23)
+    self.assertEqual(self.mock_requests_post.call_count, 4)
     self.assertEqual(self.mock_requests_get.call_count, 2)
     self.assertEqual(self.mock_requests_delete.call_count, 0)
 
     mock_boto_transfer_patcher.stop()
 
   def test_ttable_with_no_rows(self):
-    mock_boto_transfer_patcher = mock.patch("src.utils.transfer.upload_file")
-    mock_boto_transfer_patcher.start()
+    WIDGETS_RESPONSE = {
+        "widgets": [[{
+            "visualization": {
+                "query": {
+                    "name": "Some Graph",
+                },
+            },
+        }]]
+    }
+
+    mock_json_uploader = mock.patch(
+        "src.dashboards.ActivityStreamExperimentDashboard.upload_as_json")
+    upload_file_patch = mock_json_uploader.start()
+    upload_file_patch.return_value = ""
 
     self.server_calls = 0
 
-    self.mock_requests_get.return_value = self.get_mock_response()
+    self.mock_requests_get.return_value = self.get_mock_response(
+        content=json.dumps(WIDGETS_RESPONSE))
     self.mock_requests_post.side_effect = self.post_server
 
     self.dash.add_ttable()
@@ -377,15 +421,17 @@ class TestActivityStreamExperimentDashboard(AppTest):
     #     3) Get table ID
     # POST calls:
     #     1) Create dashboard
-    #     2) Create query
-    #     3) Refresh query
-    #     4) Append visualization to dashboard
-    #     5) Get T-Table data for 20 rows
-    self.assertEqual(self.mock_requests_post.call_count, 24)
-    self.assertEqual(self.mock_requests_get.call_count, 3)
+    #     3) Append visualization to dashboard
+    #     4) Get T-Table data for 1 row
+    self.assertEqual(self.mock_requests_post.call_count, 4)
+    self.assertEqual(self.mock_requests_get.call_count, 2)
     self.assertEqual(self.mock_requests_delete.call_count, 0)
 
-    mock_boto_transfer_patcher.stop()
+    # The ttable has no rows
+    args, kwargs = upload_file_patch.call_args
+    self.assertEqual(len(args[2]["rows"]), 0)
+
+    mock_json_uploader.stop()
 
   def test_statistical_analysis_graph_exist_makes_no_request(self):
     WIDGETS_RESPONSE = {

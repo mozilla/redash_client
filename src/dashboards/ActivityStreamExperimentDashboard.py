@@ -118,16 +118,18 @@ class ActivityStreamExperimentDashboard(SummaryDashboard):
     data = self.redash.get_query_results(
         query_string, self.TILES_DATA_SOURCE_ID)
 
-    if data is None or len(data) == 0:
+    if data is None or len(data) == 0 or (column_name not in data[0]):
       return {}
 
     control_vals = []
     exp_vals = []
     for row in data:
-      if row["type"] == "experiment":
+      if "type" in row and row["type"] == "experiment":
         exp_vals.append(row[column_name])
-      else:
+      elif "type" in row and row["type"] == "control":
         control_vals.append(row[column_name])
+      else:
+        return {}
 
     power, p_val, mean_diff = self._power_and_ttest(control_vals, exp_vals)
     return {
@@ -191,7 +193,7 @@ class ActivityStreamExperimentDashboard(SummaryDashboard):
       # Update graphs if they already exist.
       if query_name in chart_data:
         self.redash.update_query(
-            chart_data[query_name],
+            chart_data[query_name]["id"],
             query_name,
             query_string,
             self.TILES_DATA_SOURCE_ID,
@@ -217,27 +219,22 @@ class ActivityStreamExperimentDashboard(SummaryDashboard):
 
   def add_ttable(self):
     # Don't add a table if it already exists
-    if self.T_TABLE_TITLE in self.get_query_ids_and_names():
+    widgets = self.get_query_ids_and_names()
+    if self.T_TABLE_TITLE in widgets:
       return
 
     values = {"columns": TTableSchema, "rows": []}
 
     # Create the t-table
-    for event in self.DEFAULT_EVENTS + self.MASGA_EVENTS:
-      table = self._events_table
-      if event in self.MASGA_EVENTS:
-        table = "activity_stream_masga"
+    for widget_name in widgets:
+      query_string = widgets[widget_name]["query"]
+      ttable_row = self._get_ttable_data_for_query(
+          widget_name, query_string, "event_rate")
 
-      for event_query in [event_rate, event_per_user]:
-        event_query_name, query_string, fields = self._get_event_query_data(
-            event, event_query, table)
-        ttable_row = self._get_ttable_data_for_query(
-            event_query_name, query_string, "event_rate")
-
-        if len(ttable_row) == 0:
+      if len(ttable_row) == 0:
           continue
 
-        values["rows"].append(ttable_row)
+      values["rows"].append(ttable_row)
 
     query_string = upload_as_json("experiments", self._experiment_id, values)
     query_id, table_id = self.redash.create_new_query(

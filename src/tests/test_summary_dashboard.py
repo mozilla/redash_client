@@ -79,7 +79,7 @@ class TestSummaryDashboard(AppTest):
     self.assertEqual(len(data_dict), 2)
     for name in data_dict:
       self.assertTrue(name in EXPECTED_NAMES)
-      self.assertTrue(data_dict[name] in EXPECTED_IDS)
+      self.assertTrue(data_dict[name]["id"] in EXPECTED_IDS)
 
   def test_remove_all_graphs_success(self):
     EXPECTED_QUERY_ID = "query_id123"
