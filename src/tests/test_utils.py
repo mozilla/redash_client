@@ -31,7 +31,7 @@ class TestUtils(AppTest):
     mock_transfer = mock_boto_transfer_patcher.start()
     mock_transfer.return_value = "fail"
 
-    json_result = read_experiment_definition()
+    json_result = read_experiment_definition("beep")
 
     self.assertEqual(json_result, {})
 
@@ -51,7 +51,7 @@ class TestUtils(AppTest):
 
     mock_download.return_value = {"Body": file_handle}
 
-    json_result = read_experiment_definition()
+    json_result = read_experiment_definition("boop")
 
     self.assertEqual(json_result, json.loads(EXPECTED_JSON))
 

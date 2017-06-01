@@ -22,12 +22,11 @@ def upload_as_json(directory_name, filename, data):
   return "https://analysis-output.telemetry.mozilla.org/" + s3_key
 
 
-def read_experiment_definition():
+def read_experiment_definition(filename):
   DIRECTORY_NAME = "experiments/json_definitions"
-  FILENAME = "experiments.json"
 
   path = "activity-stream/" + DIRECTORY_NAME + "/"
-  s3_key = path + FILENAME
+  s3_key = path + filename
 
   obj = s3.get_object(Bucket="telemetry-public-analysis-2", Key=s3_key)
 
