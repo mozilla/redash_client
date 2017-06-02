@@ -4,7 +4,7 @@ import tempfile
 
 from src.tests.base import AppTest
 from src.constants import TTableSchema
-from src.utils import upload_as_json, read_experiment_definition
+from src.utils import upload_as_json, read_experiment_definition, format_date
 
 
 class TestUtils(AppTest):
@@ -57,3 +57,10 @@ class TestUtils(AppTest):
 
     mock_boto_download_patcher.stop()
     file_handle.close()
+
+  def test_date_format(self):
+    MS_DATE = 1493611201000.0
+    EXPECTED_FORMAT = '05/01/17'
+    formatted_date = format_date(MS_DATE)
+
+    self.assertEqual(formatted_date, EXPECTED_FORMAT)

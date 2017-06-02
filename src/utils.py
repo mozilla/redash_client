@@ -1,6 +1,8 @@
 import json
 import boto3
 from boto3.s3.transfer import S3Transfer
+from datetime import datetime
+
 
 BUCKET = "telemetry-public-analysis-2"
 client = boto3.client('s3', 'us-west-2')
@@ -35,3 +37,9 @@ def read_experiment_definition(filename):
     return json.loads(experiments_string)
   except:
     return {}
+
+
+def format_date(date):
+  date_epoch = datetime.fromtimestamp(date / 1000.0)
+  date = date_epoch.strftime("%m/%d/%y")
+  return date
