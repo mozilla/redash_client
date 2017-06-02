@@ -53,7 +53,10 @@ class RedashClient(object):
       request_function = requests.post
 
     try:
-      response = request_function(url, args)
+      if request_function == requests.delete:
+        response = request_function(url)
+      else:
+        response = request_function(url, args)
     except requests.RequestException as e:
       raise self.RedashClientException(
           ("Unable to communicate with redash: {error}").format(error=e), e)
