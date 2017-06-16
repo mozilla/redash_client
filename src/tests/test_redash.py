@@ -348,7 +348,8 @@ class TestRedashClient(AppTest):
         description="",
     )
 
-    self.assertEqual(self.mock_requests_post.call_count, 1)
+    # One call to update query, one call to refresh it
+    self.assertEqual(self.mock_requests_post.call_count, 2)
     self.assertEqual(self.mock_requests_get.call_count, 0)
     self.assertEqual(self.mock_requests_delete.call_count, 0)
 

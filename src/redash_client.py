@@ -104,6 +104,13 @@ class RedashClient(object):
 
     return table_id
 
+  def _refresh_graph(self, query_id):
+    # Refresh our new query so it becomes available
+    url_path = "queries/{0}/refresh?{1}".format(
+        str(query_id), self._url_params)
+    query_url = urljoin(self.BASE_URL, url_path)
+    self._make_request(requests.post, query_url)
+
   def create_new_query(self, name, sql_query,
                        data_source_id, description=None):
     query_id = self._get_new_query_id(
@@ -114,12 +121,7 @@ class RedashClient(object):
       return None, None
 
     table_id = self._get_table_id(query_id)
-
-    # Refresh our new query so it becomes available
-    url_path = "queries/{0}/refresh?{1}".format(
-        str(query_id), self._url_params)
-    query_url = urljoin(self.BASE_URL, url_path)
-    self._make_request(requests.post, query_url)
+    self._refresh_graph(query_id)
 
     return query_id, table_id
 
@@ -271,6 +273,7 @@ class RedashClient(object):
     })
 
     self._make_request(requests.post, query_url, update_query_args)
+    self._refresh_graph(query_id)
 
   def get_widget_from_dash(self, name):
     slug = self.get_slug(name)

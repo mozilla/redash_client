@@ -303,9 +303,9 @@ class TestActivityStreamExperimentDashboard(AppTest):
     #     4) Create visualization
     #     5) Append visualization to dashboard
     #     6) Repeat 2-5 six times
-    #     7) Do 1 graph update
-    self.assertEqual(self.mock_requests_post.call_count, 25)
-    self.assertEqual(self.mock_requests_get.call_count, 7)
+    #     7) Do 1 graph update (2 requests)
+    self.assertEqual(self.mock_requests_post.call_count, 27)
+    self.assertEqual(self.mock_requests_get.call_count, 8)
     self.assertEqual(self.mock_requests_delete.call_count, 0)
 
   def test_add_events_per_user(self):
