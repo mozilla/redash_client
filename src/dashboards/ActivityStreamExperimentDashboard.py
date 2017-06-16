@@ -1,4 +1,5 @@
 import math
+import logging
 import statistics
 from scipy import stats
 import statsmodels.stats.power as smp
@@ -42,12 +43,17 @@ class ActivityStreamExperimentDashboard(SummaryDashboard):
         "activity_stream_events_daily",
         start_date, end_date)
 
+    logging.basicConfig()
+    self._logger = logging.getLogger()
+    self._logger.setLevel(logging.INFO)
     self._experiment_id = exp_id
 
     addon_version_list = []
     for version in addon_versions:
       addon_version_list.append("'{}'".format(version))
     self._addon_versions = ", ".join(addon_version_list)
+    self._logger.info(
+        "ActivityStreamExperimentDashboard: Initialization Complete")
 
   def _compute_pooled_stddev(self, control_std, exp_std,
                              control_vals, exp_vals):
@@ -176,22 +182,31 @@ class ActivityStreamExperimentDashboard(SummaryDashboard):
         time_interval=TimeInterval.DAILY,
     )
 
-  def add_event_graphs(self, events_list,
+  def add_event_graphs(self, events_list, graph_description="",
                        event_query=event_rate, events_table=None):
+    self._logger.info(("ActivityStreamExperimentDashboard: "
+                       "Adding event graphs with query: "
+                       "{query}:".format(query=event_query.__name__)))
     if events_list is None or len(events_list) == 0:
       events_list = self.DEFAULT_EVENTS
 
     chart_data = self.get_query_ids_and_names()
     for event in events_list:
-      GRAPH_DESCRIPTION = (
-          "Percent of sessions with at least "
-          "one occurance of {0}").format(event)
+      GRAPH_DESCRIPTION = graph_description
+      if not GRAPH_DESCRIPTION:
+        GRAPH_DESCRIPTION = (
+            "Percent of sessions with at least "
+            "one occurance of {0}")
+      GRAPH_DESCRIPTION = GRAPH_DESCRIPTION.format(event)
 
       query_name, query_string, fields = self._get_event_query_data(
           event, event_query, events_table)
 
       # Update graphs if they already exist.
       if query_name in chart_data:
+        self._logger.info(("ActivityStreamExperimentDashboard: "
+                           "{event} event graph exists and is being updated:"
+                           .format(event=event)))
         self.redash.update_query(
             chart_data[query_name]["id"],
             query_name,
@@ -203,6 +218,9 @@ class ActivityStreamExperimentDashboard(SummaryDashboard):
 
       mapping = {fields[0]: "x", fields[1]: "y", fields[2]: "series"}
 
+      self._logger.info(("ActivityStreamExperimentDashboard: "
+                         "{event} event graph is being added:"
+                         .format(event=event)))
       self._add_query_to_dashboard(
           query_name,
           query_string,
@@ -215,9 +233,12 @@ class ActivityStreamExperimentDashboard(SummaryDashboard):
       )
 
   def add_events_per_user(self, events_list, events_table=None):
-    self.add_event_graphs(events_list, event_per_user)
+    GRAPH_DESCRIPTION = ("Average number of {0} events per person per day")
+    self.add_event_graphs(events_list, GRAPH_DESCRIPTION, event_per_user)
 
   def add_ttable(self):
+    self._logger.info(
+        "ActivityStreamExperimentDashboard: Attempting to create a T-Table")
     # Don't add a table if it already exists
     widgets = self.get_query_ids_and_names()
     if self.T_TABLE_TITLE in widgets:
@@ -232,7 +253,11 @@ class ActivityStreamExperimentDashboard(SummaryDashboard):
           widget_name, query_string, "event_rate")
 
       if len(ttable_row) == 0:
-          continue
+        self._logger.info((
+            "ActivityStreamExperimentDashboard: "
+            "Widget '{name}' has no data and will not be "
+            "included in T-Table.".format(name=widget_name)))
+        continue
 
       values["rows"].append(ttable_row)
 
