@@ -99,20 +99,23 @@ class TestSummaryDashboard(AppTest):
             "id": EXPECTED_QUERY_ID,
             "visualization": {
                 "query": {
-                    "id": EXPECTED_QUERY_ID
+                    "id": EXPECTED_QUERY_ID,
+                    "name": "A"
                 }
             }}], [{
                 "id": EXPECTED_QUERY_ID2,
                 "visualization": {
                     "query": {
-                        "id": EXPECTED_QUERY_ID2
+                        "id": EXPECTED_QUERY_ID2,
+                        "name": "B"
                     }
                 }
             }, {
                 "id": EXPECTED_QUERY_ID3,
                 "visualization": {
                     "query": {
-                        "id": EXPECTED_QUERY_ID3
+                        "id": EXPECTED_QUERY_ID3,
+                        "name": "C"
                     }
                 }
             }

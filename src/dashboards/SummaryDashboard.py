@@ -86,15 +86,15 @@ class SummaryDashboard(object):
     return data
 
   def remove_all_graphs(self):
-    widgets = self.redash.get_widget_from_dash(self._dash_name)
+    widgets = self.get_query_ids_and_names()
 
-    for widget in widgets:
-      widget_id = widget.get("id", None)
+    for widget_name in widgets:
+      widget = widgets[widget_name]
+      widget_id = widget.get("widget_id", None)
       if widget_id is not None:
         self.redash.remove_visualization(widget_id)
 
-      query_id = widget.get(
-          "visualization", {}).get("query", {}).get("id", None)
+      query_id = widget.get("query_id", None)
       if query_id is not None:
         self.redash.delete_query(query_id)
 
