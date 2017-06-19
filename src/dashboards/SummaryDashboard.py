@@ -85,18 +85,22 @@ class SummaryDashboard(object):
 
     return data
 
+  def remove_graph_from_dashboard(self, widget_id, query_id):
+    if widget_id is not None:
+      self.redash.remove_visualization(widget_id)
+
+    if query_id is not None:
+      self.redash.delete_query(query_id)
+
   def remove_all_graphs(self):
     widgets = self.get_query_ids_and_names()
 
     for widget_name in widgets:
       widget = widgets[widget_name]
       widget_id = widget.get("widget_id", None)
-      if widget_id is not None:
-        self.redash.remove_visualization(widget_id)
-
       query_id = widget.get("query_id", None)
-      if query_id is not None:
-        self.redash.delete_query(query_id)
+
+      self.remove_graph_from_dashboard(widget_id, query_id)
 
   def _get_mau_dau_column_mappings(self, query_fields):
     mau_dau_column_mapping = {
