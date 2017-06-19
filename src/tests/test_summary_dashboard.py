@@ -53,23 +53,30 @@ class TestSummaryDashboard(AppTest):
                     "name": EXPECTED_QUERY_NAME,
                     "id": 1
                 }
-            }}],
-            [{"visualization": {
-                "query": {
-                    "not_a_name": EXPECTED_QUERY_NAME2,
-                    "id": 2
-                }
-            }},
-            {"visualization": {
-                "query": {
-                    "name": EXPECTED_QUERY_NAME3,
-                    "id": 3
-                }
-            }}
+            },
+            "id": 4}],
+            [{
+                "visualization": {
+                    "query": {
+                        "not_a_name": EXPECTED_QUERY_NAME2,
+                        "id": 2
+                    }
+                },
+                "id": 5
+            }, {
+                "visualization": {
+                    "query": {
+                        "name": EXPECTED_QUERY_NAME3,
+                        "id": 3
+                    }
+                },
+                "id": 6
+            }
         ]]
     }
     EXPECTED_NAMES = [EXPECTED_QUERY_NAME, EXPECTED_QUERY_NAME3]
-    EXPECTED_IDS = [1, 3]
+    EXPECTED_QUERY_IDS = [1, 3]
+    EXPECTED_WIDGET_IDS = [4, 6]
 
     self.mock_requests_get.return_value = self.get_mock_response(
         content=json.dumps(WIDGETS_RESPONSE))
@@ -78,8 +85,10 @@ class TestSummaryDashboard(AppTest):
 
     self.assertEqual(len(data_dict), 2)
     for name in data_dict:
+      self.assertEqual(len(data_dict[name]), 3)
       self.assertTrue(name in EXPECTED_NAMES)
-      self.assertTrue(data_dict[name]["id"] in EXPECTED_IDS)
+      self.assertTrue(data_dict[name]["query_id"] in EXPECTED_QUERY_IDS)
+      self.assertTrue(data_dict[name]["widget_id"] in EXPECTED_WIDGET_IDS)
 
   def test_remove_all_graphs_success(self):
     EXPECTED_QUERY_ID = "query_id123"

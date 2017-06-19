@@ -63,11 +63,13 @@ class SummaryDashboard(object):
 
     data = {}
     for widget in widgets:
+      widget_id = widget.get("id", None)
+
+      query_id = widget.get(
+          "visualization", {}).get("query", {}).get("id", None)
+
       widget_name = widget.get(
           "visualization", {}).get("query", {}).get("name", None)
-
-      widget_id = widget.get(
-          "visualization", {}).get("query", {}).get("id", None)
 
       widget_query = widget.get(
           "visualization", {}).get("query", {}).get("query", None)
@@ -75,7 +77,11 @@ class SummaryDashboard(object):
       if not widget_name:
         continue
 
-      data[widget_name] = {"id": widget_id, "query": widget_query}
+      data[widget_name] = {
+          "query_id": query_id,
+          "widget_id": widget_id,
+          "query": widget_query,
+      }
 
     return data
 

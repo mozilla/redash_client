@@ -208,7 +208,7 @@ class ActivityStreamExperimentDashboard(SummaryDashboard):
                            "{event} event graph exists and is being updated:"
                            .format(event=event)))
         self.redash.update_query(
-            chart_data[query_name]["id"],
+            chart_data[query_name]["query_id"],
             query_name,
             query_string,
             self.TILES_DATA_SOURCE_ID,
@@ -239,6 +239,7 @@ class ActivityStreamExperimentDashboard(SummaryDashboard):
   def add_ttable(self):
     self._logger.info(
         "ActivityStreamExperimentDashboard: Attempting to create a T-Table")
+
     # Don't add a table if it already exists
     widgets = self.get_query_ids_and_names()
     if self.T_TABLE_TITLE in widgets:
