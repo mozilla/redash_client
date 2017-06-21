@@ -238,12 +238,17 @@ class ActivityStreamExperimentDashboard(SummaryDashboard):
 
   def add_ttable(self):
     self._logger.info(
-        "ActivityStreamExperimentDashboard: Attempting to create a T-Table")
+        "ActivityStreamExperimentDashboard: Creating a T-Table")
 
-    # Don't add a table if it already exists
+    # Remove a table if it already exists
     widgets = self.get_query_ids_and_names()
     if self.T_TABLE_TITLE in widgets:
-      return
+      self._logger.info((
+          "ActivityStreamExperimentDashboard: "
+          "Stale T-Table exists and will be removed"))
+      query_id = widgets[self.T_TABLE_TITLE]["query_id"]
+      widget_id = widgets[self.T_TABLE_TITLE]["widget_id"]
+      self.remove_graph_from_dashboard(widget_id, query_id)
 
     values = {"columns": TTableSchema, "rows": []}
 
@@ -256,7 +261,7 @@ class ActivityStreamExperimentDashboard(SummaryDashboard):
       if len(ttable_row) == 0:
         self._logger.info((
             "ActivityStreamExperimentDashboard: "
-            "Widget '{name}' has no data and will not be "
+            "Widget '{name}' has no relevant data and will not be "
             "included in T-Table.".format(name=widget_name)))
         continue
 

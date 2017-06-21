@@ -418,11 +418,10 @@ class TestActivityStreamExperimentDashboard(AppTest):
     # GET calls:
     #     1) Create dashboard
     #     2) Get dashboard widgets
-    #     3) Get table ID
     # POST calls:
     #     1) Create dashboard
+    #     2) Create new query (Create + Refresh)
     #     3) Append visualization to dashboard
-    #     4) Get T-Table data for 1 row
     self.assertEqual(self.mock_requests_post.call_count, 4)
     self.assertEqual(self.mock_requests_get.call_count, 2)
     self.assertEqual(self.mock_requests_delete.call_count, 0)
@@ -433,24 +432,39 @@ class TestActivityStreamExperimentDashboard(AppTest):
 
     mock_json_uploader.stop()
 
-  def test_statistical_analysis_graph_exist_makes_no_request(self):
+  def test_statistical_analysis_graph_exist_deletes_and_creates_new(self):
     WIDGETS_RESPONSE = {
         "widgets": [[{
+            "id": "123",
             "visualization": {
                 "query": {
                     "name": self.dash.T_TABLE_TITLE,
+                    "id": "abc"
                 },
             },
         }]]
     }
 
+    mock_json_uploader = mock.patch(
+        "src.dashboards.ActivityStreamExperimentDashboard.upload_as_json")
+    upload_file_patch = mock_json_uploader.start()
+    upload_file_patch.return_value = ""
+
+    self.mock_requests_delete.return_value = self.get_mock_response()
     self.mock_requests_get.return_value = self.get_mock_response(
         content=json.dumps(WIDGETS_RESPONSE))
 
     self.dash.add_ttable()
 
-    # Only 1 each for post and get to set up the dashboard
-    # Then one get for looking up chart names
-    self.assertEqual(self.mock_requests_post.call_count, 1)
+    # GET calls:
+    #     1) Create dashboard
+    #     2) Get dashboard widgets
+    # POST calls:
+    #     1) Create dashboard
+    #     2) Create new query (Create + Refresh)
+    #     3) Append visualization to dashboard
+    self.assertEqual(self.mock_requests_post.call_count, 4)
     self.assertEqual(self.mock_requests_get.call_count, 2)
-    self.assertEqual(self.mock_requests_delete.call_count, 0)
+    self.assertEqual(self.mock_requests_delete.call_count, 2)
+
+    mock_json_uploader.stop()
