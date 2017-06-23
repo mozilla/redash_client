@@ -1,3 +1,6 @@
+build:
+	./lambda.sh
+
 lint:
 	flake8 src/constants.py
 	flake8 src/redash_client.py
