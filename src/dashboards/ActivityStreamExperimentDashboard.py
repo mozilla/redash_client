@@ -1,5 +1,6 @@
 import math
 import logging
+
 import statistics
 from scipy import stats
 import statsmodels.stats.power as smp
@@ -52,8 +53,9 @@ class ActivityStreamExperimentDashboard(SummaryDashboard):
     for version in addon_versions:
       addon_version_list.append("'{}'".format(version))
     self._addon_versions = ", ".join(addon_version_list)
-    self._logger.info(
-        "ActivityStreamExperimentDashboard: Initialization Complete")
+    self._logger.info((
+        "ActivityStreamExperimentDashboard: {name} "
+        "Initialization Complete".format(name=dash_name)))
 
   def _compute_pooled_stddev(self, control_std, exp_std,
                              control_vals, exp_vals):

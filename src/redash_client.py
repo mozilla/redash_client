@@ -1,7 +1,9 @@
 import json
 import time
+import logging
 import requests
 from slugify import slugify
+
 from urlparse import urljoin
 from urllib import urlencode
 
@@ -18,6 +20,10 @@ class RedashClient(object):
   def __init__(self, api_key):
     self._api_key = api_key
     self._url_params = urlencode({"api_key": self._api_key})
+
+    logging.basicConfig()
+    self._logger = logging.getLogger()
+    self._logger.setLevel(logging.INFO)
 
   def get_slug(self, name):
     return slugify(name)
@@ -202,10 +208,16 @@ class RedashClient(object):
 
     try:
       json_result, response = self._make_request(
-          requests.get, query_url, new_dashboard_args)
+          requests.get, query_url)
+      self._logger.info((
+          "RedashClient: Dashboard {name} exists and has "
+          "been fetched").format(name=name))
     except self.RedashClientException as ex:
       server_error_code = ex.args[1]
       if server_error_code == 404:
+        self._logger.info((
+            "RedashClient: Dashboard {name} does not exist. "
+            "Creating a new one.").format(name=name))
         url_path = "dashboards?{0}".format(self._url_params)
         query_url = urljoin(self.BASE_URL, url_path)
 
