@@ -59,7 +59,7 @@ class RedashClient(object):
       request_function = requests.post
 
     try:
-      if request_function == requests.delete:
+      if request_function != requests.post:
         response = request_function(url)
       else:
         response = request_function(url, args)
