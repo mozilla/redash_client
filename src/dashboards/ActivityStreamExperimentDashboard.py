@@ -77,17 +77,18 @@ class ActivityStreamExperimentDashboard(SummaryDashboard):
     exp_mean = statistics.mean(exp_vals)
     exp_std = statistics.stdev(exp_vals)
 
-    percent_diff = abs(control_mean - exp_mean) / control_mean
-
     pooled_stddev = self._compute_pooled_stddev(
         control_std, exp_std, control_vals, exp_vals)
 
-    effect_size = (percent_diff * float(control_mean)) / float(pooled_stddev)
-    power = smp.TTestIndPower().solve_power(
-        effect_size,
-        nobs1=len(control_vals),
-        ratio=len(exp_vals) / float(len(control_vals)),
-        alpha=self.ALPHA_ERROR, alternative='two-sided')
+    power = 0
+    if control_mean != 0 and pooled_stddev != 0:
+      percent_diff = abs(control_mean - exp_mean) / control_mean
+      effect_size = (percent_diff * float(control_mean)) / float(pooled_stddev)
+      power = smp.TTestIndPower().solve_power(
+          effect_size,
+          nobs1=len(control_vals),
+          ratio=len(exp_vals) / float(len(control_vals)),
+          alpha=self.ALPHA_ERROR, alternative='two-sided')
 
     ttest_result = stats.ttest_ind(control_vals, exp_vals, equal_var=False)
     p_val = None if len(ttest_result) < 2 else ttest_result[1]

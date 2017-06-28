@@ -125,10 +125,12 @@ class TestActivityStreamExperimentDashboard(AppTest):
     self.assertEqual(ttable_row, {})
 
   def test_ttable_not_made_for_non_matching_graph(self):
-    BAD_ROW = [{
-        "some_weird_row": "beep",
-        "event_rate": 5
-    }]
+    BAD_ROW = []
+    for i in xrange(5):
+        BAD_ROW.append({
+            "some_weird_row": "beep",
+            "event_rate": 5
+        })
 
     QUERY_RESULTS_RESPONSE = {
         "query_result": {
