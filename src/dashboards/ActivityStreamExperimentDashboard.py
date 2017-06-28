@@ -127,7 +127,7 @@ class ActivityStreamExperimentDashboard(SummaryDashboard):
     data = self.redash.get_query_results(
         query_string, self.TILES_DATA_SOURCE_ID)
 
-    if data is None or len(data) == 0 or (column_name not in data[0]):
+    if data is None or len(data) <= 3 or (column_name not in data[0]):
       return {}
 
     control_vals = []
