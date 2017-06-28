@@ -16,11 +16,12 @@ def upload_as_json(directory_name, filename, data):
   s3_key = path + filename
 
   json_data = json.dumps(data)
-  with open(filename, 'w') as f:
+  file_path = "/tmp/{filename}".format(filename=filename)
+  with open(file_path, 'w') as f:
     f.write(json_data)
 
   transfer.upload_file(
-      filename, BUCKET, s3_key, extra_args={"ContentType": "application/json"})
+      file_path, BUCKET, s3_key, extra_args={"ContentType": "application/json"})
 
   return "https://analysis-output.telemetry.mozilla.org/" + s3_key
 

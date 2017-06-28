@@ -9,12 +9,11 @@ DIRECTORY_NAME = "experiments/json_definitions"
 FILENAME = "experiments2.json"
 
 
-def handler():
+def handler(json_input, context):
   api_key = os.environ["REDASH_API_KEY"]
   redash_client = RedashClient(api_key)
 
   experiments = read_experiment_definition(FILENAME)
-  print experiments
   for experiment in experiments:
     dash = ActivityStreamExperimentDashboard(
         redash_client,
@@ -22,6 +21,7 @@ def handler():
         experiment["variant"]["experiment_variant_slug"],
         experiment["addon_versions"],
         format_date(experiment["start_date"]),
+        format_date(experiment["end_date"]),
     )
 
     dash.add_event_graphs(dash.DEFAULT_EVENTS)
