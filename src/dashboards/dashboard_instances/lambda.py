@@ -20,7 +20,7 @@ def handler(json_input, context):
     dash = ActivityStreamExperimentDashboard(
         redash_client,
         experiment["name"],
-        experiment["variant"]["experiment_variant_slug"],
+        experiment["slug"],
         experiment["addon_versions"],
         format_date(experiment["start_date"]),
         format_date(experiment["end_date"]),
