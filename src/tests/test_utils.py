@@ -59,7 +59,7 @@ class TestUtils(AppTest):
     file_handle.close()
 
   def test_date_format(self):
-    MS_DATE = 1493611201000.0
+    MS_DATE = 1493671545000.0
     EXPECTED_FORMAT = '05/01/17'
     formatted_date = format_date(MS_DATE)
 
