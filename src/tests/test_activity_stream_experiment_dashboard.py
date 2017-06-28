@@ -15,7 +15,6 @@ class TestActivityStreamExperimentDashboard(AppTest):
   ADDON_VERSIONS = ["1.8.0", "1.9.0"]
   START_DATE = "02/17/2017"
   END_DATE = time.strftime("%m/%d/%y")
-  DASH_PREFIX = "Activity Stream A/B Testing: {0}"
   DASH_NAME = "Screenshots Long Cache"
   EXPERIMENT_ID = "exp-014-screenshotsasync"
 
@@ -35,7 +34,8 @@ class TestActivityStreamExperimentDashboard(AppTest):
   def test_correct_values_at_initialization(self):
     self.assertEqual(self.dash._experiment_id, self.EXPERIMENT_ID)
     self.assertEqual(
-        self.dash._dash_name, self.DASH_PREFIX.format(self.DASH_NAME))
+        self.dash._dash_name,
+        self.dash.DASH_PREFIX.format(name=self.DASH_NAME))
     self.assertEqual(self.dash._start_date, self.START_DATE)
     self.assertEqual(self.dash._end_date, self.END_DATE)
     self.assertEqual(self.dash._addon_versions, "'1.8.0', '1.9.0'")
