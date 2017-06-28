@@ -1,9 +1,9 @@
 import json
 import boto3
+import urllib
 from boto3.s3.transfer import S3Transfer
 
 from datetime import datetime
-
 
 BUCKET = "telemetry-public-analysis-2"
 client = boto3.client('s3', 'us-west-2')
@@ -29,7 +29,15 @@ def upload_as_json(directory_name, filename, data):
   return "https://analysis-output.telemetry.mozilla.org/" + s3_key
 
 
-def read_experiment_definition(filename):
+def read_experiment_definition(url):
+  try:
+    response = urllib.urlopen(url)
+    return json.loads(response.read())
+  except:
+    return {}
+
+
+def read_experiment_definition_s3(filename):
   DIRECTORY_NAME = "experiments/json_definitions"
 
   path = "activity-stream/" + DIRECTORY_NAME + "/"

@@ -6,14 +6,16 @@ from src.dashboards.ActivityStreamExperimentDashboard import (
     ActivityStreamExperimentDashboard)
 
 DIRECTORY_NAME = "experiments/json_definitions"
-FILENAME = "experiments2.json"
+URL = (
+    "https://experimenter.dev.mozaws.net/api/v1/"
+    "activity-stream/experiments.json?format=json")
 
 
 def handler(json_input, context):
   api_key = os.environ["REDASH_API_KEY"]
   redash_client = RedashClient(api_key)
 
-  experiments = read_experiment_definition(FILENAME)
+  experiments = read_experiment_definition(URL)
   for experiment in experiments:
     dash = ActivityStreamExperimentDashboard(
         redash_client,

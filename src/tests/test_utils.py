@@ -4,7 +4,9 @@ import tempfile
 
 from src.tests.base import AppTest
 from src.constants import TTableSchema
-from src.utils import upload_as_json, read_experiment_definition, format_date
+from src.utils import (
+    upload_as_json, read_experiment_definition,
+    read_experiment_definition_s3, format_date)
 
 
 class TestUtils(AppTest):
@@ -26,8 +28,19 @@ class TestUtils(AppTest):
 
     mock_boto_transfer_patcher.stop()
 
-  def test_download_experiment_definition_non_json_return_val(self):
+  def test_download_experiment_definition_json_non_json_return_val(self):
     mock_boto_transfer_patcher = mock.patch("src.utils.s3.get_object")
+    mock_transfer = mock_boto_transfer_patcher.start()
+    mock_transfer.return_value = "fail"
+
+    json_result = read_experiment_definition_s3("beep")
+
+    self.assertEqual(json_result, {})
+
+    mock_boto_transfer_patcher.stop()
+
+  def test_download_experiment_definition_non_json_return_val(self):
+    mock_boto_transfer_patcher = mock.patch("src.utils.urllib.urlopen")
     mock_transfer = mock_boto_transfer_patcher.start()
     mock_transfer.return_value = "fail"
 
@@ -38,6 +51,27 @@ class TestUtils(AppTest):
     mock_boto_transfer_patcher.stop()
 
   def test_download_experiment_definition_json_return_val(self):
+    EXPECTED_JSON = json.dumps({"experiment1": "some_value"})
+
+    download_patcher = mock.patch("src.utils.urllib.urlopen")
+    mock_download = download_patcher.start()
+
+    # Make a temp file for returning
+    temp_file = tempfile.mkstemp()
+    file_handle = open(temp_file[1], "w+")
+    file_handle.write(EXPECTED_JSON)
+    file_handle.seek(0)
+
+    mock_download.return_value = file_handle
+
+    json_result = read_experiment_definition("boop")
+
+    self.assertEqual(json_result, json.loads(EXPECTED_JSON))
+
+    download_patcher.stop()
+    file_handle.close()
+
+  def test_download_experiment_definition_s3_json_return_val(self):
     EXPECTED_JSON = json.dumps({"experiment1": "some_value"})
 
     mock_boto_download_patcher = mock.patch("src.utils.s3.get_object")
@@ -51,7 +85,7 @@ class TestUtils(AppTest):
 
     mock_download.return_value = {"Body": file_handle}
 
-    json_result = read_experiment_definition("boop")
+    json_result = read_experiment_definition_s3("boop")
 
     self.assertEqual(json_result, json.loads(EXPECTED_JSON))
 
