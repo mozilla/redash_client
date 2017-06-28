@@ -17,13 +17,17 @@ def handler(json_input, context):
 
   experiments = read_experiment_definition(URL)
   for experiment in experiments:
+    end_date = None
+    if "end_date" in experiment and experiment["end_date"] != None:
+      end_date = format_date(experiment["end_date"])
+
     dash = ActivityStreamExperimentDashboard(
         redash_client,
         experiment["name"],
         experiment["slug"],
         experiment["addon_versions"],
         format_date(experiment["start_date"]),
-        format_date(experiment["end_date"]),
+        end_date,
     )
 
     dash.add_event_graphs(dash.DEFAULT_EVENTS)
