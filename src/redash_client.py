@@ -308,7 +308,7 @@ class RedashClient(object):
     for row in row_arr:
       if len(row) == 1:
         widgets.append(row[0])
-      else:
+      elif len(row) == 2:
         widgets += [row[0], row[1]]
 
     return widgets
