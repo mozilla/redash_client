@@ -91,7 +91,9 @@ class ActivityStreamExperimentDashboard(SummaryDashboard):
           alpha=self.ALPHA_ERROR, alternative='two-sided')
 
     ttest_result = stats.ttest_ind(control_vals, exp_vals, equal_var=False)
-    p_val = None if len(ttest_result) < 2 else ttest_result[1]
+    p_val = ""
+    if len(ttest_result) >= 2 and not math.isnan(ttest_result[1]):
+      p_val = ttest_result[1]
 
     return power, p_val, exp_mean - control_mean
 
