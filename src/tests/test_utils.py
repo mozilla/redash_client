@@ -1,12 +1,14 @@
 import mock
 import json
 import tempfile
+import calendar
+from datetime import datetime, timedelta
 
 from src.tests.base import AppTest
 from src.constants import TTableSchema
 from src.utils import (
     upload_as_json, read_experiment_definition,
-    read_experiment_definition_s3, format_date)
+    read_experiment_definition_s3, format_date, is_old_date)
 
 
 class TestUtils(AppTest):
@@ -98,3 +100,15 @@ class TestUtils(AppTest):
     formatted_date = format_date(MS_DATE)
 
     self.assertEqual(formatted_date, EXPECTED_FORMAT)
+
+  def test_is_old_date(self):
+    new_datetime = datetime.today() - timedelta(days=1)
+
+    MS_DATE_OLD = 1493671545000.0
+    MS_DATE_NEW = calendar.timegm(new_datetime.utctimetuple()) * 1000.0
+
+    is_old = is_old_date(MS_DATE_OLD)
+    self.assertEqual(is_old, True)
+
+    is_old = is_old_date(MS_DATE_NEW)
+    self.assertEqual(is_old, False)

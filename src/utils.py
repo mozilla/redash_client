@@ -3,7 +3,7 @@ import boto3
 import urllib
 from boto3.s3.transfer import S3Transfer
 
-from datetime import datetime
+from datetime import datetime, timedelta
 
 BUCKET = "telemetry-public-analysis-2"
 client = boto3.client('s3', 'us-west-2')
@@ -56,3 +56,10 @@ def format_date(date):
   date_epoch = datetime.fromtimestamp(date / 1000.0)
   date = date_epoch.strftime("%m/%d/%y")
   return date
+
+
+# A date is considered "old" if it's > 3 days earlier than today.
+def is_old_date(date):
+  three_old = datetime.today() - timedelta(days=3)
+  input_date_epoch = datetime.fromtimestamp(date / 1000.0)
+  return input_date_epoch < three_old

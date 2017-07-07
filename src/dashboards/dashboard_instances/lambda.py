@@ -1,7 +1,7 @@
 import os
 
 from src.redash_client import RedashClient
-from src.utils import read_experiment_definition, format_date
+from src.utils import read_experiment_definition, format_date, is_old_date
 from src.dashboards.ActivityStreamExperimentDashboard import (
     ActivityStreamExperimentDashboard)
 
@@ -18,7 +18,10 @@ def handler(json_input, context):
   experiments = read_experiment_definition(URL)
   for experiment in experiments:
     end_date = None
-    if "end_date" in experiment and experiment["end_date"] != None:
+    if "end_date" in experiment and experiment["end_date"] is not None:
+      if is_old_date(experiment["end_date"]):
+        continue
+
       end_date = format_date(experiment["end_date"])
 
     dash = ActivityStreamExperimentDashboard(
