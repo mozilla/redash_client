@@ -40,7 +40,8 @@ class TestActivityStreamExperimentDashboard(AppTest):
     self.assertEqual(self.dash._end_date, self.END_DATE)
     self.assertEqual(self.dash._addon_versions, "'1.8.0', '1.9.0'")
 
-    self.assertEqual(self.mock_requests_post.call_count, 1)
+    # 2 posts to create the dashboard and make it public
+    self.assertEqual(self.mock_requests_post.call_count, 2)
     self.assertEqual(self.mock_requests_get.call_count, 1)
     self.assertEqual(self.mock_requests_delete.call_count, 0)
 
@@ -205,7 +206,8 @@ class TestActivityStreamExperimentDashboard(AppTest):
     #     3) Refresh query
     #     4) Create visualization
     #     5) Append visualization to dashboard
-    self.assertEqual(self.mock_requests_post.call_count, 5)
+    #     6) Make dashboard public
+    self.assertEqual(self.mock_requests_post.call_count, 6)
     self.assertEqual(self.mock_requests_get.call_count, 3)
     self.assertEqual(self.mock_requests_delete.call_count, 0)
 
@@ -225,9 +227,9 @@ class TestActivityStreamExperimentDashboard(AppTest):
 
     self.dash.add_disable_graph()
 
-    # Only 1 each for post and get to set up the dashboard
-    # Then one get for looking up chart names
-    self.assertEqual(self.mock_requests_post.call_count, 1)
+    # 2 posts to create the dashboard and make it public
+    # 2 gets for creating the dashboard and looking up chart names
+    self.assertEqual(self.mock_requests_post.call_count, 2)
     self.assertEqual(self.mock_requests_get.call_count, 2)
     self.assertEqual(self.mock_requests_delete.call_count, 0)
 
@@ -249,7 +251,8 @@ class TestActivityStreamExperimentDashboard(AppTest):
     #     3) Refresh query
     #     4) Create visualization
     #     5) Append visualization to dashboard
-    self.assertEqual(self.mock_requests_post.call_count, 5)
+    #     6) Make dashboard public
+    self.assertEqual(self.mock_requests_post.call_count, 6)
     self.assertEqual(self.mock_requests_get.call_count, 3)
     self.assertEqual(self.mock_requests_delete.call_count, 0)
 
@@ -269,9 +272,9 @@ class TestActivityStreamExperimentDashboard(AppTest):
 
     self.dash.add_retention_diff()
 
-    # Only 1 each for post and get to set up the dashboard
-    # Then one get for looking up chart names
-    self.assertEqual(self.mock_requests_post.call_count, 1)
+    # 2 posts to create the dashboard and make it public
+    # 2 gets for creating the dashboard and looking up chart names
+    self.assertEqual(self.mock_requests_post.call_count, 2)
     self.assertEqual(self.mock_requests_get.call_count, 2)
     self.assertEqual(self.mock_requests_delete.call_count, 0)
 
@@ -306,7 +309,8 @@ class TestActivityStreamExperimentDashboard(AppTest):
     #     5) Append visualization to dashboard
     #     6) Repeat 2-5 six times
     #     7) Do 1 graph update (2 requests)
-    self.assertEqual(self.mock_requests_post.call_count, 27)
+    #     8) Make dashboard public
+    self.assertEqual(self.mock_requests_post.call_count, 28)
     self.assertEqual(self.mock_requests_get.call_count, 8)
     self.assertEqual(self.mock_requests_delete.call_count, 0)
 
@@ -330,7 +334,8 @@ class TestActivityStreamExperimentDashboard(AppTest):
     #     5) Append visualization to dashboard
     #     6) Repeat 2-5 six times
     #     7) Do 1 graph update
-    self.assertEqual(self.mock_requests_post.call_count, 29)
+    #     8) Make dashboard public
+    self.assertEqual(self.mock_requests_post.call_count, 30)
     self.assertEqual(self.mock_requests_get.call_count, 9)
     self.assertEqual(self.mock_requests_delete.call_count, 0)
 
@@ -387,7 +392,8 @@ class TestActivityStreamExperimentDashboard(AppTest):
     #     2) Get Ttable data for 1 row
     #     3) Create query
     #     4) Append visualization to dashboard
-    self.assertEqual(self.mock_requests_post.call_count, 4)
+    #     5) Make dashboard public
+    self.assertEqual(self.mock_requests_post.call_count, 5)
     self.assertEqual(self.mock_requests_get.call_count, 2)
     self.assertEqual(self.mock_requests_delete.call_count, 0)
 
@@ -424,7 +430,8 @@ class TestActivityStreamExperimentDashboard(AppTest):
     #     1) Create dashboard
     #     2) Create new query (Create + Refresh)
     #     3) Append visualization to dashboard
-    self.assertEqual(self.mock_requests_post.call_count, 4)
+    #     4) Make dashboard public
+    self.assertEqual(self.mock_requests_post.call_count, 5)
     self.assertEqual(self.mock_requests_get.call_count, 2)
     self.assertEqual(self.mock_requests_delete.call_count, 0)
 
@@ -465,7 +472,8 @@ class TestActivityStreamExperimentDashboard(AppTest):
     #     1) Create dashboard
     #     2) Create new query (Create + Refresh)
     #     3) Append visualization to dashboard
-    self.assertEqual(self.mock_requests_post.call_count, 4)
+    #     4) Make dashboard public
+    self.assertEqual(self.mock_requests_post.call_count, 5)
     self.assertEqual(self.mock_requests_get.call_count, 2)
     self.assertEqual(self.mock_requests_delete.call_count, 2)
 

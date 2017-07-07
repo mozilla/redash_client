@@ -35,10 +35,10 @@ class TestSummaryDashboard(AppTest):
 
     self.dash.update_refresh_schedule(86400)
 
-    # There is one get and post each in creating a dashboard
-    # then 1 get for widget names and 1 post for refreshing the
-    # one valid visualization iD
-    self.assertEqual(self.mock_requests_post.call_count, 2)
+    # 2 posts to create the dashboard and make it public
+    # 1 post for refreshing the one valid visualization ID
+    # 2 gets for creating the dashboard and looking up chart names
+    self.assertEqual(self.mock_requests_post.call_count, 3)
     self.assertEqual(self.mock_requests_get.call_count, 2)
     self.assertEqual(self.mock_requests_delete.call_count, 0)
 
@@ -128,7 +128,9 @@ class TestSummaryDashboard(AppTest):
 
     self.dash.remove_all_graphs()
 
-    self.assertEqual(self.mock_requests_post.call_count, 1)
+    # 2 posts to create the dashboard and make it public
+    # 2 gets for creating the dashboard and looking up chart names
+    self.assertEqual(self.mock_requests_post.call_count, 2)
     self.assertEqual(self.mock_requests_get.call_count, 2)
     self.assertEqual(self.mock_requests_delete.call_count, 6)
 
@@ -168,9 +170,9 @@ class TestSummaryDashboard(AppTest):
 
     self.dash.add_mau_dau()
 
-    # Only 1 each for post and get to set up the dashboard
-    # Then one get for looking up chart names
-    self.assertEqual(self.mock_requests_post.call_count, 1)
+    # 2 posts to create the dashboard and make it public
+    # 2 gets for creating the dashboard and looking up chart names
+    self.assertEqual(self.mock_requests_post.call_count, 2)
     self.assertEqual(self.mock_requests_get.call_count, 2)
     self.assertEqual(self.mock_requests_delete.call_count, 0)
 
@@ -197,7 +199,8 @@ class TestSummaryDashboard(AppTest):
     #     7) Append first visualization to dashboard
     #     8) Create second visualization
     #     9) Append second visualization to dashboard
-    self.assertEqual(self.mock_requests_post.call_count, 9)
+    #     10) Make dashboard public
+    self.assertEqual(self.mock_requests_post.call_count, 10)
     self.assertEqual(self.mock_requests_get.call_count, 4)
     self.assertEqual(self.mock_requests_delete.call_count, 0)
 
@@ -217,9 +220,9 @@ class TestSummaryDashboard(AppTest):
 
     self.dash.add_retention_graph(RetentionType.WEEKLY)
 
-    # Only 1 each for post and get to set up the dashboard
-    # Then one get for looking up chart names
-    self.assertEqual(self.mock_requests_post.call_count, 1)
+    # 2 posts to create the dashboard and make it public
+    # 2 gets for creating the dashboard and looking up chart names
+    self.assertEqual(self.mock_requests_post.call_count, 2)
     self.assertEqual(self.mock_requests_get.call_count, 2)
     self.assertEqual(self.mock_requests_delete.call_count, 0)
 
@@ -241,7 +244,8 @@ class TestSummaryDashboard(AppTest):
     #     3) Refresh query
     #     4) Create visualization
     #     5) Append visualization to dashboard
-    self.assertEqual(self.mock_requests_post.call_count, 5)
+    #     6) Make dashboard public
+    self.assertEqual(self.mock_requests_post.call_count, 6)
     self.assertEqual(self.mock_requests_get.call_count, 3)
     self.assertEqual(self.mock_requests_delete.call_count, 0)
 
@@ -261,9 +265,9 @@ class TestSummaryDashboard(AppTest):
 
     self.dash.add_events_weekly()
 
-    # Only 1 each for post and get to set up the dashboard
-    # Then one get for looking up chart names
-    self.assertEqual(self.mock_requests_post.call_count, 1)
+    # 2 posts to create the dashboard and make it public
+    # 2 gets for creating the dashboard and looking up chart names
+    self.assertEqual(self.mock_requests_post.call_count, 2)
     self.assertEqual(self.mock_requests_get.call_count, 2)
     self.assertEqual(self.mock_requests_delete.call_count, 0)
 
@@ -285,6 +289,7 @@ class TestSummaryDashboard(AppTest):
     #     3) Refresh query
     #     4) Create visualization
     #     5) Append visualization to dashboard
-    self.assertEqual(self.mock_requests_post.call_count, 5)
+    #     6) Make dashboard public
+    self.assertEqual(self.mock_requests_post.call_count, 6)
     self.assertEqual(self.mock_requests_get.call_count, 3)
     self.assertEqual(self.mock_requests_delete.call_count, 0)
