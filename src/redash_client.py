@@ -296,6 +296,38 @@ class RedashClient(object):
     self._make_request(requests.post, query_url, update_query_args)
     self._refresh_graph(query_id)
 
+  def fork_query(self, query_id):
+    url_path = "queries/{0}/fork?{1}".format(query_id, self._url_params)
+    query_url = urljoin(self.BASE_URL, url_path)
+
+    json_result, response = self._make_request(
+        requests.post, query_url)
+    fork = {
+        "id": json_result.get("id", None),
+        "query": json_result.get("query", None),
+        "data_source_id": json_result.get("data_source_id", None)
+    }
+
+    return fork
+
+  def search_queries(self, keyword):
+    url_path = "queries/search?q={0}&{1}".format(keyword, self._url_params)
+    query_url = urljoin(self.BASE_URL, url_path)
+
+    json_result, response = self._make_request(
+        requests.get, query_url)
+
+    templated_queries = []
+    for query in json_result:
+      templated_queries.append({
+          "id": query.get("id", None),
+          "description": query.get("description", None),
+          "name": query.get("name", None),
+          "data_source_id": query.get("data_source_id", None),
+      })
+
+    return templated_queries
+
   def get_widget_from_dash(self, name):
     slug = self.get_slug(name)
     url_path = "dashboards/{0}?{1}".format(slug, self._url_params)

@@ -353,6 +353,44 @@ class TestRedashClient(AppTest):
     self.assertEqual(self.mock_requests_get.call_count, 0)
     self.assertEqual(self.mock_requests_delete.call_count, 0)
 
+  def test_fork_query_returns_correct_attributes(self):
+    FORKED_QUERY = {
+        "id": 5,
+        "query": "sql query text",
+        "data_source_id": 5
+    }
+
+    self.mock_requests_post.return_value = self.get_mock_response(
+        content=json.dumps(FORKED_QUERY))
+
+    fork = self.redash.fork_query(5)
+
+    self.assertEqual(len(fork), 3)
+    self.assertTrue("id" in fork)
+    self.assertTrue("query" in fork)
+    self.assertTrue("data_source_id" in fork)
+    self.assertEqual(self.mock_requests_post.call_count, 1)
+
+  def test_search_queries_returns_correct_attributes(self):
+    QUERIES_IN_SEARCH = [{
+        "id": 5,
+        "description": "SomeQuery",
+        "name": "Query Title",
+        "data_source_id": 5
+    }]
+
+    self.mock_requests_get.return_value = self.get_mock_response(
+        content=json.dumps(QUERIES_IN_SEARCH))
+
+    templates = self.redash.search_queries("Keyword")
+
+    self.assertEqual(len(templates), 1)
+    self.assertTrue("id" in templates[0])
+    self.assertTrue("description" in templates[0])
+    self.assertTrue("name" in templates[0])
+    self.assertTrue("data_source_id" in templates[0])
+    self.assertEqual(self.mock_requests_get.call_count, 1)
+
   def test_get_widget_from_dash_returns_correctly_flattened_widgets(self):
     DASH_NAME = "Activity Stream A/B Testing: Beep Meep"
     EXPECTED_QUERY_ID = "query_id123"
