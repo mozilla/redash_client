@@ -95,7 +95,21 @@ class ActivityStreamExperimentDashboard(SummaryDashboard):
     if len(ttest_result) >= 2 and not math.isnan(ttest_result[1]):
       p_val = ttest_result[1]
 
-    return power, p_val, exp_mean - control_mean
+    mean_diff = exp_mean - control_mean
+
+    if p_val <= 0.05 and mean_diff < 0:
+      significance = "Negative"
+    elif p_val <= 0.05 and mean_diff > 0:
+      significance = "Positive"
+    else:
+      significance = "Neutral"
+
+    return {
+        "power": power,
+        "p_val": p_val,
+        "mean_diff": mean_diff,
+        "significance": significance
+    }
 
   def _get_event_query_data(self, event, event_query=event_rate,
                             events_table=None):
@@ -143,13 +157,14 @@ class ActivityStreamExperimentDashboard(SummaryDashboard):
       else:
         return {}
 
-    power, p_val, mean_diff = self._power_and_ttest(control_vals, exp_vals)
+    results = self._power_and_ttest(control_vals, exp_vals)
     return {
         "Metric": label,
         "Alpha Error": self.ALPHA_ERROR,
-        "Power": power,
-        "Two-Tailed P-value (ttest)": p_val,
-        "Experiment Mean - Control Mean": mean_diff
+        "Power": results["power"],
+        "Two-Tailed P-value (ttest)": results["p_val"],
+        "Significance": results["significance"],
+        "Experiment Mean - Control Mean": results["mean_diff"]
     }
 
   def add_disable_graph(self):

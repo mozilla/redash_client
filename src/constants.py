@@ -47,6 +47,10 @@ TTableSchema = [
         "type": "float",
         "friendly_name": "Two-Tailed P-value (ttest)"
     }, {
+        "name": "Significance",
+        "type": "string",
+        "friendly_name": "Significance"
+    }, {
         "name": "Experiment Mean - Control Mean",
         "type": "float",
         "friendly_name": "Experiment Mean - Control Mean"

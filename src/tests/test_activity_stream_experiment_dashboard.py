@@ -58,17 +58,44 @@ class TestActivityStreamExperimentDashboard(AppTest):
 
     self.assertEqual(pooled_stddev, EXPECTED_POOLED_STDDEV)
 
-  def test_power_and_ttest_correct_results(self):
+  def test_power_and_ttest_negative_results(self):
     exp_vals = [1, 2, 3, 1, 2, 3, 1, 2, 3, 1, 2, 3]
     control_vals = [4, 6, 8, 4, 6, 8, 4, 6, 8, 4, 6, 8]
     MEAN_DIFFERENCE = -4
 
-    power, p_val, mean_diff = self.dash._power_and_ttest(
+    results = self.dash._power_and_ttest(
         control_vals, exp_vals)
 
-    self.assertEqual(mean_diff, MEAN_DIFFERENCE)
-    self.assertTrue(0 <= p_val <= 0.05)
-    self.assertTrue(0.5 <= power <= 1)
+    self.assertEqual(results["mean_diff"], MEAN_DIFFERENCE)
+    self.assertEqual(results["significance"], "Negative")
+    self.assertTrue(0 <= results["p_val"] <= 0.05)
+    self.assertTrue(0.5 <= results["power"] <= 1)
+
+  def test_power_and_ttest_positive_results(self):
+    exp_vals = [4, 6, 8, 4, 6, 8, 4, 6, 8, 4, 6, 8]
+    control_vals = [1, 2, 3, 1, 2, 3, 1, 2, 3, 1, 2, 3]
+    MEAN_DIFFERENCE = 4
+
+    results = self.dash._power_and_ttest(
+        control_vals, exp_vals)
+
+    self.assertEqual(results["mean_diff"], MEAN_DIFFERENCE)
+    self.assertEqual(results["significance"], "Positive")
+    self.assertTrue(0 <= results["p_val"] <= 0.05)
+    self.assertTrue(0.5 <= results["power"] <= 1)
+
+  def test_power_and_ttest_neutral_results(self):
+    exp_vals = [4, 6, 8, 4, 6, 8, 4, 6, 8, 4, 6, 8]
+    control_vals = [4, 6, 8, 4, 6, 8, 4, 6, 8, 4, 6, 8]
+    MEAN_DIFFERENCE = 0
+
+    results = self.dash._power_and_ttest(
+        control_vals, exp_vals)
+
+    self.assertEqual(results["mean_diff"], MEAN_DIFFERENCE)
+    self.assertEqual(results["significance"], "Neutral")
+    self.assertEqual(results["p_val"], 1)
+    self.assertTrue(0 <= results["power"] <= 0.1)
 
   def test_get_query_event_data_for_string(self):
     EVENT = "CLICK"
@@ -180,7 +207,7 @@ class TestActivityStreamExperimentDashboard(AppTest):
     ttable_row = self.dash._get_ttable_data_for_query(
         EXPECTED_LABEL, "meep", "event_rate")
 
-    self.assertEqual(len(ttable_row), 5)
+    self.assertEqual(len(ttable_row), 6)
     self.assertEqual(ttable_row["Metric"], EXPECTED_LABEL)
     self.assertEqual(ttable_row["Alpha Error"], self.dash.ALPHA_ERROR)
     self.assertTrue(0.5 <= ttable_row["Power"] <= 1)
