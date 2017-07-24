@@ -341,6 +341,65 @@ class TestActivityStreamExperimentDashboard(AppTest):
     self.assertEqual(self.mock_requests_get.call_count, 8)
     self.assertEqual(self.mock_requests_delete.call_count, 0)
 
+  def test_add_templates_makes_correct_calls(self):
+    self.get_calls = 0
+    QUERIES_IN_SEARCH = [{
+        "id": 5,
+        "description": "SomeQuery",
+        "name": "AS Template: Query Title Event",
+        "data_source_id": 5
+    }]
+    WIDGETS_RESPONSE = {
+        "widgets": [[{
+            "id": "the_widget_id",
+            "visualization": {
+                "query": {
+                    "id": "some_id",
+                    "name": "Query Title Click"
+                },
+            },
+        }]]
+    }
+
+    def get_server(url):
+      response = self.get_mock_response()
+      if self.get_calls == 0:
+        response = self.get_mock_response(
+            content=json.dumps(QUERIES_IN_SEARCH))
+      else:
+        response = self.get_mock_response(
+            content=json.dumps(WIDGETS_RESPONSE))
+
+      self.get_calls += 1
+      return response
+
+    self.server_calls = 0
+    self.mock_requests_delete.return_value = self.get_mock_response()
+    self.mock_requests_post.side_effect = self.post_server
+    self.mock_requests_get.side_effect = get_server
+
+    self.dash.add_templates()
+
+    # GET calls:
+    #     1) Create dashboard
+    #     2) Get dashboard widgets (twice)
+    #     3) Search queries
+    # POST calls:
+    #     1) Create dashboard
+    #     2) Search queries
+    #     3) Fork query
+    #     4) Update query
+    #     5) Create visualization
+    #     6) Append visualization to dashboard
+    #     7) Repeat 2-6 ten times
+    #     8) Make dashboard public
+    # DELETE calls:
+    #     One existing graph is removed from dashboard
+    #     and deleted (2 calls)
+    self.assertEqual(self.mock_requests_post.call_count, 52)
+    self.assertEqual(self.mock_requests_get.call_count, 4)
+    self.assertEqual(self.mock_requests_delete.call_count, 2)
+
   def test_add_events_per_user(self):
     self.server_calls = 0
     self.mock_requests_post.side_effect = self.post_server

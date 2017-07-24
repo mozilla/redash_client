@@ -36,6 +36,8 @@ class ActivityStreamExperimentDashboard(SummaryDashboard):
   RETENTION_DIFF_TITLE = "Daily Retention Difference (Experiment - Control)"
   T_TABLE_TITLE = "Statistical Analysis"
   DASH_PREFIX = "Activity Stream Experiment: {name}"
+  EVENT_RATE_MAPPING = {"date": "x", "event_rate": "y", "type": "series"}
+  MASGA_EVENTS_TABLE = "activity_stream_masga"
 
   def __init__(self, redash_client, dash_name, exp_id,
                addon_versions, start_date=None, end_date=None):
@@ -54,6 +56,9 @@ class ActivityStreamExperimentDashboard(SummaryDashboard):
     for version in addon_versions:
       addon_version_list.append("'{}'".format(version))
     self._addon_versions = ", ".join(addon_version_list)
+
+    self._params["addon_versions"] = "(" + self._addon_versions + ")"
+    self._params["experiment_id"] = self._experiment_id
     self._logger.info((
         "ActivityStreamExperimentDashboard: {name} "
         "Initialization Complete".format(name=dash_name)))
@@ -256,6 +261,75 @@ class ActivityStreamExperimentDashboard(SummaryDashboard):
   def add_events_per_user(self, events_list, events_table=None):
     GRAPH_DESCRIPTION = ("Average number of {0} events per person per day")
     self.add_event_graphs(events_list, GRAPH_DESCRIPTION, event_per_user)
+
+  def _apply_event_template(self, template, events_list, events_table):
+    chart_data = self.get_query_ids_and_names()
+
+    for event in events_list:
+      if type(event) == str:
+        event_name = event.capitalize()
+        event_string = "('{}')".format(event)
+      else:
+        event_name = event["event_name"]
+        events = []
+        for event in event["event_list"]:
+          events.append("'{}'".format(event))
+        event_string = "(" + ", ".join(events) + ")"
+
+      title = template["name"].lower().replace(
+          "event", event_name).title().split(": ")
+      if len(title) > 1:
+        title = title[1]
+
+      description = template["description"].lower().replace(
+          "event", event_name).capitalize()
+
+      self._params["events_table"] = events_table
+      self._params["event"] = event_string
+
+      # Remove graphs if they already exist.
+      if title in chart_data:
+        self._logger.info(("ActivityStreamExperimentDashboard: "
+                           "{event} event graph exists and is being removed"
+                           .format(event=event_name)))
+
+        query_id = chart_data[title]["query_id"]
+        widget_id = chart_data[title]["widget_id"]
+        self.remove_graph_from_dashboard(widget_id, query_id)
+
+      self._logger.info(("ActivityStreamExperimentDashboard: "
+                         "New {event} event graph is being added"
+                         .format(event=event_name)))
+      self._add_forked_query_to_dashboard(
+          title,
+          template["id"],
+          self._params,
+          VizWidth.REGULAR,
+          VizType.CHART,
+          description,
+          ChartType.LINE,
+          self.EVENT_RATE_MAPPING,
+      )
+
+  def add_templates(self, templates=[]):
+    if len(templates) == 0:
+      templates = self.redash.search_queries("AS Template:")
+
+    for template in templates:
+      if "event" in template["name"].lower():
+        self._logger.info((
+            "ActivityStreamExperimentDashboard: "
+            "Processing template '{template_name}' for default events"
+            .format(template_name=template["name"])))
+        self._apply_event_template(
+            template, self.DEFAULT_EVENTS, self._events_table)
+
+        self._logger.info((
+            "ActivityStreamExperimentDashboard: "
+            "Processing template '{template_name}' for masga events"
+            .format(template_name=template["name"])))
+        self._apply_event_template(
+            template, self.MASGA_EVENTS, self.MASGA_EVENTS_TABLE)
 
   def add_ttable(self):
     self._logger.info(

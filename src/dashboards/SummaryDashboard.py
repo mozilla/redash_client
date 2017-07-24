@@ -41,6 +41,10 @@ class SummaryDashboard(object):
     self._events_table = events_table_name
     self._start_date = start_date
     self._end_date = end_date if end_date else time.strftime("%m/%d/%y")
+    self._params = {
+        "start_date": self._start_date,
+        "end_date": self._end_date
+    }
 
     self.redash = redash_client
     self._dash_id = self.redash.create_new_dashboard(self._dash_name)
@@ -123,6 +127,37 @@ class SummaryDashboard(object):
         query_fields[5]: "y",
     }
     return mau_dau_column_mapping, engagement_ratio_column_mapping
+
+  def _add_forked_query_to_dashboard(
+      self, query_title, parent_query_id, options, visualization_width,
+      visualization_type=VizType.CHART, visualization_name="",
+      chart_type=None, column_mapping=None, series_options=None,
+      time_interval=None, stacking=True
+  ):
+
+    fork = self.redash.fork_query(parent_query_id)
+    sql_query = fork["query"].format(**options)
+
+    self.redash.update_query(
+        fork["id"],
+        query_title,
+        sql_query,
+        fork["data_source_id"],
+        "",
+    )
+
+    viz_id = self.redash.create_new_visualization(
+        fork["id"],
+        visualization_type,
+        visualization_name,
+        chart_type,
+        column_mapping,
+        series_options,
+        time_interval,
+        stacking,
+    )
+    self.redash.add_visualization_to_dashboard(
+        self._dash_id, viz_id, visualization_width)
 
   def _add_query_to_dashboard(self, query_title, query_string,
                               data_source, visualization_width,
