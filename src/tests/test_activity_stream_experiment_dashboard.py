@@ -348,6 +348,11 @@ class TestActivityStreamExperimentDashboard(AppTest):
         "description": "SomeQuery",
         "name": "AS Template: Query Title Event",
         "data_source_id": 5
+    }, {
+        "id": 6,
+        "description": "SomeQuery2",
+        "name": "AS Template: Query Title",
+        "data_source_id": 5
     }]
     WIDGETS_RESPONSE = {
         "widgets": [[{
@@ -382,7 +387,7 @@ class TestActivityStreamExperimentDashboard(AppTest):
 
     # GET calls:
     #     1) Create dashboard
-    #     2) Get dashboard widgets (twice)
+    #     2) Get dashboard widgets
     #     3) Search queries
     # POST calls:
     #     1) Create dashboard
@@ -391,13 +396,13 @@ class TestActivityStreamExperimentDashboard(AppTest):
     #     4) Update query
     #     5) Create visualization
     #     6) Append visualization to dashboard
-    #     7) Repeat 2-6 ten times
+    #     7) Repeat 2-6 eleven times
     #     8) Make dashboard public
     # DELETE calls:
     #     One existing graph is removed from dashboard
     #     and deleted (2 calls)
-    self.assertEqual(self.mock_requests_post.call_count, 52)
-    self.assertEqual(self.mock_requests_get.call_count, 4)
+    self.assertEqual(self.mock_requests_post.call_count, 57)
+    self.assertEqual(self.mock_requests_get.call_count, 3)
     self.assertEqual(self.mock_requests_delete.call_count, 2)
 
   def test_add_events_per_user(self):

@@ -155,9 +155,9 @@ class RedashClient(object):
     return rows
 
   def create_new_visualization(self, query_id, viz_type=VizType.CHART,
-                               title="", chart_type=None, column_mapping=None,
-                               series_options=None, time_interval=None,
-                               stacking=False):
+                               title="Chart", chart_type=None,
+                               column_mapping=None, series_options=None,
+                               time_interval=None, stacking=False):
 
     # Note: column_mapping is a dict of which field names to use for the x and
     # y axis. (e.g. {"event":"x","count":"y","type":"series"})

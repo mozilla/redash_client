@@ -33,9 +33,6 @@ def handler(json_input, context):
         end_date,
     )
 
-    dash.add_event_graphs(dash.DEFAULT_EVENTS)
-    dash.add_event_graphs(
-        dash.MASGA_EVENTS, events_table="activity_stream_masga")
-    dash.add_events_per_user(dash.DEFAULT_EVENTS)
+    dash.add_templates()
     dash.add_ttable()
     dash.update_refresh_schedule(43200)

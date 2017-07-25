@@ -130,7 +130,7 @@ class SummaryDashboard(object):
 
   def _add_forked_query_to_dashboard(
       self, query_title, parent_query_id, options, visualization_width,
-      visualization_type=VizType.CHART, visualization_name="",
+      visualization_type=VizType.CHART, visualization_name="Chart",
       chart_type=None, column_mapping=None, series_options=None,
       time_interval=None, stacking=True
   ):
