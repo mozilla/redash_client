@@ -4,7 +4,6 @@ import json
 import time
 import statistics
 
-from src.templates import event_rate
 from src.tests.base import AppTest
 from src.dashboards.ActivityStreamExperimentDashboard import (
     ActivityStreamExperimentDashboard)
@@ -96,50 +95,6 @@ class TestActivityStreamExperimentDashboard(AppTest):
     self.assertEqual(results["significance"], "Neutral")
     self.assertEqual(results["p_val"], 1)
     self.assertTrue(0 <= results["power"] <= 0.1)
-
-  def test_get_query_event_data_for_string(self):
-    EVENT = "CLICK"
-    EXPECTED_GRAPH_TITLE = "Click Rate"
-    EXPECTED_QUERY_STRING, EXPECTED_FIELDS = event_rate(
-        "'{}'".format(EVENT),
-        self.START_DATE,
-        self.END_DATE,
-        self.EXPERIMENT_ID,
-        self.dash._addon_versions,
-        self.dash._events_table)
-
-    query_name, query_string, fields = self.dash._get_event_query_data(
-        EVENT)
-
-    self.assertEqual(query_name, EXPECTED_GRAPH_TITLE)
-    self.assertEqual(query_string, EXPECTED_QUERY_STRING)
-    self.assertEqual(len(fields), 3)
-    for i in xrange(len(fields)):
-      self.assertEqual(fields[i], EXPECTED_FIELDS[i])
-
-  def test_get_query_event_data_for_dict(self):
-    EVENT = {
-        "event_name": "Positive Interactions",
-        "event_list": ["CLICK", "BOOKMARK_ADD", "SEARCH"]
-    }
-    EVENT_LIST_STRING = "'CLICK', 'BOOKMARK_ADD', 'SEARCH'"
-    EXPECTED_GRAPH_TITLE = "Positive Interactions Rate"
-    EXPECTED_QUERY_STRING, EXPECTED_FIELDS = event_rate(
-        EVENT_LIST_STRING,
-        self.START_DATE,
-        self.END_DATE,
-        self.EXPERIMENT_ID,
-        self.dash._addon_versions,
-        self.dash._events_table)
-
-    query_name, query_string, fields = self.dash._get_event_query_data(
-        EVENT)
-
-    self.assertEqual(query_name, EXPECTED_GRAPH_TITLE)
-    self.assertEqual(query_string, EXPECTED_QUERY_STRING)
-    self.assertEqual(len(fields), 3)
-    for i in xrange(len(fields)):
-      self.assertEqual(fields[i], EXPECTED_FIELDS[i])
 
   def test_get_ttable_data_for_non_existent_query(self):
     QUERY_RESULTS_RESPONSE = {}
@@ -305,42 +260,6 @@ class TestActivityStreamExperimentDashboard(AppTest):
     self.assertEqual(self.mock_requests_get.call_count, 2)
     self.assertEqual(self.mock_requests_delete.call_count, 0)
 
-  def test_add_event_graphs_makes_correct_calls(self):
-    WIDGETS_RESPONSE = {
-        "widgets": [[{
-            "visualization": {
-                "query": {
-                    "name": "Click Rate",
-                },
-            },
-        }]]
-    }
-
-    self.server_calls = 0
-    self.mock_requests_post.side_effect = self.post_server
-    self.mock_requests_get.return_value = self.get_mock_response(
-        content=json.dumps(WIDGETS_RESPONSE))
-
-    self.dash.add_event_graphs([])
-
-    # GET calls:
-    #     1) Create dashboard
-    #     2) Get dashboard widgets
-    #     3) Get table ID
-    #     4) Repeat 3 six times
-    # POST calls:
-    #     1) Create dashboard
-    #     2) Create query
-    #     3) Refresh query
-    #     4) Create visualization
-    #     5) Append visualization to dashboard
-    #     6) Repeat 2-5 six times
-    #     7) Do 1 graph update (2 requests)
-    #     8) Make dashboard public
-    self.assertEqual(self.mock_requests_post.call_count, 28)
-    self.assertEqual(self.mock_requests_get.call_count, 8)
-    self.assertEqual(self.mock_requests_delete.call_count, 0)
-
   def test_add_templates_makes_correct_calls(self):
     self.get_calls = 0
     QUERIES_IN_SEARCH = [{
@@ -404,31 +323,6 @@ class TestActivityStreamExperimentDashboard(AppTest):
     self.assertEqual(self.mock_requests_post.call_count, 57)
     self.assertEqual(self.mock_requests_get.call_count, 3)
     self.assertEqual(self.mock_requests_delete.call_count, 2)
-
-  def test_add_events_per_user(self):
-    self.server_calls = 0
-    self.mock_requests_post.side_effect = self.post_server
-    self.mock_requests_get.return_value = self.get_mock_response()
-
-    self.dash.add_events_per_user([])
-
-    # GET calls:
-    #     1) Create dashboard
-    #     2) Get dashboard widgets
-    #     3) Get table ID
-    #     4) Repeat 3 six times
-    # POST calls:
-    #     1) Create dashboard
-    #     2) Create query
-    #     3) Refresh query
-    #     4) Create visualization
-    #     5) Append visualization to dashboard
-    #     6) Repeat 2-5 six times
-    #     7) Do 1 graph update
-    #     8) Make dashboard public
-    self.assertEqual(self.mock_requests_post.call_count, 30)
-    self.assertEqual(self.mock_requests_get.call_count, 9)
-    self.assertEqual(self.mock_requests_delete.call_count, 0)
 
   def test_add_ttable_makes_correct_calls(self):
     WIDGETS_RESPONSE = {

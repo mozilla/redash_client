@@ -10,7 +10,7 @@ from src.constants import (
     VizType, ChartType, VizWidth, TTableSchema, TimeInterval)
 from src.dashboards.SummaryDashboard import SummaryDashboard
 from src.templates import (
-    retention_diff, disable_rate, event_rate, event_per_user)
+    retention_diff, disable_rate)
 
 
 class ActivityStreamExperimentDashboard(SummaryDashboard):
@@ -125,35 +125,6 @@ class ActivityStreamExperimentDashboard(SummaryDashboard):
         "significance": significance
     }
 
-  def _get_event_query_data(self, event, event_query=event_rate,
-                            events_table=None):
-    if events_table is None:
-      events_table = self._events_table
-
-    if type(event) == str:
-      event_name = event.capitalize()
-      event_string = "'{}'".format(event)
-    else:
-      event_name = event["event_name"]
-      events = []
-      for event in event["event_list"]:
-        events.append("'{}'".format(event))
-      event_string = ", ".join(events)
-
-    query_string, fields = event_query(
-        event_string,
-        self._start_date,
-        self._end_date,
-        self._experiment_id,
-        self._addon_versions,
-        events_table)
-
-    query_name = "{0} Rate".format(event_name)
-    if event_query != event_rate:
-      query_name = "Average {0} Per User".format(event_name)
-
-    return query_name, query_string, fields
-
   def _get_ttable_data_for_query(self, label, query_string, column_name):
     data = self.redash.get_query_results(
         query_string, self.TILES_DATA_SOURCE_ID)
@@ -216,60 +187,6 @@ class ActivityStreamExperimentDashboard(SummaryDashboard):
         VizType.COHORT,
         time_interval=TimeInterval.DAILY,
     )
-
-  def add_event_graphs(self, events_list, graph_description="",
-                       event_query=event_rate, events_table=None):
-    self._logger.info(("ActivityStreamExperimentDashboard: "
-                       "Adding event graphs with query: "
-                       "{query}:".format(query=event_query.__name__)))
-    if events_list is None or len(events_list) == 0:
-      events_list = self.DEFAULT_EVENTS
-
-    chart_data = self.get_query_ids_and_names()
-    for event in events_list:
-      GRAPH_DESCRIPTION = graph_description
-      if not GRAPH_DESCRIPTION:
-        GRAPH_DESCRIPTION = (
-            "Percent of sessions with at least "
-            "one occurance of {0}")
-      GRAPH_DESCRIPTION = GRAPH_DESCRIPTION.format(event)
-
-      query_name, query_string, fields = self._get_event_query_data(
-          event, event_query, events_table)
-
-      # Update graphs if they already exist.
-      if query_name in chart_data:
-        self._logger.info(("ActivityStreamExperimentDashboard: "
-                           "{event} event graph exists and is being updated:"
-                           .format(event=event)))
-        self.redash.update_query(
-            chart_data[query_name]["query_id"],
-            query_name,
-            query_string,
-            self.TILES_DATA_SOURCE_ID,
-            GRAPH_DESCRIPTION,
-        )
-        continue
-
-      mapping = {fields[0]: "x", fields[1]: "y", fields[2]: "series"}
-
-      self._logger.info(("ActivityStreamExperimentDashboard: "
-                         "{event} event graph is being added:"
-                         .format(event=event)))
-      self._add_query_to_dashboard(
-          query_name,
-          query_string,
-          self.TILES_DATA_SOURCE_ID,
-          VizWidth.REGULAR,
-          VizType.CHART,
-          GRAPH_DESCRIPTION,
-          ChartType.LINE,
-          mapping,
-      )
-
-  def add_events_per_user(self, events_list, events_table=None):
-    GRAPH_DESCRIPTION = ("Average number of {0} events per person per day")
-    self.add_event_graphs(events_list, GRAPH_DESCRIPTION, event_per_user)
 
   def _get_title(self, template_name):
     title = template_name.title().split(": ")
