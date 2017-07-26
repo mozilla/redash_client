@@ -88,11 +88,9 @@ if __name__ == '__main__':
     "05/02/17"
   )
 
+  dash.add_templates()
   #dash.add_retention_diff()
-  dash.add_event_graphs(dash.DEFAULT_EVENTS)
-  dash.add_event_graphs(dash.MASGA_EVENTS, events_table="activity_stream_masga")
-  dash.add_events_per_user(dash.DEFAULT_EVENTS)
   #dash.add_disable_graph()
-  #dash.add_ttable()
+  dash.add_ttable()
   dash.update_refresh_schedule(86400)
   #dash.remove_all_graphs()

@@ -98,17 +98,18 @@ class RedashClient(object):
     query_id = json_result.get("id", None)
     return query_id
 
-  def _get_table_id(self, query_id):
+  def _get_visualization(self, query_id):
     url_path = "queries/{0}?{1}".format(str(query_id), self._url_params)
     query_url = urljoin(self.BASE_URL, url_path)
 
     query_json_data, response = self._make_request(requests.get, query_url)
     query_visualizations = query_json_data.get("visualizations", [])
-    table_id = None
-    if len(query_visualizations) >= 1:
-      table_id = query_visualizations[0].get("id", None)
 
-    return table_id
+    visualization_data = None
+    if len(query_visualizations) >= 1:
+      visualization_data = query_visualizations[0]
+
+    return visualization_data
 
   def _refresh_graph(self, query_id):
     # Refresh our new query so it becomes available
@@ -126,7 +127,12 @@ class RedashClient(object):
     if not query_id:
       return None, None
 
-    table_id = self._get_table_id(query_id)
+    visualization = self._get_visualization(query_id)
+
+    table_id = None
+    if visualization:
+      table_id = visualization.get("id", None)
+
     self._refresh_graph(query_id)
 
     return query_id, table_id
@@ -154,6 +160,22 @@ class RedashClient(object):
         "query_result", {}).get("data", {}).get("rows", [])
     return rows
 
+  def make_new_visualization_request(self, query_id, viz_type, options, title):
+    url_path = "visualizations?{0}".format(self._url_params)
+    query_url = urljoin(self.BASE_URL, url_path)
+
+    new_visualization_args = json.dumps({
+        "type": viz_type,
+        "name": title,
+        "options": options,
+        "query_id": query_id,
+    })
+
+    json_result, response = self._make_request(
+        requests.post, query_url, new_visualization_args)
+    visualization_id = json_result.get("id", None)
+    return visualization_id
+
   def create_new_visualization(self, query_id, viz_type=VizType.CHART,
                                title="Chart", chart_type=None,
                                column_mapping=None, series_options=None,
@@ -178,23 +200,12 @@ class RedashClient(object):
     if viz_type != VizType.CHART and viz_type != VizType.COHORT:
       raise ValueError("VizType must be one of: VizType.CHART, VizType.COHORT")
 
-    url_path = "visualizations?{0}".format(self._url_params)
-    query_url = urljoin(self.BASE_URL, url_path)
-
     options = self.make_visualization_options(
         chart_type, viz_type, column_mapping,
         series_options, time_interval, stacking)
 
-    new_visualization_args = json.dumps({
-        "type": viz_type,
-        "name": title,
-        "options": options,
-        "query_id": query_id,
-    })
-
-    json_result, response = self._make_request(
-        requests.post, query_url, new_visualization_args)
-    visualization_id = json_result.get("id", None)
+    visualization_id = self.make_new_visualization_request(
+        query_id, viz_type, options, title)
     return visualization_id
 
   def create_new_dashboard(self, name):
@@ -319,11 +330,18 @@ class RedashClient(object):
 
     templated_queries = []
     for query in json_result:
+      query_id = query.get("id", None)
+      visualization = self._get_visualization(query_id)
+      options = visualization.get("options", None)
+      viz_type = visualization.get("type", None)
+
       templated_queries.append({
-          "id": query.get("id", None),
+          "id": query_id,
           "description": query.get("description", None),
           "name": query.get("name", None),
           "data_source_id": query.get("data_source_id", None),
+          "options": options,
+          "type": viz_type
       })
 
     return templated_queries

@@ -36,17 +36,7 @@ class ActivityStreamExperimentDashboard(SummaryDashboard):
   RETENTION_DIFF_TITLE = "Daily Retention Difference (Experiment - Control)"
   T_TABLE_TITLE = "Statistical Analysis"
   DASH_PREFIX = "Activity Stream Experiment: {name}"
-  EVENT_RATE_MAPPING = {"date": "x", "event_rate": "y", "type": "series"}
-  REGULAR_MAPPING = {"date": "x", "event_rate": "y"}
   MASGA_EVENTS_TABLE = "activity_stream_masga"
-  SERIES_OPTIONS = {
-      "event_rate": {
-          "type": ChartType.LINE,
-          "yAxis": 0,
-          "zIndex": 0,
-          "index": 0
-      }
-  }
 
   def __init__(self, redash_client, dash_name, exp_id,
                addon_versions, start_date=None, end_date=None):
@@ -220,13 +210,12 @@ class ActivityStreamExperimentDashboard(SummaryDashboard):
           template,
           chart_data,
           title,
-          self.EVENT_RATE_MAPPING,
           VizWidth.REGULAR,
           description,
       )
 
-  def _add_template(self, template, chart_data, title, mapping,
-                    viz_width, description, series_options=None):
+  def _add_template(self, template, chart_data, title,
+                    viz_width, description):
     # Remove graphs if they already exist.
     if title in chart_data:
       self._logger.info(("ActivityStreamExperimentDashboard: "
@@ -245,11 +234,9 @@ class ActivityStreamExperimentDashboard(SummaryDashboard):
         template["id"],
         self._params,
         viz_width,
-        VizType.CHART,
-        description,
-        ChartType.LINE,
-        mapping,
-        series_options
+        template["options"],
+        template["type"],
+        description
     )
 
   def add_templates(self, templates=[]):
@@ -287,10 +274,8 @@ class ActivityStreamExperimentDashboard(SummaryDashboard):
             template,
             chart_data,
             title,
-            self.REGULAR_MAPPING,
             VizWidth.WIDE,
-            description,
-            self.SERIES_OPTIONS
+            description
         )
 
   def add_ttable(self):

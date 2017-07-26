@@ -372,15 +372,33 @@ class TestRedashClient(AppTest):
     self.assertEqual(self.mock_requests_post.call_count, 1)
 
   def test_search_queries_returns_correct_attributes(self):
+    self.get_calls = 0
     QUERIES_IN_SEARCH = [{
         "id": 5,
         "description": "SomeQuery",
         "name": "Query Title",
         "data_source_id": 5
     }]
+    VISUALIZATIONS_FOR_QUERY = {
+        "visualizations": [
+            {"options": {}},
+            {"options": {}}
+        ]
+    }
 
-    self.mock_requests_get.return_value = self.get_mock_response(
-        content=json.dumps(QUERIES_IN_SEARCH))
+    def get_server(url):
+      response = self.get_mock_response()
+      if self.get_calls == 0:
+        response = self.get_mock_response(
+            content=json.dumps(QUERIES_IN_SEARCH))
+      else:
+        response = self.get_mock_response(
+            content=json.dumps(VISUALIZATIONS_FOR_QUERY))
+
+      self.get_calls += 1
+      return response
+
+    self.mock_requests_get.side_effect = get_server
 
     templates = self.redash.search_queries("Keyword")
 
@@ -389,7 +407,7 @@ class TestRedashClient(AppTest):
     self.assertTrue("description" in templates[0])
     self.assertTrue("name" in templates[0])
     self.assertTrue("data_source_id" in templates[0])
-    self.assertEqual(self.mock_requests_get.call_count, 1)
+    self.assertEqual(self.mock_requests_get.call_count, 2)
 
   def test_get_widget_from_dash_returns_correctly_flattened_widgets(self):
     DASH_NAME = "Activity Stream A/B Testing: Beep Meep"

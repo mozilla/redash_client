@@ -129,14 +129,13 @@ class SummaryDashboard(object):
     return mau_dau_column_mapping, engagement_ratio_column_mapping
 
   def _add_forked_query_to_dashboard(
-      self, query_title, parent_query_id, options, visualization_width,
-      visualization_type=VizType.CHART, visualization_name="Chart",
-      chart_type=None, column_mapping=None, series_options=None,
-      time_interval=None, stacking=True
+      self, query_title, parent_query_id, query_params, visualization_width,
+      options, visualization_type=VizType.CHART, visualization_name="Chart"
   ):
 
     fork = self.redash.fork_query(parent_query_id)
-    sql_query = fork["query"].format(**options)
+    adjusted_string = fork["query"].replace("{{{", "{").replace("}}}", "}")
+    sql_query = adjusted_string.format(**query_params)
 
     self.redash.update_query(
         fork["id"],
@@ -146,15 +145,11 @@ class SummaryDashboard(object):
         "",
     )
 
-    viz_id = self.redash.create_new_visualization(
+    viz_id = self.redash.make_new_visualization_request(
         fork["id"],
         visualization_type,
+        options,
         visualization_name,
-        chart_type,
-        column_mapping,
-        series_options,
-        time_interval,
-        stacking,
     )
     self.redash.add_visualization_to_dashboard(
         self._dash_id, viz_id, visualization_width)

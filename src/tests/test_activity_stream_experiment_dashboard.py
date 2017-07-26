@@ -273,6 +273,12 @@ class TestActivityStreamExperimentDashboard(AppTest):
         "name": "AS Template: Query Title",
         "data_source_id": 5
     }]
+    VISUALIZATIONS_FOR_QUERY = {
+        "visualizations": [
+            {"options": {}},
+            {"options": {}}
+        ]
+    }
     WIDGETS_RESPONSE = {
         "widgets": [[{
             "id": "the_widget_id",
@@ -290,6 +296,9 @@ class TestActivityStreamExperimentDashboard(AppTest):
       if self.get_calls == 0:
         response = self.get_mock_response(
             content=json.dumps(QUERIES_IN_SEARCH))
+      elif self.get_calls <= 2:
+        response = self.get_mock_response(
+            content=json.dumps(VISUALIZATIONS_FOR_QUERY))
       else:
         response = self.get_mock_response(
             content=json.dumps(WIDGETS_RESPONSE))
@@ -308,6 +317,7 @@ class TestActivityStreamExperimentDashboard(AppTest):
     #     1) Create dashboard
     #     2) Get dashboard widgets
     #     3) Search queries
+    #     4) Get two existing visualizations
     # POST calls:
     #     1) Create dashboard
     #     2) Search queries
@@ -321,7 +331,7 @@ class TestActivityStreamExperimentDashboard(AppTest):
     #     One existing graph is removed from dashboard
     #     and deleted (2 calls)
     self.assertEqual(self.mock_requests_post.call_count, 57)
-    self.assertEqual(self.mock_requests_get.call_count, 3)
+    self.assertEqual(self.mock_requests_get.call_count, 5)
     self.assertEqual(self.mock_requests_delete.call_count, 2)
 
   def test_add_ttable_makes_correct_calls(self):
