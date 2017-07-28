@@ -88,9 +88,9 @@ if __name__ == '__main__':
     "05/02/17"
   )
 
-  dash.add_templates()
+  dash.add_graph_templates("AS Template:")
   #dash.add_retention_diff()
   #dash.add_disable_graph()
-  dash.add_ttable()
-  dash.update_refresh_schedule(86400)
+  dash.add_ttable("TTests Template:")
+  #dash.update_refresh_schedule(86400)
   #dash.remove_all_graphs()

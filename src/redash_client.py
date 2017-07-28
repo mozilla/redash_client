@@ -296,16 +296,18 @@ class RedashClient(object):
     url_path = "queries/{0}?{1}".format(str(query_id), self._url_params)
     query_url = urljoin(self.BASE_URL, url_path)
 
-    update_query_args = json.dumps({
+    update_query_args = {
         "data_source_id": data_source_id,
         "query": sql_query,
         "name": name,
         "description": description,
         "id": query_id,
-        "options": options
-    })
+    }
 
-    self._make_request(requests.post, query_url, update_query_args)
+    if options:
+      update_query_args["options"] = options
+
+    self._make_request(requests.post, query_url, json.dumps(update_query_args))
     self._refresh_graph(query_id)
 
   def fork_query(self, query_id):
@@ -342,7 +344,8 @@ class RedashClient(object):
           "name": query.get("name", None),
           "data_source_id": query.get("data_source_id", None),
           "options": options,
-          "type": viz_type
+          "type": viz_type,
+          "query": query.get("query", None)
       })
 
     return templated_queries

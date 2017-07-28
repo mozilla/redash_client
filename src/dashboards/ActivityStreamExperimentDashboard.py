@@ -184,38 +184,110 @@ class ActivityStreamExperimentDashboard(SummaryDashboard):
       title = title[1]
     return title
 
-  def _apply_event_template(self, template, chart_data,
-                            events_list, events_table):
-    for event in events_list:
-      if type(event) == str:
-        event_name = event.capitalize()
-        event_string = "('{}')".format(event)
-      else:
-        event_name = event["event_name"]
-        events = []
-        for event in event["event_list"]:
-          events.append("'{}'".format(event))
-        event_string = "(" + ", ".join(events) + ")"
+  def _get_event_title_description(self, template, event):
+    if type(event) == str:
+      event_name = event.capitalize()
+      event_string = "('{}')".format(event)
+    else:
+      event_name = event["event_name"]
+      events = []
+      for event in event["event_list"]:
+        events.append("'{}'".format(event))
+      event_string = "(" + ", ".join(events) + ")"
 
-      title = self._get_title(template["name"]).replace(
-          "Event", event_name)
+    self._params["event"] = event_string
+    title = description = self._get_title(template["name"]).replace(
+        "Event", event_name)
 
+    if template["description"]:
       description = template["description"].lower().replace(
           "event", event_name).capitalize()
 
-      self._params["events_table"] = events_table
-      self._params["event"] = event_string
+    event_data = {
+        "title": title,
+        "description": description
+    }
+    return event_data
 
-      self._add_template(
+  def _create_options(self):
+    options = {
+        "parameters": []
+    }
+
+    for param in self._params:
+      param_obj = {
+          "title": param,
+          "name": param,
+          "type": "text",
+          "value": self._params[param],
+          "global": False
+      }
+      options["parameters"].append(param_obj)
+
+    return options
+
+  def _apply_non_event_template(self, template, chart_data, values=None):
+    title = description = self._get_title(template["name"])
+
+    if template["description"]:
+      description = template["description"]
+
+    self._add_template_to_dashboard(
+        template,
+        chart_data,
+        title,
+        VizWidth.WIDE,
+        description
+    )
+
+  def _apply_event_template(self, template, chart_data,
+                            events_list, events_table, values=None):
+    self._params["events_table"] = events_table
+
+    for event in events_list:
+      event_data = self._get_event_title_description(template, event)
+
+      self._add_template_to_dashboard(
           template,
           chart_data,
-          title,
+          event_data["title"],
           VizWidth.REGULAR,
-          description,
+          event_data["description"],
       )
 
-  def _add_template(self, template, chart_data, title,
-                    viz_width, description):
+  def _apply_ttable_event_template(self, template, chart_data, events_list,
+                                   events_table, values):
+    self._params["events_table"] = events_table
+    for event in events_list:
+      event_data = self._get_event_title_description(template, event)
+      options = self._create_options()
+
+      adjusted_string = template["query"].replace(
+          "{{{", "{").replace("}}}", "}")
+      query_string = adjusted_string.format(**self._params)
+
+      self.redash.update_query(
+          template["id"],
+          template["name"],
+          template["query"],
+          template["data_source_id"],
+          event_data["description"],
+          options
+      )
+      ttable_row = self._get_ttable_data_for_query(
+          event_data["title"], query_string, "count")
+
+      if len(ttable_row) == 0:
+        self._logger.info((
+            "ActivityStreamExperimentDashboard: "
+            "Query '{name}' has no relevant data and will not be "
+            "included in T-Table.".format(name=event_data["title"])))
+        continue
+
+      values["rows"].append(ttable_row)
+
+  def _add_template_to_dashboard(self, template, chart_data, title,
+                                 viz_width, description):
     # Remove graphs if they already exist.
     if title in chart_data:
       self._logger.info(("ActivityStreamExperimentDashboard: "
@@ -239,10 +311,11 @@ class ActivityStreamExperimentDashboard(SummaryDashboard):
         description
     )
 
-  def add_templates(self, templates=[]):
-    if len(templates) == 0:
-      templates = self.redash.search_queries("AS Template:")
-
+  def _apply_functions_to_templates(
+      self, template_keyword, events_function,
+      general_function=None, values=None
+  ):
+    templates = self.redash.search_queries(template_keyword)
     chart_data = self.get_query_ids_and_names()
 
     for template in templates:
@@ -251,63 +324,59 @@ class ActivityStreamExperimentDashboard(SummaryDashboard):
             "ActivityStreamExperimentDashboard: "
             "Processing template '{template_name}' for default events"
             .format(template_name=template["name"])))
-        self._apply_event_template(
-            template, chart_data, self.DEFAULT_EVENTS, self._events_table)
+        events_function(
+            template,
+            chart_data,
+            self.DEFAULT_EVENTS,
+            self._events_table,
+            values)
 
         self._logger.info((
             "ActivityStreamExperimentDashboard: "
             "Processing template '{template_name}' for masga events"
             .format(template_name=template["name"])))
-        self._apply_event_template(
-            template, chart_data, self.MASGA_EVENTS, self.MASGA_EVENTS_TABLE)
+        events_function(
+            template,
+            chart_data,
+            self.MASGA_EVENTS,
+            self.MASGA_EVENTS_TABLE,
+            values)
       else:
         self._logger.info((
             "ActivityStreamExperimentDashboard: "
             "Processing template '{template_name}'"
             .format(template_name=template["name"])))
-        title = description = self._get_title(template["name"])
+        general_function(template, chart_data, values)
 
-        if template["description"]:
-          description = template["description"]
+  def add_graph_templates(self, template_keyword):
+    self._logger.info(
+        "ActivityStreamExperimentDashboard: Adding templates.")
 
-        self._add_template(
-            template,
-            chart_data,
-            title,
-            VizWidth.WIDE,
-            description
-        )
+    self._apply_functions_to_templates(
+        template_keyword,
+        self._apply_event_template,
+        self._apply_non_event_template
+    )
 
-  def add_ttable(self):
+  def add_ttable(self, template_keyword):
     self._logger.info(
         "ActivityStreamExperimentDashboard: Creating a T-Table")
 
+    chart_data = self.get_query_ids_and_names()
+    values = {"columns": TTableSchema, "rows": []}
+
     # Remove a table if it already exists
-    widgets = self.get_query_ids_and_names()
-    if self.T_TABLE_TITLE in widgets:
+    if self.T_TABLE_TITLE in chart_data:
       self._logger.info((
           "ActivityStreamExperimentDashboard: "
           "Stale T-Table exists and will be removed"))
-      query_id = widgets[self.T_TABLE_TITLE]["query_id"]
-      widget_id = widgets[self.T_TABLE_TITLE]["widget_id"]
+      query_id = chart_data[self.T_TABLE_TITLE]["query_id"]
+      widget_id = chart_data[self.T_TABLE_TITLE]["widget_id"]
       self.remove_graph_from_dashboard(widget_id, query_id)
 
-    values = {"columns": TTableSchema, "rows": []}
-
     # Create the t-table
-    for widget_name in widgets:
-      query_string = widgets[widget_name]["query"]
-      ttable_row = self._get_ttable_data_for_query(
-          widget_name, query_string, "event_rate")
-
-      if len(ttable_row) == 0:
-        self._logger.info((
-            "ActivityStreamExperimentDashboard: "
-            "Widget '{name}' has no relevant data and will not be "
-            "included in T-Table.".format(name=widget_name)))
-        continue
-
-      values["rows"].append(ttable_row)
+    self._apply_functions_to_templates(
+        template_keyword, self._apply_ttable_event_template, None, values)
 
     query_string = upload_as_json("experiments", self._experiment_id, values)
     query_id, table_id = self.redash.create_new_query(

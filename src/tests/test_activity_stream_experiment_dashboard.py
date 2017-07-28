@@ -112,7 +112,7 @@ class TestActivityStreamExperimentDashboard(AppTest):
     for i in xrange(5):
         BAD_ROW.append({
             "some_weird_row": "beep",
-            "event_rate": 5
+            "count": 5
         })
 
     QUERY_RESULTS_RESPONSE = {
@@ -127,7 +127,7 @@ class TestActivityStreamExperimentDashboard(AppTest):
         content=json.dumps(QUERY_RESULTS_RESPONSE))
 
     ttable_row = self.dash._get_ttable_data_for_query(
-        "beep", "meep", "event_rate")
+        "beep", "meep", "count")
 
     self.assertEqual(len(ttable_row), 0)
 
@@ -139,12 +139,12 @@ class TestActivityStreamExperimentDashboard(AppTest):
     for i in xrange(12):
       EXPECTED_ROWS.append({
           "date": 123,
-          "event_rate": (i % 3) + 1,
+          "count": (i % 3) + 1,
           "type": "experiment"
       })
       EXPECTED_ROWS.append({
           "date": 123,
-          "event_rate": ((i * 2) % 6) + 4,  # 4, 6, 8
+          "count": ((i * 2) % 6) + 4,  # 4, 6, 8
           "type": "control"
       })
 
@@ -160,7 +160,7 @@ class TestActivityStreamExperimentDashboard(AppTest):
         content=json.dumps(QUERY_RESULTS_RESPONSE))
 
     ttable_row = self.dash._get_ttable_data_for_query(
-        EXPECTED_LABEL, "meep", "event_rate")
+        EXPECTED_LABEL, "meep", "count")
 
     self.assertEqual(len(ttable_row), 6)
     self.assertEqual(ttable_row["Metric"], EXPECTED_LABEL)
@@ -311,7 +311,7 @@ class TestActivityStreamExperimentDashboard(AppTest):
     self.mock_requests_post.side_effect = self.post_server
     self.mock_requests_get.side_effect = get_server
 
-    self.dash.add_templates()
+    self.dash.add_graph_templates("Template:")
 
     # GET calls:
     #     1) Create dashboard
@@ -335,6 +335,20 @@ class TestActivityStreamExperimentDashboard(AppTest):
     self.assertEqual(self.mock_requests_delete.call_count, 2)
 
   def test_add_ttable_makes_correct_calls(self):
+    self.get_calls = 0
+    self.server_calls = 0
+    QUERIES_IN_SEARCH = [{
+        "id": 5,
+        "description": "SomeQuery",
+        "name": "AS Template: Query Title Event",
+        "data_source_id": 5,
+        "query": "SELECT stuff FROM things"
+    }]
+    VISUALIZATIONS_FOR_QUERY = {
+        "visualizations": [
+            {"options": {}},
+        ]
+    }
     WIDGETS_RESPONSE = {
         "widgets": [[{
             "visualization": {
@@ -344,18 +358,17 @@ class TestActivityStreamExperimentDashboard(AppTest):
             },
         }]]
     }
-
     EXPECTED_ROWS = [{
-        "event_rate": 123,
+        "count": 123,
         "type": "experiment",
     }, {
-        "event_rate": 789,
+        "count": 789,
         "type": "control",
     }, {
-        "event_rate": 1233,
+        "count": 1233,
         "type": "experiment",
     }, {
-        "event_rate": 7819,
+        "count": 7819,
         "type": "control",
     }]
 
@@ -367,34 +380,64 @@ class TestActivityStreamExperimentDashboard(AppTest):
         }
     }
 
+    def get_server(url):
+      response = self.get_mock_response()
+      if self.get_calls == 1:
+        response = self.get_mock_response(
+            content=json.dumps(QUERIES_IN_SEARCH))
+      elif self.get_calls <= 3 and self.get_calls > 1:
+        response = self.get_mock_response(
+            content=json.dumps(VISUALIZATIONS_FOR_QUERY))
+      else:
+        response = self.get_mock_response(
+            content=json.dumps(WIDGETS_RESPONSE))
+
+      self.get_calls += 1
+      return response
+
     mock_boto_transfer_patcher = mock.patch("src.utils.transfer.upload_file")
     mock_boto_transfer_patcher.start()
 
-    self.server_calls = 0
-
-    self.mock_requests_get.return_value = self.get_mock_response(
-        content=json.dumps(WIDGETS_RESPONSE))
+    self.mock_requests_get.side_effect = get_server
     self.mock_requests_post.return_value = self.get_mock_response(
         content=json.dumps(QUERY_RESULTS_RESPONSE))
 
-    self.dash.add_ttable()
+    self.dash.add_ttable("Template:")
 
     # GET calls:
     #     1) Create dashboard
-    #     2) Get dashboard widgets
+    #     2) Get dashboard widgets (2 times)
+    #     3) Search for templates
+    #     4) Get template
     # POST calls:
     #     1) Create dashboard
-    #     2) Get Ttable data for 1 row
-    #     3) Create query
-    #     4) Append visualization to dashboard
-    #     5) Make dashboard public
-    self.assertEqual(self.mock_requests_post.call_count, 5)
-    self.assertEqual(self.mock_requests_get.call_count, 2)
+    #     2) Update queries (10 events * 2 requests each: update + refresh)
+    #     3) Get Ttable query results for 10 rows
+    #     4) Create query (doesn't return ID, so no refresh)
+    #     5) Add query to dashboard
+    #     6) Make dashboard public
+    self.assertEqual(self.mock_requests_post.call_count, 34)
+    self.assertEqual(self.mock_requests_get.call_count, 5)
     self.assertEqual(self.mock_requests_delete.call_count, 0)
 
     mock_boto_transfer_patcher.stop()
 
   def test_ttable_with_no_rows(self):
+    self.get_calls = 0
+    self.server_calls = 0
+    QUERIES_IN_SEARCH = [{
+        "id": 5,
+        "description": "SomeQuery",
+        "name": "AS Template: Query Title Event",
+        "data_source_id": 5,
+        "query": "SELECT stuff FROM things"
+    }]
+    VISUALIZATIONS_FOR_QUERY = {
+        "visualizations": [
+            {"options": {}},
+            {"options": {}}
+        ]
+    }
     WIDGETS_RESPONSE = {
         "widgets": [[{
             "visualization": {
@@ -405,29 +448,45 @@ class TestActivityStreamExperimentDashboard(AppTest):
         }]]
     }
 
+    def get_server(url):
+      response = self.get_mock_response()
+      if self.get_calls == 1:
+        response = self.get_mock_response(
+            content=json.dumps(QUERIES_IN_SEARCH))
+      elif self.get_calls <= 3 and self.get_calls > 1:
+        response = self.get_mock_response(
+            content=json.dumps(VISUALIZATIONS_FOR_QUERY))
+      else:
+        response = self.get_mock_response(
+            content=json.dumps(WIDGETS_RESPONSE))
+
+      self.get_calls += 1
+      return response
+
     mock_json_uploader = mock.patch(
         "src.dashboards.ActivityStreamExperimentDashboard.upload_as_json")
     upload_file_patch = mock_json_uploader.start()
     upload_file_patch.return_value = ""
 
-    self.server_calls = 0
-
-    self.mock_requests_get.return_value = self.get_mock_response(
-        content=json.dumps(WIDGETS_RESPONSE))
+    self.mock_requests_get.side_effect = get_server
     self.mock_requests_post.side_effect = self.post_server
 
-    self.dash.add_ttable()
+    self.dash.add_ttable("Template:")
 
     # GET calls:
     #     1) Create dashboard
-    #     2) Get dashboard widgets
+    #     2) Get dashboard widgets (2 times)
+    #     3) Search for templates
+    #     4) Get templates (2 calls)
     # POST calls:
     #     1) Create dashboard
-    #     2) Create new query (Create + Refresh)
-    #     3) Append visualization to dashboard
-    #     4) Make dashboard public
-    self.assertEqual(self.mock_requests_post.call_count, 5)
-    self.assertEqual(self.mock_requests_get.call_count, 2)
+    #     2) Update queries (10 events * 2 requests each: update + refresh)
+    #     3) Get Ttable query results for 10 rows
+    #     4) Create query (create + refresh)
+    #     5) Add query to dashboard
+    #     6) Make dashboard public
+    self.assertEqual(self.mock_requests_post.call_count, 35)
+    self.assertEqual(self.mock_requests_get.call_count, 6)
     self.assertEqual(self.mock_requests_delete.call_count, 0)
 
     # The ttable has no rows
@@ -437,6 +496,20 @@ class TestActivityStreamExperimentDashboard(AppTest):
     mock_json_uploader.stop()
 
   def test_statistical_analysis_graph_exist_deletes_and_creates_new(self):
+    self.get_calls = 0
+    QUERIES_IN_SEARCH = [{
+        "id": 5,
+        "description": "SomeQuery",
+        "name": "AS Template: Query Title Event",
+        "data_source_id": 5,
+        "query": "SELECT stuff FROM things"
+    }]
+    VISUALIZATIONS_FOR_QUERY = {
+        "visualizations": [
+            {"options": {}},
+            {"options": {}}
+        ]
+    }
     WIDGETS_RESPONSE = {
         "widgets": [[{
             "id": "123",
@@ -449,27 +522,45 @@ class TestActivityStreamExperimentDashboard(AppTest):
         }]]
     }
 
+    def get_server(url):
+      response = self.get_mock_response()
+      if self.get_calls == 1:
+        response = self.get_mock_response(
+            content=json.dumps(QUERIES_IN_SEARCH))
+      elif self.get_calls <= 3 and self.get_calls > 1:
+        response = self.get_mock_response(
+            content=json.dumps(VISUALIZATIONS_FOR_QUERY))
+      else:
+        response = self.get_mock_response(
+            content=json.dumps(WIDGETS_RESPONSE))
+
+      self.get_calls += 1
+      return response
+
     mock_json_uploader = mock.patch(
         "src.dashboards.ActivityStreamExperimentDashboard.upload_as_json")
     upload_file_patch = mock_json_uploader.start()
     upload_file_patch.return_value = ""
 
     self.mock_requests_delete.return_value = self.get_mock_response()
-    self.mock_requests_get.return_value = self.get_mock_response(
-        content=json.dumps(WIDGETS_RESPONSE))
+    self.mock_requests_get.side_effect = get_server
 
-    self.dash.add_ttable()
+    self.dash.add_ttable("Template:")
 
     # GET calls:
     #     1) Create dashboard
-    #     2) Get dashboard widgets
+    #     2) Get dashboard widgets (2 times)
+    #     3) Search for templates
+    #     4) Get template
     # POST calls:
     #     1) Create dashboard
-    #     2) Create new query (Create + Refresh)
-    #     3) Append visualization to dashboard
-    #     4) Make dashboard public
-    self.assertEqual(self.mock_requests_post.call_count, 5)
-    self.assertEqual(self.mock_requests_get.call_count, 2)
+    #     2) Update queries (10 events * 2 requests each: update + refresh)
+    #     3) Get Ttable query results for 10 rows
+    #     4) Create query (doesn't return ID, so no refresh)
+    #     5) Add query to dashboard
+    #     6) Make dashboard public
+    self.assertEqual(self.mock_requests_post.call_count, 34)
+    self.assertEqual(self.mock_requests_get.call_count, 5)
     self.assertEqual(self.mock_requests_delete.call_count, 2)
 
     mock_json_uploader.stop()

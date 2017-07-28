@@ -33,6 +33,6 @@ def handler(json_input, context):
         end_date,
     )
 
-    dash.add_templates()
-    dash.add_ttable()
+    dash.add_graph_templates("AS Template:")
+    dash.add_ttable("TTests Template:")
     dash.update_refresh_schedule(43200)
