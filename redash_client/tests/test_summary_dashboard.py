@@ -1,8 +1,8 @@
 import json
 
-from src.constants import RetentionType
-from src.tests.base import AppTest
-from templates import active_users
+from redash_client.constants import RetentionType
+from redash_client.tests.base import AppTest
+from redash_client.templates import active_users
 
 
 class TestSummaryDashboard(AppTest):

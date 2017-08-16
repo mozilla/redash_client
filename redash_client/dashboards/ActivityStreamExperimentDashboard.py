@@ -5,11 +5,11 @@ import statistics
 from scipy import stats
 import statsmodels.stats.power as smp
 
-from src.utils import upload_as_json
-from src.constants import (
+from redash_client.utils import upload_as_json
+from redash_client.constants import (
     VizType, ChartType, VizWidth, TTableSchema, TimeInterval)
-from src.dashboards.SummaryDashboard import SummaryDashboard
-from src.templates import (
+from redash_client.dashboards.SummaryDashboard import SummaryDashboard
+from redash_client.templates import (
     retention_diff, disable_rate)
 
 

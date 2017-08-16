@@ -1,7 +1,7 @@
 import os
 
-from src.constants import RetentionType
-from src.dashboards.SummaryDashboard import SummaryDashboard
+from redash_client.constants import RetentionType
+from redash_client.dashboards.SummaryDashboard import SummaryDashboard
 
 
 if __name__ == '__main__':

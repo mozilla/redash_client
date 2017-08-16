@@ -3,7 +3,7 @@
 # Path to the project directory (that should include requirements.txt),
 # Files and directories within that need to be deployed.
 project=.
-contents=(src)
+contents=(redash_client)
 
 # Unnecessary parts. Note that there are some inter-dependencies in SciPy,
 # for example to use scipy.stats you also need scipy.linalg, scipy.integrate,
@@ -16,7 +16,7 @@ remove=(
 )
 
 # We'll use a temporary directory to prepare the package contents.
-build=$(mktemp -d --suffix=-$src)
+build=$(mktemp -d --suffix=-$redash_client)
 function cleanup {
     rm -r "$build"
 }

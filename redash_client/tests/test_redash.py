@@ -2,9 +2,9 @@ import mock
 import json
 import requests
 
-from src.tests.base import AppTest
-from src.client import RedashClient
-from src.constants import VizType, ChartType, VizWidth
+from redash_client.tests.base import AppTest
+from redash_client.client import RedashClient
+from redash_client.constants import VizType, ChartType, VizWidth
 
 
 class TestRedashClient(AppTest):
@@ -13,15 +13,18 @@ class TestRedashClient(AppTest):
     api_key = "test_key"
     self.redash = RedashClient(api_key)
 
-    mock_requests_post_patcher = mock.patch("client.requests.post")
+    mock_requests_post_patcher = mock.patch(
+        "redash_client.client.requests.post")
     self.mock_requests_post = mock_requests_post_patcher.start()
     self.addCleanup(mock_requests_post_patcher.stop)
 
-    mock_requests_get_patcher = mock.patch("client.requests.get")
+    mock_requests_get_patcher = mock.patch(
+        "redash_client.client.requests.get")
     self.mock_requests_get = mock_requests_get_patcher.start()
     self.addCleanup(mock_requests_get_patcher.stop)
 
-    mock_requests_delete_patcher = mock.patch("client.requests.delete")
+    mock_requests_delete_patcher = mock.patch(
+        "redash_client.client.requests.delete")
     self.mock_requests_delete = mock_requests_delete_patcher.start()
     self.addCleanup(mock_requests_delete_patcher.stop)
 

@@ -1,7 +1,7 @@
 import time
 
-from src.templates import retention, all_events_weekly, active_users
-from src.constants import (
+from redash_client.templates import retention, all_events_weekly, active_users
+from redash_client.constants import (
     VizWidth, VizType, RetentionType, ChartType, TimeInterval)
 
 

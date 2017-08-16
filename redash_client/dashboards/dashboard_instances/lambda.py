@@ -1,8 +1,8 @@
 import os
 
-from src.client import RedashClient
-from src.utils import read_experiment_definition, format_date, is_old_date
-from src.dashboards.ActivityStreamExperimentDashboard import (
+from redash_client.client import RedashClient
+from redash_client.utils import read_experiment_definition, format_date, is_old_date
+from redash_client.dashboards.ActivityStreamExperimentDashboard import (
     ActivityStreamExperimentDashboard)
 
 DIRECTORY_NAME = "experiments/json_definitions"

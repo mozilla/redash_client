@@ -4,8 +4,8 @@ import json
 import time
 import statistics
 
-from src.tests.base import AppTest
-from src.dashboards.ActivityStreamExperimentDashboard import (
+from redash_client.tests.base import AppTest
+from redash_client.dashboards.ActivityStreamExperimentDashboard import (
     ActivityStreamExperimentDashboard)
 
 
@@ -395,7 +395,8 @@ class TestActivityStreamExperimentDashboard(AppTest):
       self.get_calls += 1
       return response
 
-    mock_boto_transfer_patcher = mock.patch("src.utils.transfer.upload_file")
+    mock_boto_transfer_patcher = mock.patch(
+        "redash_client.utils.transfer.upload_file")
     mock_boto_transfer_patcher.start()
 
     self.mock_requests_get.side_effect = get_server
@@ -464,7 +465,8 @@ class TestActivityStreamExperimentDashboard(AppTest):
       return response
 
     mock_json_uploader = mock.patch(
-        "src.dashboards.ActivityStreamExperimentDashboard.upload_as_json")
+        ("redash_client.dashboards."
+         "ActivityStreamExperimentDashboard.upload_as_json"))
     upload_file_patch = mock_json_uploader.start()
     upload_file_patch.return_value = ""
 
@@ -538,7 +540,8 @@ class TestActivityStreamExperimentDashboard(AppTest):
       return response
 
     mock_json_uploader = mock.patch(
-        "src.dashboards.ActivityStreamExperimentDashboard.upload_as_json")
+        ("redash_client.dashboards."
+         "ActivityStreamExperimentDashboard.upload_as_json"))
     upload_file_patch = mock_json_uploader.start()
     upload_file_patch.return_value = ""
 
