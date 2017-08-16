@@ -3,7 +3,7 @@ build:
 
 lint:
 	flake8 src/constants.py
-	flake8 src/redash_client.py
+	flake8 src/client.py
 	flake8 src/utils.py
 	flake8 src/dashboards/SummaryDashboard.py
 	flake8 src/dashboards/ActivityStreamExperimentDashboard.py

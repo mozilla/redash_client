@@ -1,6 +1,6 @@
 import os
 
-from src.redash_client import RedashClient
+from src.client import RedashClient
 from src.dashboards.ActivityStreamExperimentDashboard import ActivityStreamExperimentDashboard
 
 '''

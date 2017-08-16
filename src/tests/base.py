@@ -2,7 +2,7 @@ import mock
 import json
 import unittest
 
-from src.redash_client import RedashClient
+from src.client import RedashClient
 from src.dashboards.SummaryDashboard import SummaryDashboard
 
 
@@ -53,15 +53,15 @@ class AppTest(unittest.TestCase):
 
     self.redash = RedashClient(API_KEY)
 
-    mock_requests_post_patcher = mock.patch("redash_client.requests.post")
+    mock_requests_post_patcher = mock.patch("client.requests.post")
     self.mock_requests_post = mock_requests_post_patcher.start()
     self.addCleanup(mock_requests_post_patcher.stop)
 
-    mock_requests_get_patcher = mock.patch("redash_client.requests.get")
+    mock_requests_get_patcher = mock.patch("client.requests.get")
     self.mock_requests_get = mock_requests_get_patcher.start()
     self.addCleanup(mock_requests_get_patcher.stop)
 
-    mock_requests_delete_patcher = mock.patch("redash_client.requests.delete")
+    mock_requests_delete_patcher = mock.patch("client.requests.delete")
     self.mock_requests_delete = mock_requests_delete_patcher.start()
     self.addCleanup(mock_requests_delete_patcher.stop)
 

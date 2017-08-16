@@ -1,6 +1,6 @@
 import os
 
-from src.redash_client import RedashClient
+from src.client import RedashClient
 from src.utils import read_experiment_definition, format_date, is_old_date
 from src.dashboards.ActivityStreamExperimentDashboard import (
     ActivityStreamExperimentDashboard)
