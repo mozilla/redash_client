@@ -44,6 +44,8 @@ To import and use :code:`RedashClient`:
 Package for Pip
 ===============
 
+First, you must update the :code:`version` field in :code:`setup.py`. Then run these commands:
+
 .. code-block:: bash
 
   python setup.py sdist
