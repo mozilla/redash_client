@@ -4,8 +4,13 @@ import logging
 import requests
 from slugify import slugify
 
-from urlparse import urljoin
-from urllib import urlencode
+# Taking into account different versions of Python
+try:
+  from urlparse import urljoin
+  from urllib import urlencode
+except ImportError:
+  from urllib.parse import urlencode
+  from urllib.parse import urljoin
 
 from constants import VizType, VizWidth, ChartType, TimeInterval
 
