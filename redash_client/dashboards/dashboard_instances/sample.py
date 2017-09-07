@@ -88,6 +88,7 @@ if __name__ == '__main__':
     end_date="2017-09-06"
   )
 
+  dash.add_graph_templates("AS Template UT Mapped:", dash.MAPPED_UT_EVENTS)
   dash.add_graph_templates("AS Template UT:", dash.UT_EVENTS)
   dash.add_ttable("TTests Template UT:", dash.UT_EVENTS)
   #dash.update_refresh_schedule(86400)
