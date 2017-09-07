@@ -6,11 +6,8 @@ from scipy import stats
 import statsmodels.stats.power as smp
 
 from redash_client.utils import upload_as_json
-from redash_client.constants import (
-    VizType, ChartType, VizWidth, TTableSchema, TimeInterval)
+from redash_client.constants import (VizWidth, TTableSchema)
 from redash_client.dashboards.SummaryDashboard import SummaryDashboard
-from redash_client.templates import (
-    retention_diff, disable_rate)
 
 
 class ActivityStreamExperimentDashboard(SummaryDashboard):
@@ -142,42 +139,6 @@ class ActivityStreamExperimentDashboard(SummaryDashboard):
         "Significance": results["significance"],
         "Experiment Mean - Control Mean": results["mean_diff"]
     }
-
-  def add_disable_graph(self):
-    if self.DISABLE_TITLE in self.get_query_ids_and_names():
-      return
-
-    query_string, fields = disable_rate(
-        self._start_date, self._experiment_id, self._addon_versions)
-
-    mapping = {fields[0]: "x", fields[1]: "y", fields[2]: "series"}
-
-    self._add_query_to_dashboard(
-        self.DISABLE_TITLE,
-        query_string,
-        self.TILES_DATA_SOURCE_ID,
-        VizWidth.REGULAR,
-        VizType.CHART,
-        "",
-        ChartType.LINE,
-        mapping,
-    )
-
-  def add_retention_diff(self):
-    if self.RETENTION_DIFF_TITLE in self.get_query_ids_and_names():
-      return
-
-    query_string, fields = retention_diff(
-        self._start_date, self._experiment_id, self._addon_versions)
-
-    self._add_query_to_dashboard(
-        self.RETENTION_DIFF_TITLE,
-        query_string,
-        self.TILES_DATA_SOURCE_ID,
-        VizWidth.WIDE,
-        VizType.COHORT,
-        time_interval=TimeInterval.DAILY,
-    )
 
   def _get_title(self, template_name):
     title = template_name.title().split(": ")
