@@ -26,21 +26,28 @@ class ActivityStreamExperimentDashboard(SummaryDashboard):
                     "CLEAR_HISTORY", {
                         "event_name": "Positive Interactions",
                         "event_list": ["CLICK", "BOOKMARK_ADD", "SEARCH"]}]
-  MASGA_EVENTS = ["HIDE_LOADER", "SHOW_LOADER", "MISSING_IMAGE"]
+  UT_EVENTS = [
+      "scalar_parent_browser_engagement_unique_domains_count",
+      "scalar_parent_browser_engagement_active_ticks",
+      "scalar_parent_browser_engagement_tab_open_event_count",
+      "scalar_parent_browser_engagement_max_concurrent_tab_count",
+      "scalar_parent_browser_engagement_unique_domains_count",
+      "scalar_parent_browser_engagement_unfiltered_uri_count"]
+
+  DEFAULT_EVENTS_TABLE = "assa_events_daily"
   ALPHA_ERROR = 0.005
   URL_FETCHER_DATA_SOURCE_ID = 28
   DISABLE_TITLE = "Disable Rate"
   RETENTION_DIFF_TITLE = "Daily Retention Difference (Experiment - Control)"
   T_TABLE_TITLE = "Statistical Analysis"
   DASH_PREFIX = "Activity Stream Experiment: {name}"
-  MASGA_EVENTS_TABLE = "activity_stream_masga"
 
   def __init__(self, redash_client, dash_name, exp_id,
                start_date=None, end_date=None):
     super(ActivityStreamExperimentDashboard, self).__init__(
         redash_client,
         self.DASH_PREFIX.format(name=dash_name),
-        "activity_stream_events_daily",
+        self.DEFAULT_EVENTS_TABLE,
         start_date, end_date)
 
     logging.basicConfig()
@@ -151,7 +158,8 @@ class ActivityStreamExperimentDashboard(SummaryDashboard):
         events.append("'{}'".format(event))
       event_string = "(" + ", ".join(events) + ")"
 
-    self._params["event"] = event_string
+    self._params["event"] = event
+    self._params["event_string"] = event_string
     title = description = self._get_title(template["name"]).replace(
         "Event", event_name)
 
@@ -271,8 +279,8 @@ class ActivityStreamExperimentDashboard(SummaryDashboard):
     )
 
   def _apply_functions_to_templates(
-      self, template_keyword, events_function,
-      general_function=None, values=None
+      self, template_keyword, events_list, events_table,
+      events_function, general_function=None, values=None
   ):
     templates = self.redash.search_queries(template_keyword)
     chart_data = self.get_query_ids_and_names()
@@ -281,24 +289,13 @@ class ActivityStreamExperimentDashboard(SummaryDashboard):
       if "event" in template["name"].lower():
         self._logger.info((
             "ActivityStreamExperimentDashboard: "
-            "Processing template '{template_name}' for default events"
+            "Processing template '{template_name}'"
             .format(template_name=template["name"])))
         events_function(
             template,
             chart_data,
-            self.DEFAULT_EVENTS,
-            self._events_table,
-            values)
-
-        self._logger.info((
-            "ActivityStreamExperimentDashboard: "
-            "Processing template '{template_name}' for masga events"
-            .format(template_name=template["name"])))
-        events_function(
-            template,
-            chart_data,
-            self.MASGA_EVENTS,
-            self.MASGA_EVENTS_TABLE,
+            events_list,
+            events_table,
             values)
       else:
         self._logger.info((
@@ -307,19 +304,29 @@ class ActivityStreamExperimentDashboard(SummaryDashboard):
             .format(template_name=template["name"])))
         general_function(template, chart_data, values)
 
-  def add_graph_templates(self, template_keyword):
+  def add_graph_templates(self, template_keyword,
+                          events_list=None, events_table=None):
     self._logger.info(
         "ActivityStreamExperimentDashboard: Adding templates.")
 
+    if events_list is None:
+      events_list = self.DEFAULT_EVENTS
+
     self._apply_functions_to_templates(
         template_keyword,
+        events_list,
+        events_table,
         self._apply_event_template,
         self._apply_non_event_template
     )
 
-  def add_ttable(self, template_keyword):
+  def add_ttable(self, template_keyword, events_list=None, events_table=None):
     self._logger.info(
         "ActivityStreamExperimentDashboard: Creating a T-Table")
+
+    if events_list is None:
+      events_list = self.DEFAULT_EVENTS
+      events_table = self._events_table
 
     chart_data = self.get_query_ids_and_names()
     values = {"columns": TTableSchema, "rows": []}
@@ -335,7 +342,12 @@ class ActivityStreamExperimentDashboard(SummaryDashboard):
 
     # Create the t-table
     self._apply_functions_to_templates(
-        template_keyword, self._apply_ttable_event_template, None, values)
+        template_keyword,
+        events_list,
+        events_table,
+        self._apply_ttable_event_template,
+        None,
+        values)
 
     query_string = upload_as_json("experiments", self._experiment_id, values)
     query_id, table_id = self.redash.create_new_query(

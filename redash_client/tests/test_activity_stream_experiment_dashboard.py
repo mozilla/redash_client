@@ -232,12 +232,12 @@ class TestActivityStreamExperimentDashboard(AppTest):
     #     4) Update query
     #     5) Create visualization
     #     6) Append visualization to dashboard
-    #     7) Repeat 2-6 eleven times
+    #     7) Repeat 2-6 eight times
     #     8) Make dashboard public
     # DELETE calls:
     #     One existing graph is removed from dashboard
     #     and deleted (2 calls)
-    self.assertEqual(self.mock_requests_post.call_count, 57)
+    self.assertEqual(self.mock_requests_post.call_count, 42)
     self.assertEqual(self.mock_requests_get.call_count, 5)
     self.assertEqual(self.mock_requests_delete.call_count, 2)
 
@@ -319,12 +319,12 @@ class TestActivityStreamExperimentDashboard(AppTest):
     #     4) Get template
     # POST calls:
     #     1) Create dashboard
-    #     2) Update queries (10 events * 2 requests each: update + refresh)
-    #     3) Get Ttable query results for 10 rows
+    #     2) Update queries (7 events * 2 requests each: update + refresh)
+    #     3) Get Ttable query results for 7 rows
     #     4) Create query (doesn't return ID, so no refresh)
     #     5) Add query to dashboard
     #     6) Make dashboard public
-    self.assertEqual(self.mock_requests_post.call_count, 34)
+    self.assertEqual(self.mock_requests_post.call_count, 25)
     self.assertEqual(self.mock_requests_get.call_count, 5)
     self.assertEqual(self.mock_requests_delete.call_count, 0)
 
@@ -389,12 +389,12 @@ class TestActivityStreamExperimentDashboard(AppTest):
     #     4) Get templates (2 calls)
     # POST calls:
     #     1) Create dashboard
-    #     2) Update queries (10 events * 2 requests each: update + refresh)
-    #     3) Get Ttable query results for 10 rows
+    #     2) Update queries (7 events * 2 requests each: update + refresh)
+    #     3) Get Ttable query results for 7 rows
     #     4) Create query (create + refresh)
     #     5) Add query to dashboard
     #     6) Make dashboard public
-    self.assertEqual(self.mock_requests_post.call_count, 35)
+    self.assertEqual(self.mock_requests_post.call_count, 26)
     self.assertEqual(self.mock_requests_get.call_count, 6)
     self.assertEqual(self.mock_requests_delete.call_count, 0)
 
@@ -464,12 +464,12 @@ class TestActivityStreamExperimentDashboard(AppTest):
     #     4) Get template
     # POST calls:
     #     1) Create dashboard
-    #     2) Update queries (10 events * 2 requests each: update + refresh)
-    #     3) Get Ttable query results for 10 rows
+    #     2) Update queries (7 events * 2 requests each: update + refresh)
+    #     3) Get Ttable query results for 7 rows
     #     4) Create query (doesn't return ID, so no refresh)
     #     5) Add query to dashboard
     #     6) Make dashboard public
-    self.assertEqual(self.mock_requests_post.call_count, 34)
+    self.assertEqual(self.mock_requests_post.call_count, 25)
     self.assertEqual(self.mock_requests_get.call_count, 5)
     self.assertEqual(self.mock_requests_delete.call_count, 2)
 

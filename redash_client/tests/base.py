@@ -20,10 +20,8 @@ class AppTest(unittest.TestCase):
         "data_source_id": 3
     }
 
-    response = self.get_mock_response()
-    if self.server_calls % 2 == 0 or self.server_calls == 0:
-      response = self.get_mock_response(
-          content=json.dumps(QUERY_ID_RESPONSE))
+    response = self.get_mock_response(
+        content=json.dumps(QUERY_ID_RESPONSE))
 
     if "fork" in url:
       response = self.get_mock_response(
