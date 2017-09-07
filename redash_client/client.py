@@ -8,7 +8,7 @@ from slugify import slugify
 try:
   from urlparse import urljoin
   from urllib import urlencode
-except ImportError:
+except ImportError:  # pragma: no cover
   from urllib.parse import urlencode
   from urllib.parse import urljoin
 
