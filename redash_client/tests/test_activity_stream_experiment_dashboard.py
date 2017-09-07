@@ -103,7 +103,7 @@ class TestActivityStreamExperimentDashboard(AppTest):
         content=json.dumps(QUERY_RESULTS_RESPONSE))
 
     ttable_row = self.dash._get_ttable_data_for_query(
-        "beep", "meep", "boop")
+        "beep", "meep", "boop", 5)
 
     self.assertEqual(ttable_row, {})
 
@@ -127,7 +127,7 @@ class TestActivityStreamExperimentDashboard(AppTest):
         content=json.dumps(QUERY_RESULTS_RESPONSE))
 
     ttable_row = self.dash._get_ttable_data_for_query(
-        "beep", "meep", "count")
+        "beep", "meep", "count", 5)
 
     self.assertEqual(len(ttable_row), 0)
 
@@ -160,7 +160,7 @@ class TestActivityStreamExperimentDashboard(AppTest):
         content=json.dumps(QUERY_RESULTS_RESPONSE))
 
     ttable_row = self.dash._get_ttable_data_for_query(
-        EXPECTED_LABEL, "meep", "count")
+        EXPECTED_LABEL, "meep", "count", 5)
 
     self.assertEqual(len(ttable_row), 6)
     self.assertEqual(ttable_row["Metric"], EXPECTED_LABEL)

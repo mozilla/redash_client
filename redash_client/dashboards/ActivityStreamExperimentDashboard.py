@@ -115,9 +115,10 @@ class ActivityStreamExperimentDashboard(SummaryDashboard):
         "significance": significance
     }
 
-  def _get_ttable_data_for_query(self, label, query_string, column_name):
+  def _get_ttable_data_for_query(self, label, query_string,
+                                 column_name, data_source_id):
     data = self.redash.get_query_results(
-        query_string, self.TILES_DATA_SOURCE_ID)
+        query_string, data_source_id)
 
     if data is None or len(data) <= 3 or (column_name not in data[0]):
       return {}
@@ -275,7 +276,10 @@ class ActivityStreamExperimentDashboard(SummaryDashboard):
           options
       )
       ttable_row = self._get_ttable_data_for_query(
-          event_data["title"], query_string, "count")
+          event_data["title"],
+          query_string,
+          "count",
+          template["data_source_id"])
 
       if len(ttable_row) == 0:
         self._logger.info((
