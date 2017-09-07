@@ -31,7 +31,6 @@ class ActivityStreamExperimentDashboard(SummaryDashboard):
       "scalar_parent_browser_engagement_active_ticks",
       "scalar_parent_browser_engagement_tab_open_event_count",
       "scalar_parent_browser_engagement_max_concurrent_tab_count",
-      "scalar_parent_browser_engagement_unique_domains_count",
       "scalar_parent_browser_engagement_unfiltered_uri_count"]
 
   DEFAULT_EVENTS_TABLE = "assa_events_daily"
