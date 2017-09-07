@@ -36,7 +36,7 @@ class ActivityStreamExperimentDashboard(SummaryDashboard):
   MASGA_EVENTS_TABLE = "activity_stream_masga"
 
   def __init__(self, redash_client, dash_name, exp_id,
-               addon_versions, start_date=None, end_date=None):
+               start_date=None, end_date=None):
     super(ActivityStreamExperimentDashboard, self).__init__(
         redash_client,
         self.DASH_PREFIX.format(name=dash_name),
@@ -48,12 +48,6 @@ class ActivityStreamExperimentDashboard(SummaryDashboard):
     self._logger.setLevel(logging.INFO)
     self._experiment_id = exp_id
 
-    addon_version_list = []
-    for version in addon_versions:
-      addon_version_list.append("'{}'".format(version))
-    self._addon_versions = ", ".join(addon_version_list)
-
-    self._params["addon_versions"] = "(" + self._addon_versions + ")"
     self._params["experiment_id"] = self._experiment_id
     self._logger.info((
         "ActivityStreamExperimentDashboard: {name} "

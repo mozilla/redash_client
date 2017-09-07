@@ -11,7 +11,6 @@ from redash_client.dashboards.ActivityStreamExperimentDashboard import (
 
 class TestActivityStreamExperimentDashboard(AppTest):
 
-  ADDON_VERSIONS = ["1.8.0", "1.9.0"]
   START_DATE = "02/17/2017"
   END_DATE = time.strftime("%m/%d/%y")
   DASH_NAME = "Screenshots Long Cache"
@@ -25,7 +24,6 @@ class TestActivityStreamExperimentDashboard(AppTest):
         self.redash,
         self.DASH_NAME,
         self.EXPERIMENT_ID,
-        self.ADDON_VERSIONS,
         self.START_DATE,
     )
     return dashboard
@@ -37,7 +35,6 @@ class TestActivityStreamExperimentDashboard(AppTest):
         self.dash.DASH_PREFIX.format(name=self.DASH_NAME))
     self.assertEqual(self.dash._start_date, self.START_DATE)
     self.assertEqual(self.dash._end_date, self.END_DATE)
-    self.assertEqual(self.dash._addon_versions, "'1.8.0', '1.9.0'")
 
     # 2 posts to create the dashboard and make it public
     self.assertEqual(self.mock_requests_post.call_count, 2)
