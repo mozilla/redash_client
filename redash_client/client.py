@@ -12,7 +12,7 @@ except ImportError:  # pragma: no cover
   from urllib.parse import urlencode
   from urllib.parse import urljoin
 
-from constants import VizType, VizWidth, ChartType, TimeInterval
+from redash_client.constants import VizType, VizWidth, ChartType, TimeInterval
 
 
 class RedashClient(object):
