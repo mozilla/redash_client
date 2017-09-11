@@ -13,6 +13,7 @@ class TestActivityStreamExperimentDashboard(AppTest):
 
   START_DATE = "02/17/2017"
   END_DATE = time.strftime("%m/%d/%y")
+  DASH_PROJECT = "Activity Stream Experiment"
   DASH_NAME = "Screenshots Long Cache"
   EXPERIMENT_ID = "exp-014-screenshotsasync"
 
@@ -22,6 +23,7 @@ class TestActivityStreamExperimentDashboard(AppTest):
 
     dashboard = ActivityStreamExperimentDashboard(
         self.redash,
+        self.DASH_PROJECT,
         self.DASH_NAME,
         self.EXPERIMENT_ID,
         self.START_DATE,
@@ -32,7 +34,8 @@ class TestActivityStreamExperimentDashboard(AppTest):
     self.assertEqual(self.dash._experiment_id, self.EXPERIMENT_ID)
     self.assertEqual(
         self.dash._dash_name,
-        self.dash.DASH_PREFIX.format(name=self.DASH_NAME))
+        "{project}: {dash}".format(
+            project=self.DASH_PROJECT, dash=self.DASH_NAME))
     self.assertEqual(self.dash._start_date, self.START_DATE)
     self.assertEqual(self.dash._end_date, self.END_DATE)
 

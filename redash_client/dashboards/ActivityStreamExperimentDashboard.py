@@ -42,13 +42,14 @@ class ActivityStreamExperimentDashboard(SummaryDashboard):
   DISABLE_TITLE = "Disable Rate"
   RETENTION_DIFF_TITLE = "Daily Retention Difference (Experiment - Control)"
   T_TABLE_TITLE = "Statistical Analysis"
-  DASH_PREFIX = "Activity Stream Experiment: {name}"
 
-  def __init__(self, redash_client, dash_name, exp_id,
+  def __init__(self, redash_client, project_name, dash_name, exp_id,
                start_date=None, end_date=None):
+    DASH_TITLE = "{project}: {dash}".format(
+        project=project_name, dash=dash_name)
     super(ActivityStreamExperimentDashboard, self).__init__(
         redash_client,
-        self.DASH_PREFIX.format(name=dash_name),
+        DASH_TITLE,
         self.DEFAULT_EVENTS_TABLE,
         start_date, end_date)
 
