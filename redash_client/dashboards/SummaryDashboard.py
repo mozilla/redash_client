@@ -49,7 +49,7 @@ class SummaryDashboard(object):
     self.redash = redash_client
     self._dash_id = self.redash.create_new_dashboard(self._dash_name)
     self.redash.publish_dashboard(self._dash_id)
-    self.redash.get_public_url(self._dash_id)
+    self.public_url = self.redash.get_public_url(self._dash_id)
 
   def update_refresh_schedule(self, seconds_to_refresh):
     widgets = self.redash.get_widget_from_dash(self._dash_name)
