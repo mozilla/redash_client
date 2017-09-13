@@ -12,6 +12,7 @@ lint:
 	flake8 redash_client/tests/test_summary_dashboard.py
 	flake8 redash_client/test/test_utils.py
 	flake8 redash_client/tests/test_activity_stream_experiment_dashboard.py
+	flake8 redash_client/tests/test_statistical_dashboard.py
 
 test: lint
 	nosetests --with-coverage --cover-package=redash_client
