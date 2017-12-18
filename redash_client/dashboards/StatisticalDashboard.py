@@ -68,8 +68,10 @@ class StatisticalDashboard(ActivityStreamExperimentDashboard):
     return {
         "power": power,
         "p_val": p_val,
+        "control_mean": control_mean,
         "mean_diff": mean_diff,
-        "significance": significance
+        "percent_diff": 0 if percent_diff is None else percent_diff * -100,
+        "significance": significance,
     }
 
   def _get_ttable_data_for_query(self, label, query_string,
@@ -96,8 +98,10 @@ class StatisticalDashboard(ActivityStreamExperimentDashboard):
         "Alpha Error": self.ALPHA_ERROR,
         "Power": results["power"],
         "Two-Tailed P-value (ttest)": results["p_val"],
-        "Significance": results["significance"],
-        "Experiment Mean - Control Mean": results["mean_diff"]
+        "Control Mean": results["control_mean"],
+        "Experiment Mean - Control Mean": results["mean_diff"],
+        "Percent Difference in Means": results["percent_diff"],
+        "Significance": results["significance"]
     }
 
   def _apply_ttable_event_template(self, template, chart_data, events_list,

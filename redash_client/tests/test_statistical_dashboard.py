@@ -148,7 +148,7 @@ class TestStatisticalDashboard(AppTest):
     ttable_row = self.dash._get_ttable_data_for_query(
         EXPECTED_LABEL, "meep", "count", 5)
 
-    self.assertEqual(len(ttable_row), 6)
+    self.assertEqual(len(ttable_row), 8)
     self.assertEqual(ttable_row["Metric"], EXPECTED_LABEL)
     self.assertEqual(ttable_row["Alpha Error"], self.dash.ALPHA_ERROR)
     self.assertTrue(0.5 <= ttable_row["Power"] <= 1)
