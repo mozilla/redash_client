@@ -17,9 +17,19 @@ class ActivityStreamExperimentDashboard(SummaryDashboard):
       "scalar_parent_browser_engagement_tab_open_event_count",
       "scalar_parent_browser_engagement_max_concurrent_tab_count",
       "scalar_parent_browser_engagement_unfiltered_uri_count"]
+  UT_HOURLY_EVENTS = [
+      "scalar_parent_browser_engagement_unique_domains_count",
+      "scalar_parent_browser_engagement_tab_open_event_count",
+      "scalar_parent_browser_engagement_max_concurrent_tab_count",
+      "scalar_parent_browser_engagement_unfiltered_uri_count",]
+  UT_MAPPED_HOURLY_EVENTS = [
+      "scalar_parent_browser_engagement_navigation_searchbar",
+      "scalar_parent_browser_engagement_navigation_about_newtab"
+      "scalar_parent_browser_engagement_navigation_about_home"]
   MAPPED_UT_EVENTS = [
       "scalar_parent_browser_engagement_navigation_searchbar",
-      "scalar_parent_browser_engagement_navigation_about_newtab"]
+      "scalar_parent_browser_engagement_navigation_about_newtab",
+      "scalar_parent_browser_engagement_navigation_about_home"]
 
   DEFAULT_EVENTS_TABLE = "assa_events_daily"
   ALPHA_ERROR = 0.005
