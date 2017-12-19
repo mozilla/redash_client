@@ -62,9 +62,10 @@ class StatisticalDashboard(ActivityStreamExperimentDashboard):
         control_std, exp_std, control_vals, exp_vals)
 
     power = 0
+    percent_diff = None
     if control_mean != 0 and pooled_stddev != 0:
-      percent_diff = abs(control_mean - exp_mean) / control_mean
-      effect_size = (percent_diff * float(control_mean)) / float(pooled_stddev)
+      percent_diff = (control_mean - exp_mean) / float(control_mean)
+      effect_size = (abs(percent_diff) * float(control_mean)) / float(pooled_stddev)
       power = smp.TTestIndPower().solve_power(
           effect_size,
           nobs1=len(control_vals),
