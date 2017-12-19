@@ -106,9 +106,9 @@ class StatisticalDashboard(ActivityStreamExperimentDashboard):
     control_vals = []
     exp_vals = []
     for row in data:
-      if "type" in row and row["type"] == "experiment":
+      if "type" in row and row["type"].find("control") == -1:
         exp_vals.append(row[column_name])
-      elif "type" in row and row["type"] == "control":
+      elif "type" in row:
         control_vals.append(row[column_name])
       else:
         return {}
