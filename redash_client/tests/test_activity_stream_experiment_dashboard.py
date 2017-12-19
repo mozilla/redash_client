@@ -106,11 +106,11 @@ class TestActivityStreamExperimentDashboard(AppTest):
     #     4) Update query
     #     5) Create visualization
     #     6) Append visualization to dashboard
-    #     7) Repeat 2-6 eight times
+    #     7) Repeat 2-6 six times
     #     8) Make dashboard public
     # DELETE calls:
     #     One existing graph is removed from dashboard
     #     and deleted (2 calls)
-    self.assertEqual(self.mock_requests_post.call_count, 42)
+    self.assertEqual(self.mock_requests_post.call_count, 32)
     self.assertEqual(self.mock_requests_get.call_count, 5)
     self.assertEqual(self.mock_requests_delete.call_count, 2)

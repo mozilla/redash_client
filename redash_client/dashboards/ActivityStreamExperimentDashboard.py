@@ -7,10 +7,10 @@ from redash_client.dashboards.SummaryDashboard import SummaryDashboard
 class ActivityStreamExperimentDashboard(SummaryDashboard):
   # These are either strings representing both the measurement name
   # event being measured or a key value pair: {<measurement_name>: <events>}
-  DEFAULT_EVENTS = ["CLICK", "SEARCH", "BLOCK", "DELETE", "BOOKMARK_ADD",
-                    "CLEAR_HISTORY", {
-                        "event_name": "Positive Interactions",
-                        "event_list": ["CLICK", "BOOKMARK_ADD", "SEARCH"]}]
+  DEFAULT_EVENTS = ["CLICK", "SEARCH", "BLOCK", "DELETE",
+                    {
+                      "event_name": "Positive Interactions",
+                      "event_list": ["CLICK", "BOOKMARK_ADD", "SEARCH"]}]
   UT_EVENTS = [
       "scalar_parent_browser_engagement_unique_domains_count",
       "scalar_parent_browser_engagement_active_ticks",
