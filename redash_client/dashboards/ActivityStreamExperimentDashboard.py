@@ -9,8 +9,8 @@ class ActivityStreamExperimentDashboard(SummaryDashboard):
   # event being measured or a key value pair: {<measurement_name>: <events>}
   DEFAULT_EVENTS = ["CLICK", "SEARCH", "BLOCK", "DELETE",
                     {
-                      "event_name": "Positive Interactions",
-                      "event_list": ["CLICK", "BOOKMARK_ADD", "SEARCH"]}]
+                        "event_name": "Positive Interactions",
+                        "event_list": ["CLICK", "BOOKMARK_ADD", "SEARCH"]}]
   UT_EVENTS = [
       "scalar_parent_browser_engagement_unique_domains_count",
       "scalar_parent_browser_engagement_active_ticks",
@@ -21,7 +21,7 @@ class ActivityStreamExperimentDashboard(SummaryDashboard):
       "scalar_parent_browser_engagement_unique_domains_count",
       "scalar_parent_browser_engagement_tab_open_event_count",
       "scalar_parent_browser_engagement_max_concurrent_tab_count",
-      "scalar_parent_browser_engagement_unfiltered_uri_count",]
+      "scalar_parent_browser_engagement_unfiltered_uri_count"]
   UT_MAPPED_HOURLY_EVENTS = [
       "scalar_parent_browser_engagement_navigation_searchbar",
       "scalar_parent_browser_engagement_navigation_about_newtab"
