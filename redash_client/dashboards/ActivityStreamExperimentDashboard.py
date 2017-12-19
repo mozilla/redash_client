@@ -120,9 +120,7 @@ class ActivityStreamExperimentDashboard(SummaryDashboard):
     )
 
   def _apply_event_template(self, template, chart_data,
-                            events_list, events_table, values=None):
-    self._params["events_table"] = events_table
-
+                            events_list, events_table, title=None):
     for event in events_list:
       event_data = self._get_event_title_description(template, event)
 
@@ -161,8 +159,12 @@ class ActivityStreamExperimentDashboard(SummaryDashboard):
 
   def _apply_functions_to_templates(
       self, template_keyword, events_list, events_table,
-      events_function, general_function=None, values=None
+      events_function, general_function=None, title=None
   ):
+    if events_table is None:
+      events_table = self._events_table
+    self._params["events_table"] = events_table
+
     templates = self.redash.search_queries(template_keyword)
     chart_data = self.get_query_ids_and_names()
 
@@ -177,13 +179,13 @@ class ActivityStreamExperimentDashboard(SummaryDashboard):
             chart_data,
             events_list,
             events_table,
-            values)
+            title)
       else:
         self._logger.info((
             "ActivityStreamExperimentDashboard: "
             "Processing template '{template_name}'"
             .format(template_name=template["name"])))
-        general_function(template, chart_data, values)
+        general_function(template, chart_data)
 
   def add_graph_templates(self, template_keyword,
                           events_list=None, events_table=None):

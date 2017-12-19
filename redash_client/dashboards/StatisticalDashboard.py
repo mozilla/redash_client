@@ -126,7 +126,11 @@ class StatisticalDashboard(ActivityStreamExperimentDashboard):
     }
 
   def _apply_ttable_event_template(self, template, chart_data, events_list,
-                                   events_table, values):
+                                   events_table, title):
+
+    if title not in self._ttables:
+      self._ttables[title] = self._copy_ttable_tempalte()
+
     self._params["events_table"] = events_table
     for event in events_list:
       event_data = self._get_event_title_description(template, event)
@@ -157,27 +161,19 @@ class StatisticalDashboard(ActivityStreamExperimentDashboard):
             "included in T-Table.".format(name=event_data["title"])))
         continue
 
-      values["rows"].append(ttable_row)
+      self._ttables[title]["rows"].append(ttable_row)
 
-  def add_ttable(self, template_keyword, events_list=None, events_table=None):
-    self._logger.info(
-        "StatisticalTester: Creating a T-Table")
+    print self._ttables[title]
+
+  def add_ttable_data(self, template_keyword, title,
+                      events_list=None, events_table=None):
+    self._logger.info((
+        "StatisticalTester: Adding data for "
+        "{keyword}").format(keyword=template_keyword))
 
     if events_list is None:
       events_list = self.DEFAULT_EVENTS
       events_table = self._events_table
-
-    chart_data = self.get_query_ids_and_names()
-    values = {"columns": TTableSchema, "rows": []}
-
-    # Remove a table if it already exists
-    if self.T_TABLE_TITLE in chart_data:
-      self._logger.info((
-          "StatisticalTester: "
-          "Stale T-Table exists and will be removed"))
-      query_id = chart_data[self.T_TABLE_TITLE]["query_id"]
-      widget_id = chart_data[self.T_TABLE_TITLE]["widget_id"]
-      self.remove_graph_from_dashboard(widget_id, query_id)
 
     # Create the t-table
     self._apply_functions_to_templates(
@@ -186,11 +182,29 @@ class StatisticalDashboard(ActivityStreamExperimentDashboard):
         events_table,
         self._apply_ttable_event_template,
         None,
-        values)
+        title)
 
-    query_string = upload_as_json("experiments", self._experiment_id, values)
+  def add_ttable(self, title):
+    self._logger.info((
+        "StatisticalTester: Creating a T-Table with "
+        "title {title}").format(title=title))
+
+    FILENAME = '{exp_id}_{title}'.format(exp_id=self._experiment_id, title=title)
+
+    chart_data = self.get_query_ids_and_names()
+
+    # Remove a table if it already exists
+    if title in chart_data:
+      self._logger.info((
+          "StatisticalTester: "
+          "Stale T-Table exists and will be removed"))
+      query_id = chart_data[title]["query_id"]
+      widget_id = chart_data[title]["widget_id"]
+      self.remove_graph_from_dashboard(widget_id, query_id)
+
+    query_string = upload_as_json("experiments", FILENAME, self._ttables[title])
     query_id, table_id = self.redash.create_new_query(
-        self.T_TABLE_TITLE,
+        title,
         query_string,
         self.URL_FETCHER_DATA_SOURCE_ID,
         self.TTABLE_DESCRIPTION,

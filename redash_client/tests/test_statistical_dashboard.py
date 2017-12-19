@@ -203,11 +203,10 @@ class TestStatisticalDashboard(AppTest):
     }
 
     def get_server(url):
-      response = self.get_mock_response()
-      if self.get_calls == 1:
+      if self.get_calls == 0:
         response = self.get_mock_response(
             content=json.dumps(QUERIES_IN_SEARCH))
-      elif self.get_calls <= 3 and self.get_calls > 1:
+      elif self.get_calls <= 2 and self.get_calls > 0:
         response = self.get_mock_response(
             content=json.dumps(VISUALIZATIONS_FOR_QUERY))
       else:
@@ -225,7 +224,10 @@ class TestStatisticalDashboard(AppTest):
     self.mock_requests_post.return_value = self.get_mock_response(
         content=json.dumps(QUERY_RESULTS_RESPONSE))
 
-    self.dash.add_ttable("Template:")
+    TABLE_NAME = "Table Name"
+    self.dash.add_ttable_data(
+        "Template:", TABLE_NAME, self.dash.DEFAULT_EVENTS)
+    self.dash.add_ttable(TABLE_NAME)
 
     # GET calls:
     #     1) Create dashboard
@@ -273,10 +275,10 @@ class TestStatisticalDashboard(AppTest):
 
     def get_server(url):
       response = self.get_mock_response()
-      if self.get_calls == 1:
+      if self.get_calls == 0:
         response = self.get_mock_response(
             content=json.dumps(QUERIES_IN_SEARCH))
-      elif self.get_calls <= 3 and self.get_calls > 1:
+      elif self.get_calls <= 2 and self.get_calls > 0:
         response = self.get_mock_response(
             content=json.dumps(VISUALIZATIONS_FOR_QUERY))
       else:
@@ -295,7 +297,10 @@ class TestStatisticalDashboard(AppTest):
     self.mock_requests_get.side_effect = get_server
     self.mock_requests_post.side_effect = self.post_server
 
-    self.dash.add_ttable("Template:")
+    TABLE_NAME = "Table Name"
+    self.dash.add_ttable_data(
+        "Template:", TABLE_NAME, self.dash.DEFAULT_EVENTS)
+    self.dash.add_ttable(TABLE_NAME)
 
     # GET calls:
     #     1) Create dashboard
@@ -321,6 +326,7 @@ class TestStatisticalDashboard(AppTest):
 
   def test_statistical_analysis_graph_exist_deletes_and_creates_new(self):
     self.get_calls = 0
+    TABLE_NAME = "Table Name"
     QUERIES_IN_SEARCH = [{
         "id": 5,
         "description": "SomeQuery",
@@ -339,7 +345,7 @@ class TestStatisticalDashboard(AppTest):
             "id": "123",
             "visualization": {
                 "query": {
-                    "name": self.dash.T_TABLE_TITLE,
+                    "name": TABLE_NAME,
                     "id": "abc"
                 },
             },
@@ -348,10 +354,10 @@ class TestStatisticalDashboard(AppTest):
 
     def get_server(url):
       response = self.get_mock_response()
-      if self.get_calls == 1:
+      if self.get_calls == 0:
         response = self.get_mock_response(
             content=json.dumps(QUERIES_IN_SEARCH))
-      elif self.get_calls <= 3 and self.get_calls > 1:
+      elif self.get_calls <= 2 and self.get_calls > 0:
         response = self.get_mock_response(
             content=json.dumps(VISUALIZATIONS_FOR_QUERY))
       else:
@@ -370,7 +376,9 @@ class TestStatisticalDashboard(AppTest):
     self.mock_requests_delete.return_value = self.get_mock_response()
     self.mock_requests_get.side_effect = get_server
 
-    self.dash.add_ttable("Template:")
+    self.dash.add_ttable_data(
+        "Template:", TABLE_NAME)
+    self.dash.add_ttable(TABLE_NAME)
 
     # GET calls:
     #     1) Create dashboard
