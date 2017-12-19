@@ -18,6 +18,26 @@ class StatisticalDashboard(ActivityStreamExperimentDashboard):
     "probability that an observed difference is correct. Beta error "
     "(1 - power) indicates the probability that no difference is observed "
     "when indeed one exists.")
+  ALPHA_ERROR = 0.005
+  TTABLE_TEMPLATE = {"columns": TTableSchema, "rows": []}
+
+
+  def __init__(self, redash_client, project_name, dash_name, exp_id,
+               start_date=None, end_date=None):
+    super(StatisticalDashboard, self).__init__(
+        redash_client,
+        project_name,
+        dash_name,
+        exp_id,
+        start_date,
+        end_date)
+
+    self._ttables = {}
+
+  def _copy_ttable_tempalte(self):
+    template_copy = self.TTABLE_TEMPLATE.copy()
+    template_copy["rows"] = []
+    return template_copy
 
   def _compute_pooled_stddev(self, control_std, exp_std,
                              control_vals, exp_vals):
@@ -58,9 +78,9 @@ class StatisticalDashboard(ActivityStreamExperimentDashboard):
 
     mean_diff = exp_mean - control_mean
 
-    if p_val <= 0.05 and mean_diff < 0:
+    if p_val <= self.ALPHA_ERROR and mean_diff < 0:
       significance = "Negative"
-    elif p_val <= 0.05 and mean_diff > 0:
+    elif p_val <= self.ALPHA_ERROR and mean_diff > 0:
       significance = "Positive"
     else:
       significance = "Neutral"

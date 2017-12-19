@@ -32,11 +32,9 @@ class ActivityStreamExperimentDashboard(SummaryDashboard):
       "scalar_parent_browser_engagement_navigation_about_home"]
 
   DEFAULT_EVENTS_TABLE = "assa_events_daily"
-  ALPHA_ERROR = 0.005
   URL_FETCHER_DATA_SOURCE_ID = 28
   DISABLE_TITLE = "Disable Rate"
   RETENTION_DIFF_TITLE = "Daily Retention Difference (Experiment - Control)"
-  T_TABLE_TITLE = "Statistical Analysis"
 
   def __init__(self, redash_client, project_name, dash_name, exp_id,
                start_date=None, end_date=None):
