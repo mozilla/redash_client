@@ -40,7 +40,7 @@ class SummaryDashboard(object):
     self._dash_name = dash_name
     self._events_table = events_table_name
     self._start_date = start_date
-    self._end_date = end_date if end_date else time.strftime("%m/%d/%y")
+    self._end_date = end_date if end_date else time.strftime("%Y-%m-%d")
     self._params = {
         "start_date": self._start_date,
         "end_date": self._end_date

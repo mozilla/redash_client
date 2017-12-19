@@ -8,8 +8,8 @@ from redash_client.dashboards.ActivityStreamExperimentDashboard import (
 
 class TestActivityStreamExperimentDashboard(AppTest):
 
-  START_DATE = "02/17/2017"
-  END_DATE = time.strftime("%m/%d/%y")
+  START_DATE = "2017-17-02"
+  END_DATE = time.strftime("%Y-%m-%d")
   DASH_PROJECT = "Activity Stream Experiment"
   DASH_NAME = "Screenshots Long Cache"
   EXPERIMENT_ID = "exp-014-screenshotsasync"
