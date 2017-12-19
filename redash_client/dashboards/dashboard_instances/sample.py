@@ -1,7 +1,7 @@
 import os
 
 from redash_client.client import RedashClient
-from redash_client.dashboards.ActivityStreamExperimentDashboard import ActivityStreamExperimentDashboard
+from redash_client.dashboards.StatisticalDashboard import StatisticalDashboard
 
 '''
     "Deduped Combined Frecency",
@@ -75,21 +75,143 @@ from redash_client.dashboards.ActivityStreamExperimentDashboard import ActivityS
     ['1.10.0', '1.10.1'],
     "05/01/17"
 '''
+'''
+    "Activity Stream System Addon Experiment",
+    "v1 Nightly Pocket User Personalization",
+    "as-nightly-personalization-1400890",
+    start_date="2017-09-27",
+'''
+'''
+    "Activity Stream System Addon Experiment",
+    "v2 Beta",
+    "pref-flip-activity-stream-beta-1389722-v2",
+    start_date="2017-08-30",
+    end_date="2017-09-09"
+'''
+'''
+    "Activity Stream System Addon Experiment",
+    "v1 Release",
+    "pref-flip-activity-stream-56-release-bug-1405332",
+    start_date="2017-10-05",
+    end_date="2017-10-20"
+'''
+'''
+    "Activity Stream System Addon Experiment",
+    "v1 About Home",
+    "pref-flip-activity-stream-56-beta-about-home-bug-1405334",
+    start_date="2017-10-05",
+'''
+'''
+    "Activity Stream System Addon Experiment",
+    "v2 Pocket Personalization",
+    "pref-flip-activity-stream-58-nightly-pocket-personalization-bug-1400890",
+    start_date="2017-10-06",
+'''
+'''
+    "Activity Stream System Addon Experiment",
+    "Beta Revisited",
+    "pref-flip-activity-stream-beta-1389722-v2",
+    start_date="2017-08-30",
+    end_date="2017-09-08"
+'''
+'''
+    "Activity Stream System Addon Experiment",
+    "Release enUS",
+    "pref-flip-activity-stream-56-release-bug-1405332",
+    start_date="2017-10-05",
+    end_date="2017-10-20"
+'''
+'''
+    "Activity Stream System Addon Experiment",
+    "Beta Post Bug Fix",
+    "pref-flip-activity-stream-beta-1389722-v2-round2",
+    start_date="2017-09-19",
+    end_date="2017-09-24"
+'''
+'''
+    "Activity Stream System Addon Experiment",
+    "Beta All Pocket Geos Post Bug Fix",
+    "pref-flip-activity-stream-beta-1389722-v2-2-round2",
+    start_date="2017-09-20",
+    end_date="2017-09-28"
+'''
+'''
+    "Activity Stream System Addon Experiment",
+    "Beta 57 Study",
+    "pref-flip-activity-stream-57-beta-enabled-bug-1410535",
+    start_date="2017-10-25",
+'''
+'''
+    "Activity Stream System Addon Experiment",
+    "Beta 57 Two Rows of Topsites",
+    "pref-flip-activity-stream-57-beta-two-rows-bug-1411695",
+    start_date="    ",
+'''
+'''
+    "Activity Stream System Addon Experiment",
+    "Beta 57 Two Rows v2",
+    "pref-flip-activity-stream-57-beta-two-rows-user-pref-bug-1411695",
+    start_date="2017-10-31",
+'''
+'''
+    "Activity Stream System Addon Experiment",
+    "v3 Pocket Personalization",
+    "pref-flip-activity-stream-58-nightly-optimized-pocket-personalization-bug-1410483",
+    start_date="2017-10-31",
+'''
+'''
+    "Activity Stream System Addon Experiment",
+    "57 Release",
+    "pref-flip-activity-stream-57-release-enabled-existing-users-bug-1415966",
+    start_date="2017-11-14"
+'''
+'''
+    "Activity Stream System Addon Experiment",
+    "57 Release New Users",
+    "pref-flip-activity-stream-57-release-enabled-new-users-bug-1415967",
+    start_date="2017-11-14"
+'''
 
 if __name__ == '__main__':
   api_key = os.environ["REDASH_API_KEY"]
   redash_client = RedashClient(api_key)
 
-  dash = ActivityStreamExperimentDashboard(
+  PING_CENTRE_TTABLE = "Statistical Analysis - Ping Centre"
+  UT_TTABLE = "Statistical Analysis - UT"
+  UT_HOURLY_TTABLE = "Statistical Analysis (Per Active Hour) - UT"
+
+  dash = StatisticalDashboard(
     redash_client,
-    "Activity Stream Beta V2",
-    "pref-flip-activity-stream-beta-1389722-v2",
-    start_date="2017-08-29",
-    end_date="2017-09-06"
+    "Activity Stream System Addon Experiment",
+    "57 Release",
+    "pref-flip-activity-stream-57-release-enabled-existing-users-bug-1415966",
+    start_date="2017-11-14"
   )
 
-  dash.add_graph_templates("AS Template UT Mapped:", dash.MAPPED_UT_EVENTS)
-  dash.add_graph_templates("AS Template UT:", dash.UT_EVENTS)
-  dash.add_ttable("TTests Template UT:", dash.UT_EVENTS)
+  # Average Events per Day UT
+  #dash.add_graph_templates("AS Template UT One:", dash.UT_EVENTS)
+  #dash.add_graph_templates("AS Template UT Mapped Two:", dash.MAPPED_UT_EVENTS)
+
+  # Average Events per Active Hour UT
+  dash.add_graph_templates("AS Template UT Three:", dash.UT_HOURLY_EVENTS)
+  dash.add_graph_templates("AS Template UT Mapped Four:", dash.MAPPED_UT_EVENTS)
+
+  # Average Events per Day Ping Centre
+  #dash.add_graph_templates("ASSA Template:", dash.DEFAULT_EVENTS)
+
+  #dash.add_ttable_data("TTests Template UT Four:", UT_TTABLE, dash.UT_EVENTS)
+  #dash.add_ttable_data("TTests Template Mapped UT Six:", UT_TTABLE, dash.MAPPED_UT_EVENTS)
+
+  #dash.add_ttable(UT_TTABLE)
+
+  # Events per Hour TTests
+  #dash.add_ttable_data("TTests Template Per Hour UT Five:", UT_HOURLY_TTABLE, dash.UT_HOURLY_EVENTS)
+  #dash.add_ttable_data("TTests Template Per Hour Mapped UT:", UT_HOURLY_TTABLE, dash.MAPPED_UT_EVENTS)
+
+  #dash.add_ttable(UT_HOURLY_TTABLE)
+
+  #dash.add_ttable_data("TTests Template:", PING_CENTRE_TTABLE, dash.DEFAULT_EVENTS)
+  #dash.add_ttable(PING_CENTRE_TTABLE)
+
   #dash.update_refresh_schedule(86400)
   #dash.remove_all_graphs()
