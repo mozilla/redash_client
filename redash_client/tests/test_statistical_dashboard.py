@@ -95,7 +95,7 @@ class TestStatisticalDashboard(AppTest):
 
   def test_ttable_not_made_for_non_matching_graph(self):
     BAD_ROW = []
-    for i in xrange(5):
+    for i in range(5):
         BAD_ROW.append({
             "some_weird_row": "beep",
             "count": 5
@@ -122,7 +122,7 @@ class TestStatisticalDashboard(AppTest):
     EXPECTED_ROWS = []
     EXPECTED_MEAN_DIFFERENCE = -4
 
-    for i in xrange(12):
+    for i in range(12):
       EXPECTED_ROWS.append({
           "date": 123,
           "count": (i % 3) + 1,

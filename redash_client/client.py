@@ -153,7 +153,7 @@ class RedashClient(object):
 
     # If this query is still not uploaded, we'll get a job ID.
     # Let's retry in 1 second.
-    for attempt in xrange(self.MAX_RETRY_COUNT):
+    for attempt in range(self.MAX_RETRY_COUNT):
       json_response, response = self._make_request(
           requests.post, query_url, get_query_results_args)
       if "job" not in json_response:
