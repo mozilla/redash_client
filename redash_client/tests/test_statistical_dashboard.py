@@ -16,13 +16,23 @@ class TestStatisticalDashboard(AppTest):
   DASH_PROJECT = "Activity Stream Experiment"
   DASH_NAME = "Screenshots Long Cache"
   EXPERIMENT_ID = "exp-014-screenshotsasync"
+  AWS_ACCESS_KEY = "access"
+  AWS_SECRET_KEY = "secret"
+  AWS_BUCKET_ID = "bucket"
 
   def get_dashboard(self, api_key):
     self.mock_requests_get.return_value = self.get_mock_response()
     self.mock_requests_post.return_value = self.get_mock_response()
+    mock_boto_transfer_patcher = mock.patch(
+        "redash_client.utils.S3Transfer")
+    mock_boto_transfer_patcher.start()
+    self.addCleanup(mock_boto_transfer_patcher.stop)
 
     dashboard = StatisticalDashboard(
         self.redash,
+        self.AWS_ACCESS_KEY,
+        self.AWS_SECRET_KEY,
+        self.AWS_BUCKET_ID,
         self.DASH_PROJECT,
         self.DASH_NAME,
         self.EXPERIMENT_ID,
@@ -216,10 +226,6 @@ class TestStatisticalDashboard(AppTest):
       self.get_calls += 1
       return response
 
-    mock_boto_transfer_patcher = mock.patch(
-        "redash_client.utils.transfer.upload_file")
-    mock_boto_transfer_patcher.start()
-
     self.mock_requests_get.side_effect = get_server
     self.mock_requests_post.return_value = self.get_mock_response(
         content=json.dumps(QUERY_RESULTS_RESPONSE))
@@ -244,8 +250,6 @@ class TestStatisticalDashboard(AppTest):
     self.assertEqual(self.mock_requests_post.call_count, 19)
     self.assertEqual(self.mock_requests_get.call_count, 5)
     self.assertEqual(self.mock_requests_delete.call_count, 0)
-
-    mock_boto_transfer_patcher.stop()
 
   def test_ttable_with_no_rows(self):
     self.get_calls = 0

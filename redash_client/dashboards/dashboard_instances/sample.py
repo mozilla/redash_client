@@ -174,6 +174,10 @@ from redash_client.dashboards.StatisticalDashboard import StatisticalDashboard
 
 if __name__ == '__main__':
   api_key = os.environ["REDASH_API_KEY"]
+  aws_access_key = os.environ['AWS_ACCESS_KEY']
+  aws_secret_key = os.environ['AWS_SECRET_KEY']
+  s3_bucket_id_stats = os.environ['S3_BUCKET_ID_STATS']
+
   redash_client = RedashClient(api_key)
 
   PING_CENTRE_TTABLE = "Statistical Analysis - Ping Centre"

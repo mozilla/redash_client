@@ -5,13 +5,20 @@ from boto3.s3.transfer import S3Transfer
 
 from datetime import datetime, timedelta
 
-BUCKET = "telemetry-public-analysis-2"
-client = boto3.client('s3', 'us-west-2')
-transfer = S3Transfer(client)
 s3 = boto3.client("s3")
 
 
-def upload_as_json(directory_name, filename, data):
+def create_boto_transfer(access_key, secret_key):
+  client = boto3.client(
+      "s3",
+      region_name="us-west-2",
+      aws_access_key_id=access_key,
+      aws_secret_access_key=secret_key)
+  transfer = S3Transfer(client)
+  return transfer
+
+
+def upload_as_json(directory_name, filename, transfer, bucket_id, data):
   path = "activity-stream/" + directory_name + "/"
   s3_key = path + filename
 
@@ -22,7 +29,7 @@ def upload_as_json(directory_name, filename, data):
 
   transfer.upload_file(
       file_path,
-      BUCKET,
+      bucket_id,
       s3_key,
       extra_args={"ContentType": "application/json"})
 

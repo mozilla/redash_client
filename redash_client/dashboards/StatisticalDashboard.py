@@ -3,7 +3,7 @@ import statistics
 from scipy import stats
 import statsmodels.stats.power as smp
 
-from redash_client.utils import upload_as_json
+from redash_client.utils import upload_as_json, create_boto_transfer
 from redash_client.constants import TTableSchema, VizWidth
 from redash_client.dashboards.ActivityStreamExperimentDashboard import (
     ActivityStreamExperimentDashboard)
@@ -22,8 +22,11 @@ class StatisticalDashboard(ActivityStreamExperimentDashboard):
   TTABLE_TEMPLATE = {"columns": TTableSchema, "rows": []}
 
 
-  def __init__(self, redash_client, project_name, dash_name, exp_id,
-               start_date=None, end_date=None):
+  def __init__(
+      self, redash_client, aws_access_key, aws_secret_key,
+      s3_bucket_id, project_name, dash_name, exp_id,
+      start_date=None, end_date=None
+  ):
     super(StatisticalDashboard, self).__init__(
         redash_client,
         project_name,
@@ -33,6 +36,8 @@ class StatisticalDashboard(ActivityStreamExperimentDashboard):
         end_date)
 
     self._ttables = {}
+    self._s3_bucket = s3_bucket_id
+    self._transfer = create_boto_transfer(aws_access_key, aws_secret_key)
 
   def _copy_ttable_tempalte(self):
     template_copy = self.TTABLE_TEMPLATE.copy()
@@ -163,8 +168,6 @@ class StatisticalDashboard(ActivityStreamExperimentDashboard):
 
       self._ttables[title]["rows"].append(ttable_row)
 
-    print self._ttables[title]
-
   def add_ttable_data(self, template_keyword, title,
                       events_list=None, events_table=None):
     self._logger.info((
@@ -202,7 +205,13 @@ class StatisticalDashboard(ActivityStreamExperimentDashboard):
       widget_id = chart_data[title]["widget_id"]
       self.remove_graph_from_dashboard(widget_id, query_id)
 
-    query_string = upload_as_json("experiments", FILENAME, self._ttables[title])
+    query_string = upload_as_json(
+        "experiments",
+        FILENAME,
+        self._transfer,
+        self._s3_bucket,
+        self._ttables[title],
+    )
     query_id, table_id = self.redash.create_new_query(
         title,
         query_string,

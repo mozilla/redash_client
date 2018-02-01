@@ -7,7 +7,7 @@ from datetime import datetime, timedelta
 from redash_client.tests.base import AppTest
 from redash_client.constants import TTableSchema
 from redash_client.utils import (
-    upload_as_json, read_experiment_definition,
+    upload_as_json, read_experiment_definition, create_boto_transfer,
     read_experiment_definition_s3, format_date, is_old_date)
 
 
@@ -16,15 +16,19 @@ class TestUtils(AppTest):
   def test_upload_as_json_return_val(self):
     DIRECTORY_NAME = "experiments"
     FILENAME = "test_file_name"
+    ACCESS_KEY = "key"
+    SECRET_KEY = "secret"
+    BUCKET_ID = "bucket"
     DATA = {"columns": TTableSchema, "rows": []}
 
     EXPECTED_S3_KEY = "activity-stream/" + DIRECTORY_NAME + "/" + FILENAME
     EXPECTED_BASE_URL = "https://analysis-output.telemetry.mozilla.org/"
 
-    mock_boto_transfer_patcher = mock.patch("redash_client.utils.transfer.upload_file")
+    mock_boto_transfer_patcher = mock.patch("redash_client.utils.S3Transfer")
     mock_boto_transfer_patcher.start()
 
-    query_string = upload_as_json(DIRECTORY_NAME, FILENAME, DATA)
+    transfer = create_boto_transfer(ACCESS_KEY, SECRET_KEY)
+    query_string = upload_as_json(DIRECTORY_NAME, FILENAME, transfer, BUCKET_ID, DATA)
 
     self.assertEqual(query_string, EXPECTED_BASE_URL + EXPECTED_S3_KEY)
 
