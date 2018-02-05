@@ -4,7 +4,6 @@ python:
 cache: pip
 install:
   - pip install --upgrade pip setuptools wheel
-  - pip install --only-binary=numpy,scipy numpy scipy
   - pip install -r test_requirements.txt
 script:
   - make test
