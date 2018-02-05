@@ -1,3 +1,0 @@
-[report]
-omit =
-    */redash_client/dashboards/dashboard_instances/*
