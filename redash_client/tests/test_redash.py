@@ -66,6 +66,15 @@ class TestRedashClient(AppTest):
         "Unable to parse JSON response: {0}".format(JSON_ERROR),
         lambda: self.redash._make_request(None, url, args={}))
 
+  def test_get_public_url_returns_expected_url(self):
+    DASH_ID = 6
+    EXPECTED_PUBLIC_URL = {"public_url": "www.example.com/expected"}
+    self.mock_requests_post.return_value = self.get_mock_response(
+        content=json.dumps(EXPECTED_PUBLIC_URL))
+
+    public_url = self.redash.get_public_url(DASH_ID)
+    self.assertEqual(public_url, EXPECTED_PUBLIC_URL["public_url"])
+
   def test_get_visualization_public_url_has_correct_url(self):
     WIDGET_ID = 123
     QUERY_ID = 456
