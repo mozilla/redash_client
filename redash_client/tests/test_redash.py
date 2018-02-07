@@ -371,6 +371,7 @@ class TestRedashClient(AppTest):
         sql_query="SELECT * FROM table",
         data_source_id=5,
         description="",
+        options={"some_options": "an_option"}
     )
 
     # One call to update query, one call to refresh it
