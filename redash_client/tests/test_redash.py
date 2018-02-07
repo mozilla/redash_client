@@ -66,6 +66,19 @@ class TestRedashClient(AppTest):
         "Unable to parse JSON response: {0}".format(JSON_ERROR),
         lambda: self.redash._make_request(None, url, args={}))
 
+  def test_get_visualization_public_url_has_correct_url(self):
+    WIDGET_ID = 123
+    QUERY_ID = 456
+    URL_PARAM = "api_key={api_key}".format(api_key=self.redash._api_key)
+
+    EXPECTED_PUBLIC_URL = ("https://sql.telemetry.mozilla.org/embed/"
+                           "query/{query_id}/visualization/{viz_id}"
+                           "?{url_param}").format(
+        query_id=QUERY_ID, viz_id=WIDGET_ID, url_param=URL_PARAM)
+
+    public_url = self.redash.get_visualization_public_url(QUERY_ID, WIDGET_ID)
+    self.assertEqual(public_url, EXPECTED_PUBLIC_URL)
+
   def test_create_new_query_returns_expected_ids(self):
     EXPECTED_QUERY_ID = "query_id123"
     EXPECTED_VIZ_ID = "viz_id123"
