@@ -369,22 +369,11 @@ class RedashClient(object):
     query_url = urljoin(self.API_BASE_URL, url_path)
 
     # Note: row_arr is in the form:
-    # [[{}, {}], [{}], ...]
+    # [{}, {}, {} ...]
     #
-    # Where each sub-array represents a row of widgets in a redash dashboard
-
-    get_widget_args = json.dumps({"name": name})
+    # Where each object represents a widget in a redash dashboard
 
     json_result, response = self._make_request(
-        requests.get, query_url, get_widget_args)
-    row_arr = json_result.get("widgets", [])
-
-    # Return a flattened list of all widgets
-    widgets = []
-    for row in row_arr:
-      if len(row) == 1:
-        widgets.append(row[0])
-      elif len(row) == 2:
-        widgets += [row[0], row[1]]
-
+        requests.get, query_url)
+    widgets = json_result.get("widgets", [])
     return widgets

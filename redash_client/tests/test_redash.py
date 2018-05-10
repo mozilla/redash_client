@@ -461,13 +461,13 @@ class TestRedashClient(AppTest):
     }]
 
     WIDGETS_RESPONSE = {
-        "widgets": [[{
+        "widgets": [{
             "visualization": {
                 "query": {
                     "id": EXPECTED_QUERY_ID
                 }
-            }}],
-            [{"visualization": {
+            }},
+            {"visualization": {
                 "query": {
                     "id": EXPECTED_QUERY_ID2
                 }
@@ -477,7 +477,7 @@ class TestRedashClient(AppTest):
                     "id": EXPECTED_QUERY_ID3
                 }
             }}
-        ]]
+        ]
     }
 
     self.mock_requests_get.return_value = self.get_mock_response(
