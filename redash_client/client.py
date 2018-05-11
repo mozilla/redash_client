@@ -377,3 +377,20 @@ class RedashClient(object):
         requests.get, query_url)
     widgets = json_result.get("widgets", [])
     return widgets
+
+  def get_query(self, query_id):
+    url_path = "queries/{0}?{1}".format(str(query_id), self._url_params)
+    query_url = urljoin(self.API_BASE_URL, url_path)
+
+    query, _ = self._make_request(requests.get, query_url)
+    visualization = self._get_visualization(query_id)
+
+    return {
+        "id": query_id,
+        "description": query.get("description", None),
+        "name": query.get("name", None),
+        "data_source_id": query.get("data_source_id", None),
+        "options": visualization.get("options", None),
+        "type": visualization.get("type", None),
+        "query": query.get("query", None)
+    }

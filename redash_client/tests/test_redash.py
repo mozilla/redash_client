@@ -487,3 +487,40 @@ class TestRedashClient(AppTest):
 
     self.assertEqual(widget_list, FLAT_WIDGETS)
     self.assertEqual(self.mock_requests_get.call_count, 1)
+
+  def test_get_query_returns_correct_attributes(self):
+    self.get_calls = 0
+    QUERY_RESPONSE = {
+        "id": 5,
+        "description": "SomeQuery",
+        "name": "Query Title",
+        "data_source_id": 5,
+    }
+    VISUALIZATIONS_FOR_QUERY = {
+        "visualizations": [
+            {"options": {}},
+            {"options": {}},
+        ]
+    }
+
+    def get_server(url):
+      response = self.get_mock_response()
+      if self.get_calls == 0:
+        response = self.get_mock_response(
+            content=json.dumps(QUERY_RESPONSE))
+      else:
+        response = self.get_mock_response(
+            content=json.dumps(VISUALIZATIONS_FOR_QUERY))
+
+      self.get_calls += 1
+      return response
+
+    self.mock_requests_get.side_effect = get_server
+
+    query = self.redash.get_query(5)
+
+    self.assertEqual(query["id"], QUERY_RESPONSE["id"])
+    self.assertEqual(query["description"], QUERY_RESPONSE["description"])
+    self.assertEqual(query["name"], QUERY_RESPONSE["name"])
+    self.assertEqual(query["data_source_id"], QUERY_RESPONSE["data_source_id"])
+    self.assertEqual(self.mock_requests_get.call_count, 2)
