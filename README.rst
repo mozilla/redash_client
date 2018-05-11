@@ -8,7 +8,7 @@
 Redash Python Client
 ====================
 
-A client for the re:dash API for stmo (https://sql.telemetry.mozilla.org)
+A client for the Redash API for stmo (https://sql.telemetry.mozilla.org)
 
 =======
 Install
