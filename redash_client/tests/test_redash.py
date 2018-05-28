@@ -282,33 +282,45 @@ class TestRedashClient(AppTest):
   def test_new_dashboard_exists(self):
     DASH_NAME = "Activity Stream A/B Testing: Beep Meep"
     EXPECTED_QUERY_ID = "query_id123"
+    EXPECTED_SLUG = "some_slug_it_made"
     QUERY_ID_RESPONSE = {
-        "id": EXPECTED_QUERY_ID
+        "id": EXPECTED_QUERY_ID,
+        "slug": EXPECTED_SLUG
     }
 
     self.mock_requests_get.return_value = self.get_mock_response(
         content=json.dumps(QUERY_ID_RESPONSE))
 
-    query_id = self.redash.create_new_dashboard(DASH_NAME)
+    dash_info = self.redash.create_new_dashboard(DASH_NAME)
 
-    self.assertEqual(query_id, EXPECTED_QUERY_ID)
+    self.assertEqual(dash_info["dashboard_id"], EXPECTED_QUERY_ID)
+    self.assertEqual(dash_info["dashboard_slug"], EXPECTED_SLUG)
+    self.assertEqual(
+        dash_info["slug_url"],
+        self.redash.BASE_URL + "dashboard/{slug}".format(slug=EXPECTED_SLUG))
     self.assertEqual(self.mock_requests_get.call_count, 1)
     self.assertEqual(self.mock_requests_post.call_count, 0)
 
   def test_new_dashboard_doesnt_exist(self):
     DASH_NAME = "Activity Stream A/B Testing: Beep Meep"
     EXPECTED_QUERY_ID = "query_id123"
+    EXPECTED_SLUG = "some_slug_it_made"
     QUERY_ID_RESPONSE = {
-        "id": EXPECTED_QUERY_ID
+        "id": EXPECTED_QUERY_ID,
+        "slug": EXPECTED_SLUG
     }
 
     self.mock_requests_get.return_value = self.get_mock_response(status=404)
     self.mock_requests_post.return_value = self.get_mock_response(
         content=json.dumps(QUERY_ID_RESPONSE))
 
-    query_id = self.redash.create_new_dashboard(DASH_NAME)
+    dash_info = self.redash.create_new_dashboard(DASH_NAME)
 
-    self.assertEqual(query_id, EXPECTED_QUERY_ID)
+    self.assertEqual(dash_info["dashboard_id"], EXPECTED_QUERY_ID)
+    self.assertEqual(dash_info["dashboard_slug"], EXPECTED_SLUG)
+    self.assertEqual(
+        dash_info["slug_url"],
+        self.redash.BASE_URL + "dashboard/{slug}".format(slug=EXPECTED_SLUG))
     self.assertEqual(self.mock_requests_get.call_count, 1)
     self.assertEqual(self.mock_requests_post.call_count, 1)
 
