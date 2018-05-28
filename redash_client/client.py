@@ -242,7 +242,8 @@ class RedashClient(object):
             requests.post, query_url, new_dashboard_args)
 
     dashboard_id = json_result.get("id", None)
-    return dashboard_id
+    slug = json_result.get("slug", None)
+    return dashboard_id, slug
 
   def get_public_url(self, dash_id):
     url_path = "dashboards/{0}/share?{1}".format(
