@@ -16,15 +16,14 @@ from redash_client.constants import VizType, VizWidth, ChartType, TimeInterval
 
 
 class RedashClient(object):
-  BASE_URL = "https://sql.telemetry.mozilla.org/"
-  API_BASE_URL = BASE_URL + "api/"
   MAX_RETRY_COUNT = 5
 
   class RedashClientException(Exception):
     pass
 
-  def __init__(self, api_key):
+  def __init__(self, api_key, base_url):
     self._api_key = api_key
+    self.API_BASE_URL = base_url + "/api/"
     self._url_params = urlencode({"api_key": self._api_key})
 
     logging.basicConfig()
@@ -80,7 +79,7 @@ class RedashClient(object):
               error_message=response.content,
           ), response.status_code)
     try:
-      json_result = json.loads(response.content), response
+      json_result = json.loads(response.text), response
     except ValueError as e:
       raise self.RedashClientException(
           ("Unable to parse JSON response: {error}").format(error=e))
