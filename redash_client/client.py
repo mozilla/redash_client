@@ -164,7 +164,8 @@ class RedashClient(object):
 
     rows = json_response.get(
         "query_result", {}).get("data", {}).get("rows", [])
-    return rows
+    result_id = json_response.get("query_result", {}).get("id", None)
+    return rows, result_id
 
   def make_new_visualization_request(self, query_id, viz_type, options, title):
     url_path = "visualizations?{0}".format(self._url_params)

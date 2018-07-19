@@ -140,20 +140,23 @@ class TestRedashClient(AppTest):
         "col1": 789,
         "col2": 123,
     }]
+    EXPECTED_RESULT_ID = 123
 
     QUERY_RESULTS_RESPONSE = {
         "query_result": {
             "data": {
                 "rows": EXPECTED_ROWS
-            }
+            },
+            "id": EXPECTED_RESULT_ID
         }
     }
 
     self.mock_requests_post.return_value = self.get_mock_response(
         content=json.dumps(QUERY_RESULTS_RESPONSE))
 
-    rows = self.redash.get_query_results("SELECT * FROM test", 5)
+    rows, result_id = self.redash.get_query_results("SELECT * FROM test", 5)
 
+    self.assertEqual(result_id, EXPECTED_RESULT_ID)
     self.assertItemsEqual(rows, EXPECTED_ROWS)
     self.assertEqual(self.mock_requests_post.call_count, 1)
 
@@ -165,13 +168,15 @@ class TestRedashClient(AppTest):
         "col1": 789,
         "col2": 123,
     }]
+    EXPECTED_RESULT_ID = 123
 
     QUERY_RESULTS_RESPONSE = {
         "query_result": {
             "data": {
                 "rows": EXPECTED_ROWS
-            }
-        }
+            },
+            "id": EXPECTED_RESULT_ID
+        },
     }
     QUERY_RESULTS_NOT_READY_RESPONSE = {
         "job": {}
@@ -189,8 +194,9 @@ class TestRedashClient(AppTest):
 
     self.mock_requests_post.side_effect = simulate_server_calls
 
-    rows = self.redash.get_query_results("SELECT * FROM test", 5)
+    rows, result_id = self.redash.get_query_results("SELECT * FROM test", 5)
 
+    self.assertEqual(result_id, EXPECTED_RESULT_ID)
     self.assertEqual(rows, EXPECTED_ROWS)
     self.assertEqual(self.mock_requests_post.call_count, 3)
 
@@ -202,8 +208,9 @@ class TestRedashClient(AppTest):
     self.mock_requests_post.return_value = self.get_mock_response(
         content=json.dumps(QUERY_RESULTS_NOT_READY_RESPONSE))
 
-    rows = self.redash.get_query_results("SELECT * FROM test", 5)
+    rows, result_id = self.redash.get_query_results("SELECT * FROM test", 5)
 
+    self.assertEqual(result_id, None)
     self.assertEqual(rows, [])
     self.assertEqual(self.mock_requests_post.call_count, 5)
 
