@@ -44,10 +44,12 @@ To import and use :code:`RedashClient`:
 Package for Pip
 ===============
 
-First, you must update the :code:`version` field in :code:`setup.py`. Then run these commands:
+First, you must update the :code:`version` field in :code:`setup.py`.
+Then run this commands:
 
 .. code-block:: bash
 
-  python setup.py sdist
+  python setup.py sdist bdist_wheel
+  twine upload dist/*
 
-  twine upload dist/redash_client-<version>.tar.gz
+Make sure you have ``wheel`` and ``twine`` installed.
