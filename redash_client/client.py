@@ -60,7 +60,8 @@ class RedashClient(object):
 
     return options
 
-  def _make_request(self, request_function, url, args={}):
+  def _make_request(self, request_function, url, args=None):
+    args = args or {}
     if not request_function:
       request_function = requests.post
 
@@ -143,28 +144,44 @@ class RedashClient(object):
 
     return query_id, table_id
 
-  def get_query_results(self, sql_query, data_source_id):
-    url_path = "query_results?{0}".format(self._url_params)
+  def get_query(self, query_id):
+    url_path = "queries/{0}?{1}".format(query_id, self._url_params)
+    query_url = urljoin(self.API_BASE_URL, url_path)
+    result, _ = self._make_request(requests.get, query_url)
+    return result
+
+  def get_query_results(self, query_data_id, sql_query=None):
+    # In 0.3.0, this method changed signature significantly. Help
+    # people migrate.
+    if isinstance(query_data_id, str) and isinstance(sql_query, int):
+      raise Exception("First argument should be and ID the second a string.")
+
+    if sql_query:
+      url_path = "query_results/?{0}".format(self._url_params)
+    else:
+      url_path = "query_results/{0}?{1}".format(query_data_id,
+                                                self._url_params)
     query_url = urljoin(self.API_BASE_URL, url_path)
 
-    get_query_results_args = json.dumps({
-        "query": sql_query,
-        "data_source_id": data_source_id,
-    })
+    if sql_query:
+      get_query_results_args = json.dumps({
+          "query": sql_query,
+          "data_source_id": query_data_id,
+      })
 
-    # If this query is still not uploaded, we'll get a job ID.
-    # Let's retry in 1 second.
-    for attempt in range(self.MAX_RETRY_COUNT):
-      json_response, response = self._make_request(
-          requests.post, query_url, get_query_results_args)
-      if "job" not in json_response:
-        break
+      # If this query is still not uploaded, we'll get a job ID.
+      # Let's retry in 1 second.
+      for attempt in range(self.MAX_RETRY_COUNT):
+        result, _ = self._make_request(
+            requests.post, query_url, get_query_results_args)
+        if "job" not in result:
+          return result['query_result']
 
-      time.sleep(1)
-
-    rows = json_response.get(
-        "query_result", {}).get("data", {}).get("rows", [])
-    return rows
+        time.sleep(1)
+      return result
+    else:
+      result, _ = self._make_request(requests.get, query_url)
+      return result['query_result']
 
   def make_new_visualization_request(self, query_id, viz_type, options, title):
     url_path = "visualizations?{0}".format(self._url_params)
