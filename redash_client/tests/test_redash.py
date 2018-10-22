@@ -411,12 +411,14 @@ class TestRedashClient(AppTest):
 
   def test_search_queries_returns_correct_attributes(self):
     self.get_calls = 0
-    QUERIES_IN_SEARCH = [{
-        "id": 5,
-        "description": "SomeQuery",
-        "name": "Query Title",
-        "data_source_id": 5
-    }]
+    QUERIES_IN_SEARCH = {
+        "results": [{
+            "id": 5,
+            "description": "SomeQuery",
+            "name": "Query Title",
+            "data_source_id": 5
+        }]
+    }
     VISUALIZATIONS_FOR_QUERY = {
         "visualizations": [
             {"options": {}},
