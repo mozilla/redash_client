@@ -154,7 +154,7 @@ class RedashClient(object):
     # In 0.3.0, this method changed signature significantly. Help
     # people migrate.
     if isinstance(query_data_id, str) and isinstance(sql_query, int):
-      raise Exception("First argument should be and ID the second a string.")
+      raise Exception("First argument should be a query data ID and the second a query string.")
 
     if sql_query:
       url_path = "query_results/?{0}".format(self._url_params)
