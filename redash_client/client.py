@@ -344,14 +344,14 @@ class RedashClient(object):
     return fork
 
   def search_queries(self, keyword):
-    url_path = "queries/search?q={0}&{1}".format(keyword, self._url_params)
+    url_path = "queries?q={0}&{1}".format(keyword, self._url_params)
     query_url = urljoin(self.API_BASE_URL, url_path)
 
     json_result, response = self._make_request(
         requests.get, query_url)
 
     templated_queries = []
-    for query in json_result:
+    for query in json_result["results"]:
       query_id = query.get("id", None)
       visualization = self._get_visualization(query_id)
       options = visualization.get("options", None)
