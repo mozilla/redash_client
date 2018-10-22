@@ -204,7 +204,6 @@ class TestRedashClient(AppTest):
 
     def simulate_server_calls(url, data):
       response = QUERY_RESULTS_NOT_READY_RESPONSE
-      print(server_calls)
       if len(server_calls) > 1:
         response = QUERY_RESULTS_RESPONSE
 
