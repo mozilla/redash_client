@@ -42,7 +42,7 @@ class TestRedashClient(AppTest):
     self.mock_requests_post.side_effect = server_call_raising_exception
 
     url = "www.test.com"
-    self.assertRaisesRegex(
+    self.assertRaisesRegexp(
         self.redash.RedashClientException,
         "Unable to communicate with redash: {0}".format(ERROR_STRING),
         lambda: self.redash._make_request(None, url, args={}))
@@ -54,7 +54,7 @@ class TestRedashClient(AppTest):
         STATUS, ERROR_STRING)
 
     url = "www.test.com"
-    self.assertRaisesRegex(
+    self.assertRaisesRegexp(
         self.redash.RedashClientException,
         "Error status returned: {0} {1}".format(STATUS, ERROR_STRING),
         lambda: self.redash._make_request(None, url, args={}))
@@ -65,7 +65,7 @@ class TestRedashClient(AppTest):
         content=BAD_JSON)
 
     url = "www.test.com"
-    self.assertRaisesRegex(
+    self.assertRaisesRegexp(
         self.redash.RedashClientException,
         "Unable to parse JSON response:",
         lambda: self.redash._make_request(None, url, args={}))

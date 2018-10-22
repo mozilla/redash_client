@@ -2,3 +2,4 @@ flake8 == 3.5.0
 mock == 2.0.0
 python-slugify == 1.2.6
 pytest == 3.9.1
+coverage == 4.5.1
