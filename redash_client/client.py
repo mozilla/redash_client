@@ -60,7 +60,8 @@ class RedashClient(object):
 
     return options
 
-  def _make_request(self, request_function, url, args={}):
+  def _make_request(self, request_function, url, args=None):
+    args = args or {}
     if not request_function:
       request_function = requests.post
 
@@ -143,7 +144,7 @@ class RedashClient(object):
 
     return query_id, table_id
 
-  def get_query_results(self, sql_query, data_source_id):
+  def get_query_results_from_sql(self, sql_query, data_source_id):
     url_path = "query_results?{0}".format(self._url_params)
     query_url = urljoin(self.API_BASE_URL, url_path)
 
@@ -165,6 +166,19 @@ class RedashClient(object):
     rows = json_response.get(
         "query_result", {}).get("data", {}).get("rows", [])
     return rows
+
+  def get_query(self, query_id):
+    url_path = "queries/{0}?{1}".format(query_id, self._url_params)
+    query_url = urljoin(self.API_BASE_URL, url_path)
+    result, _ = self._make_request(requests.get, query_url)
+    return result
+
+  def get_query_results_from_id(self, query_data_id, sql_query=None):
+    url_path = "query_results/{0}?{1}".format(query_data_id, self._url_params)
+    query_url = urljoin(self.API_BASE_URL, url_path)
+
+    result, _ = self._make_request(requests.get, query_url)
+    return result['query_result']
 
   def make_new_visualization_request(self, query_id, viz_type, options, title):
     url_path = "visualizations?{0}".format(self._url_params)

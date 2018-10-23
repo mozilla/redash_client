@@ -5,7 +5,9 @@ cache: pip
 install:
   - pip install --upgrade pip setuptools wheel
   - pip install -r test_requirements.txt
+  - pip install coveralls
 script:
+  - make lint
   - make test
 after_success:
   - coveralls

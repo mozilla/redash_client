@@ -9,9 +9,14 @@ from redash_client.constants import VizType, ChartType, VizWidth
 
 class TestRedashClient(AppTest):
 
+  FAKE_BASE_URL = "https://sql.telemetry.example.comm"
+
   def setUp(self):
     api_key = "test_key"
     self.redash = RedashClient(api_key)
+    # This is to make sure it never actually goes to the real server
+    # if the mocking was to not be tight.
+    self.redash.BASE_URL = self.FAKE_BASE_URL
 
     mock_requests_post_patcher = mock.patch(
         "redash_client.client.requests.post")
@@ -56,14 +61,13 @@ class TestRedashClient(AppTest):
 
   def test_failed_to_load_content_json(self):
     BAD_JSON = "boop beep _ epic json fail"
-    JSON_ERROR = "No JSON object could be decoded"
     self.mock_requests_post.return_value = self.get_mock_response(
         content=BAD_JSON)
 
     url = "www.test.com"
     self.assertRaisesRegexp(
         self.redash.RedashClientException,
-        "Unable to parse JSON response: {0}".format(JSON_ERROR),
+        "Unable to parse JSON response:",
         lambda: self.redash._make_request(None, url, args={}))
 
   def test_get_public_url_returns_expected_url(self):
@@ -80,7 +84,7 @@ class TestRedashClient(AppTest):
     QUERY_ID = 456
     URL_PARAM = "api_key={api_key}".format(api_key=self.redash._api_key)
 
-    EXPECTED_PUBLIC_URL = ("https://sql.telemetry.mozilla.org/embed/"
+    EXPECTED_PUBLIC_URL = (self.FAKE_BASE_URL + "/embed/"
                            "query/{query_id}/visualization/{viz_id}"
                            "?{url_param}").format(
         query_id=QUERY_ID, viz_id=WIDGET_ID, url_param=URL_PARAM)
@@ -152,9 +156,9 @@ class TestRedashClient(AppTest):
     self.mock_requests_post.return_value = self.get_mock_response(
         content=json.dumps(QUERY_RESULTS_RESPONSE))
 
-    rows = self.redash.get_query_results("SELECT * FROM test", 5)
+    rows = self.redash.get_query_results_from_sql("SELECT * FROM test", 5)
 
-    self.assertItemsEqual(rows, EXPECTED_ROWS)
+    self.assertEqual(rows, EXPECTED_ROWS)
     self.assertEqual(self.mock_requests_post.call_count, 1)
 
   def test_late_response_query_results_are_correct(self):
@@ -189,7 +193,7 @@ class TestRedashClient(AppTest):
 
     self.mock_requests_post.side_effect = simulate_server_calls
 
-    rows = self.redash.get_query_results("SELECT * FROM test", 5)
+    rows = self.redash.get_query_results_from_sql("SELECT * FROM test", 5)
 
     self.assertEqual(rows, EXPECTED_ROWS)
     self.assertEqual(self.mock_requests_post.call_count, 3)
@@ -202,17 +206,54 @@ class TestRedashClient(AppTest):
     self.mock_requests_post.return_value = self.get_mock_response(
         content=json.dumps(QUERY_RESULTS_NOT_READY_RESPONSE))
 
-    rows = self.redash.get_query_results("SELECT * FROM test", 5)
+    rows = self.redash.get_query_results_from_sql("SELECT * FROM test", 5)
 
     self.assertEqual(rows, [])
     self.assertEqual(self.mock_requests_post.call_count, 5)
 
-  def test_new_visualization_throws_for_missing_chart_data(self):
-    EXPECTED_QUERY_ID = "query_id123"
+  def test_get_query(self):
+    QUERY_RESPONSE = {
+        "name": "Name McName",
+        "data_source_id": 26,
+        "latest_query_data_id": 4985282,
+        "created_at": "2018-10-09T22:56:55.681284+00:00",
+        "last_modified_by": {},
+        "visualizations": [],
+    }
 
-    self.assertRaises(ValueError,
-                      lambda: self.redash.create_new_visualization(
-                          EXPECTED_QUERY_ID, VizType.CHART))
+    self.mock_requests_get.return_value = self.get_mock_response(
+        content=json.dumps(QUERY_RESPONSE))
+
+    query_result = self.redash.get_query(5)
+
+    self.assertEqual(query_result, QUERY_RESPONSE)
+    self.assertEqual(self.mock_requests_get.call_count, 1)
+
+  def test_get_query_results(self):
+    EXPECTED_ROWS = [{
+        "col1": 123,
+        "col2": 456,
+    }, {
+        "col1": 789,
+        "col2": 123,
+    }]
+
+    QUERY_RESULTS_RESPONSE = {
+        "query_result": {
+            "data": {
+                "rows": EXPECTED_ROWS
+            }
+        }
+    }
+
+    self.mock_requests_get.return_value = self.get_mock_response(
+        content=json.dumps(QUERY_RESULTS_RESPONSE))
+
+    query_result = self.redash.get_query_results_from_id(5)
+    rows = query_result['data']['rows']
+
+    self.assertEqual(rows, EXPECTED_ROWS)
+    self.assertEqual(self.mock_requests_get.call_count, 1)
 
   def test_new_visualization_throws_for_missing_cohort_data(self):
     EXPECTED_QUERY_ID = "query_id123"
@@ -252,7 +293,7 @@ class TestRedashClient(AppTest):
 
     options = self.redash.make_visualization_options(
         viz_type=VizType.COHORT, time_interval=TIME_INTERVAL)
-    self.assertItemsEqual(options, COHORT_OPTIONS)
+    self.assertEqual(options, COHORT_OPTIONS)
 
   def test_format_chart_options_correctly(self):
     COLUMN_MAPPING = {"date": "x", "event_rate": "y", "type": "series"}
@@ -270,7 +311,7 @@ class TestRedashClient(AppTest):
 
     options = self.redash.make_visualization_options(
         ChartType.LINE, VizType.CHART, COLUMN_MAPPING)
-    self.assertItemsEqual(options, CHART_OPTIONS)
+    self.assertEqual(options, CHART_OPTIONS)
 
   def test_make_correct_slug(self):
     DASH_NAME = "Activity Stream A/B Testing: Beep Meep"
@@ -297,7 +338,7 @@ class TestRedashClient(AppTest):
     self.assertEqual(dash_info["dashboard_slug"], EXPECTED_SLUG)
     self.assertEqual(
         dash_info["slug_url"],
-        self.redash.BASE_URL + "dashboard/{slug}".format(slug=EXPECTED_SLUG))
+        self.FAKE_BASE_URL + "/dashboard/{slug}".format(slug=EXPECTED_SLUG))
     self.assertEqual(self.mock_requests_get.call_count, 1)
     self.assertEqual(self.mock_requests_post.call_count, 0)
 
@@ -320,7 +361,7 @@ class TestRedashClient(AppTest):
     self.assertEqual(dash_info["dashboard_slug"], EXPECTED_SLUG)
     self.assertEqual(
         dash_info["slug_url"],
-        self.redash.BASE_URL + "dashboard/{slug}".format(slug=EXPECTED_SLUG))
+        self.FAKE_BASE_URL + "/dashboard/{slug}".format(slug=EXPECTED_SLUG))
     self.assertEqual(self.mock_requests_get.call_count, 1)
     self.assertEqual(self.mock_requests_post.call_count, 1)
 

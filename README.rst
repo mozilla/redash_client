@@ -8,7 +8,15 @@
 Redash Python Client
 ====================
 
-A client for the Redash API for stmo (https://sql.telemetry.mozilla.org)
+A client for the Redash API for `stmo <https://sql.telemetry.mozilla.org>`_.
+
+Redash API
+----------
+
+Redash doesn't have a formal API but what it exposes internally for its
+client-side app is the API this project attempts to track.
+To get a list of all endpoints available, see
+https://github.com/getredash/redash/blob/master/redash/handlers/api.py
 
 =======
 Install
