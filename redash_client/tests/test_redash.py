@@ -255,64 +255,6 @@ class TestRedashClient(AppTest):
     self.assertEqual(rows, EXPECTED_ROWS)
     self.assertEqual(self.mock_requests_get.call_count, 1)
 
-#   def test_late_response_query_results_are_correct(self):
-#     EXPECTED_ROWS = [{
-#         "col1": 123,
-#         "col2": 456,
-#     }, {
-#         "col1": 789,
-#         "col2": 123,
-#     }]
-
-#     QUERY_RESULTS_RESPONSE = {
-#         "query_result": {
-#             "data": {
-#                 "rows": EXPECTED_ROWS
-#             }
-#         }
-#     }
-#     QUERY_RESULTS_NOT_READY_RESPONSE = {
-#         "job": {}
-#     }
-
-#     server_calls = []
-
-#     def simulate_server_calls(url, data):
-#       response = QUERY_RESULTS_NOT_READY_RESPONSE
-#       if len(server_calls) > 1:
-#         response = QUERY_RESULTS_RESPONSE
-
-#       server_calls.append(url)
-#       return self.get_mock_response(content=json.dumps(response))
-
-#     self.mock_requests_post.side_effect = simulate_server_calls
-
-#     query_result = self.redash.get_query_results(5, "SELECT * FROM test")
-#     rows = query_result['data']['rows']
-
-#     self.assertEqual(rows, EXPECTED_ROWS)
-#     self.assertEqual(self.mock_requests_post.call_count, 3)
-
-#   def test_query_results_not_available(self):
-#     QUERY_RESULTS_NOT_READY_RESPONSE = {
-#         "job": {}
-#     }
-
-#     self.mock_requests_post.return_value = self.get_mock_response(
-#         content=json.dumps(QUERY_RESULTS_NOT_READY_RESPONSE))
-
-#     result = self.redash.get_query_results(5, "SELECT * FROM test")
-
-#     self.assertTrue("job" in result)
-#     self.assertEqual(self.mock_requests_post.call_count, 5)
-
-#   def test_new_visualization_throws_for_missing_chart_data(self):
-#     EXPECTED_QUERY_ID = "query_id123"
-
-#     self.assertRaises(ValueError,
-#                       lambda: self.redash.create_new_visualization(
-#                           EXPECTED_QUERY_ID, VizType.CHART))
-
   def test_new_visualization_throws_for_missing_cohort_data(self):
     EXPECTED_QUERY_ID = "query_id123"
 
