@@ -4,3 +4,4 @@ MANIFEST
 dist/*
 *.pyc
 redash_client.egg-info/*
+htmlcov

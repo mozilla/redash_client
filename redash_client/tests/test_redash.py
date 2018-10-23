@@ -136,6 +136,81 @@ class TestRedashClient(AppTest):
     self.assertEqual(self.mock_requests_post.call_count, 1)
     self.assertEqual(self.mock_requests_get.call_count, 0)
 
+  def test_immediate_query_results_are_correct(self):
+    EXPECTED_ROWS = [{
+        "col1": 123,
+        "col2": 456,
+    }, {
+        "col1": 789,
+        "col2": 123,
+    }]
+
+    QUERY_RESULTS_RESPONSE = {
+        "query_result": {
+            "data": {
+                "rows": EXPECTED_ROWS
+            }
+        }
+    }
+
+    self.mock_requests_post.return_value = self.get_mock_response(
+        content=json.dumps(QUERY_RESULTS_RESPONSE))
+
+    rows = self.redash.get_query_results_from_sql("SELECT * FROM test", 5)
+
+    self.assertEqual(rows, EXPECTED_ROWS)
+    self.assertEqual(self.mock_requests_post.call_count, 1)
+
+  def test_late_response_query_results_are_correct(self):
+    EXPECTED_ROWS = [{
+        "col1": 123,
+        "col2": 456,
+    }, {
+        "col1": 789,
+        "col2": 123,
+    }]
+
+    QUERY_RESULTS_RESPONSE = {
+        "query_result": {
+            "data": {
+                "rows": EXPECTED_ROWS
+            }
+        }
+    }
+    QUERY_RESULTS_NOT_READY_RESPONSE = {
+        "job": {}
+    }
+
+    self.server_calls = 0
+
+    def simulate_server_calls(url, data):
+      response = QUERY_RESULTS_NOT_READY_RESPONSE
+      if self.server_calls >= 2:
+        response = QUERY_RESULTS_RESPONSE
+
+      self.server_calls += 1
+      return self.get_mock_response(content=json.dumps(response))
+
+    self.mock_requests_post.side_effect = simulate_server_calls
+
+    rows = self.redash.get_query_results_from_sql("SELECT * FROM test", 5)
+
+    self.assertEqual(rows, EXPECTED_ROWS)
+    self.assertEqual(self.mock_requests_post.call_count, 3)
+
+  def test_query_results_not_available(self):
+    QUERY_RESULTS_NOT_READY_RESPONSE = {
+        "job": {}
+    }
+
+    self.mock_requests_post.return_value = self.get_mock_response(
+        content=json.dumps(QUERY_RESULTS_NOT_READY_RESPONSE))
+
+    rows = self.redash.get_query_results_from_sql("SELECT * FROM test", 5)
+
+    self.assertEqual(rows, [])
+    self.assertEqual(self.mock_requests_post.call_count, 5)
+
   def test_get_query(self):
     QUERY_RESPONSE = {
         "name": "Name McName",
@@ -174,69 +249,69 @@ class TestRedashClient(AppTest):
     self.mock_requests_get.return_value = self.get_mock_response(
         content=json.dumps(QUERY_RESULTS_RESPONSE))
 
-    query_result = self.redash.get_query_results(5)
+    query_result = self.redash.get_query_results_from_id(5)
     rows = query_result['data']['rows']
 
     self.assertEqual(rows, EXPECTED_ROWS)
     self.assertEqual(self.mock_requests_get.call_count, 1)
 
-  def test_late_response_query_results_are_correct(self):
-    EXPECTED_ROWS = [{
-        "col1": 123,
-        "col2": 456,
-    }, {
-        "col1": 789,
-        "col2": 123,
-    }]
+#   def test_late_response_query_results_are_correct(self):
+#     EXPECTED_ROWS = [{
+#         "col1": 123,
+#         "col2": 456,
+#     }, {
+#         "col1": 789,
+#         "col2": 123,
+#     }]
 
-    QUERY_RESULTS_RESPONSE = {
-        "query_result": {
-            "data": {
-                "rows": EXPECTED_ROWS
-            }
-        }
-    }
-    QUERY_RESULTS_NOT_READY_RESPONSE = {
-        "job": {}
-    }
+#     QUERY_RESULTS_RESPONSE = {
+#         "query_result": {
+#             "data": {
+#                 "rows": EXPECTED_ROWS
+#             }
+#         }
+#     }
+#     QUERY_RESULTS_NOT_READY_RESPONSE = {
+#         "job": {}
+#     }
 
-    server_calls = []
+#     server_calls = []
 
-    def simulate_server_calls(url, data):
-      response = QUERY_RESULTS_NOT_READY_RESPONSE
-      if len(server_calls) > 1:
-        response = QUERY_RESULTS_RESPONSE
+#     def simulate_server_calls(url, data):
+#       response = QUERY_RESULTS_NOT_READY_RESPONSE
+#       if len(server_calls) > 1:
+#         response = QUERY_RESULTS_RESPONSE
 
-      server_calls.append(url)
-      return self.get_mock_response(content=json.dumps(response))
+#       server_calls.append(url)
+#       return self.get_mock_response(content=json.dumps(response))
 
-    self.mock_requests_post.side_effect = simulate_server_calls
+#     self.mock_requests_post.side_effect = simulate_server_calls
 
-    query_result = self.redash.get_query_results(5, "SELECT * FROM test")
-    rows = query_result['data']['rows']
+#     query_result = self.redash.get_query_results(5, "SELECT * FROM test")
+#     rows = query_result['data']['rows']
 
-    self.assertEqual(rows, EXPECTED_ROWS)
-    self.assertEqual(self.mock_requests_post.call_count, 3)
+#     self.assertEqual(rows, EXPECTED_ROWS)
+#     self.assertEqual(self.mock_requests_post.call_count, 3)
 
-  def test_query_results_not_available(self):
-    QUERY_RESULTS_NOT_READY_RESPONSE = {
-        "job": {}
-    }
+#   def test_query_results_not_available(self):
+#     QUERY_RESULTS_NOT_READY_RESPONSE = {
+#         "job": {}
+#     }
 
-    self.mock_requests_post.return_value = self.get_mock_response(
-        content=json.dumps(QUERY_RESULTS_NOT_READY_RESPONSE))
+#     self.mock_requests_post.return_value = self.get_mock_response(
+#         content=json.dumps(QUERY_RESULTS_NOT_READY_RESPONSE))
 
-    result = self.redash.get_query_results(5, "SELECT * FROM test")
+#     result = self.redash.get_query_results(5, "SELECT * FROM test")
 
-    self.assertTrue("job" in result)
-    self.assertEqual(self.mock_requests_post.call_count, 5)
+#     self.assertTrue("job" in result)
+#     self.assertEqual(self.mock_requests_post.call_count, 5)
 
-  def test_new_visualization_throws_for_missing_chart_data(self):
-    EXPECTED_QUERY_ID = "query_id123"
+#   def test_new_visualization_throws_for_missing_chart_data(self):
+#     EXPECTED_QUERY_ID = "query_id123"
 
-    self.assertRaises(ValueError,
-                      lambda: self.redash.create_new_visualization(
-                          EXPECTED_QUERY_ID, VizType.CHART))
+#     self.assertRaises(ValueError,
+#                       lambda: self.redash.create_new_visualization(
+#                           EXPECTED_QUERY_ID, VizType.CHART))
 
   def test_new_visualization_throws_for_missing_cohort_data(self):
     EXPECTED_QUERY_ID = "query_id123"
