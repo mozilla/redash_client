@@ -6,7 +6,7 @@ _here = os.path.dirname(__file__)
 setup(
   name = 'redash_client',
   packages = ['redash_client'],
-  version = '0.2.5',
+  version = '0.2.7',
   description = 'A client for the Redash API for stmo (https://sql.telemetry.mozilla.org)',
   long_description= open(os.path.join(_here, 'README.rst')).read(),
   author = 'Marina Samuel',

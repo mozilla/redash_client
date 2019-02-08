@@ -3,4 +3,5 @@
 MANIFEST
 dist/*
 *.pyc
+lib/*
 redash_client.egg-info/*

@@ -34,9 +34,16 @@ class RedashClient(object):
   def get_slug(self, name):
     return slugify(name)
 
-  def make_visualization_options(self, chart_type=None, viz_type=None,
-                                 column_mapping=None, series_options=None,
-                                 time_interval=None, stacking=None):
+  def make_visualization_options(
+      self,
+      chart_type=None,
+      viz_type=None,
+      column_mapping=None,
+      series_options=None,
+      time_interval=None,
+      stacking=None,
+      axis_info={}
+  ):
 
     # See the API doc for more details about visualization options:
     # https://people-mozilla.org/~ashort/redash_docs/api.html
@@ -53,9 +60,15 @@ class RedashClient(object):
         "legend": {"enabled": True},
         "series": {"stacking": "normal" if stacking else None},
         "seriesOptions": series_options if series_options else {},
-        "sortX": True,
-        "xAxis": {"type": "datetime", "labels": {"enabled": True}},
-        "yAxis": [{"type": "linear"}, {"type": "linear", "opposite": True}],
+        "sortX": axis_info.get("sortX", True),
+        "xAxis": {
+            "type": axis_info.get("x_axis_type", "datetime"),
+            "labels": {"enabled": True}
+        },
+        "yAxis": [
+            {"type": axis_info.get("y_axis_type", "linear")},
+            {"type": "linear", "opposite": True}
+        ],
     }
 
     return options
@@ -182,10 +195,17 @@ class RedashClient(object):
     visualization_id = json_result.get("id", None)
     return visualization_id
 
-  def create_new_visualization(self, query_id, viz_type=VizType.CHART,
-                               title="Chart", chart_type=None,
-                               column_mapping=None, series_options=None,
-                               time_interval=None, stacking=False):
+  def create_new_visualization(
+      self,
+      query_id, viz_type=VizType.CHART,
+      title="Chart",
+      chart_type=None,
+      column_mapping=None,
+      series_options=None,
+      time_interval=None,
+      stacking=False,
+      axis_info={}
+  ):
 
     # Note: column_mapping is a dict of which field names to use for the x and
     # y axis. (e.g. {"event":"x","count":"y","type":"series"})
@@ -208,7 +228,7 @@ class RedashClient(object):
 
     options = self.make_visualization_options(
         chart_type, viz_type, column_mapping,
-        series_options, time_interval, stacking)
+        series_options, time_interval, stacking, axis_info)
 
     visualization_id = self.make_new_visualization_request(
         query_id, viz_type, options, title)
