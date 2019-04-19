@@ -138,6 +138,11 @@ class RedashClient(object):
         str(query_id), self._url_params)
     self._make_api_request(requests.post, url_path)
 
+  def get_data_sources(self):
+      url_path = "data_sources?{}".format(self._url_params)
+      json_response, response = self._make_api_request(requests.get, url_path)
+      return json_response
+
   def create_new_query(self, name, sql_query,
                        data_source_id, description=None):
     query_id = self._get_new_query_id(
