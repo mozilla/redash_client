@@ -157,6 +157,17 @@ class RedashClient(object):
 
     return query_id, table_id
 
+  def _poll_job(self, job):
+    for attempt in range(self.MAX_RETRY_COUNT):
+      url_path = "jobs/{}?{}".format(job['id'], self._url_params)
+      json_response, response = self._make_api_request(requests.get, url_path)
+      job = json_response['job']
+      if job['status'] in (3, 4):
+          break
+      time.sleep(1)
+
+    return job
+
   def get_query_results(self, sql_query, data_source_id):
     url_path = "query_results?{0}".format(self._url_params)
 
@@ -167,13 +178,10 @@ class RedashClient(object):
 
     # If this query is still not uploaded, we'll get a job ID.
     # Let's retry in 1 second.
-    for attempt in range(self.MAX_RETRY_COUNT):
-      json_response, response = self._make_api_request(
-          requests.post, url_path, get_query_results_args)
-      if "job" not in json_response:
-        break
-
-      time.sleep(1)
+    json_response, response = self._make_api_request(
+        requests.post, url_path, get_query_results_args)
+    if "job" in json_response:
+      self._poll_job(json_response['job'])
 
     rows = json_response.get(
         "query_result", {}).get("data", {}).get("rows", [])
