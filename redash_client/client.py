@@ -93,7 +93,7 @@ class RedashClient(object):
               error_message=response.content,
           ), response.status_code)
     try:
-      json_result = json.loads(response.content), response
+      json_result = response.json(), response
     except ValueError as e:
       raise self.RedashClientException(
           ("Unable to parse JSON response: {error}").format(error=e))
