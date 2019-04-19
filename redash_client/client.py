@@ -73,7 +73,7 @@ class RedashClient(object):
 
     return options
 
-  def _make_request(self, request_function, url, args={}):
+  def _make_request(self, request_function, url, req_args={}):
     if not request_function:
       request_function = requests.post
 
@@ -81,7 +81,7 @@ class RedashClient(object):
       if request_function != requests.post:
         response = request_function(url)
       else:
-        response = request_function(url, args)
+        response = request_function(url, req_args)
     except requests.RequestException as e:
       raise self.RedashClientException(
           ("Unable to communicate with redash: {error}").format(error=e), e)
@@ -100,9 +100,12 @@ class RedashClient(object):
 
     return json_result
 
+  def _make_api_request(self, request_function, url_path, req_args={}):
+    req_url = urljoin(self.API_BASE_URL, url_path)
+    return self._make_request(request_function, req_url, req_args)
+
   def _get_new_query_id(self, name, sql_query, data_source_id, description):
     url_path = "queries?{0}".format(self._url_params)
-    query_url = urljoin(self.API_BASE_URL, url_path)
 
     new_query_args = json.dumps({
         "name": name,
@@ -111,17 +114,16 @@ class RedashClient(object):
         "description": description,
     })
 
-    json_result, response = self._make_request(
-        requests.post, query_url, new_query_args)
+    json_result, response = self._make_api_request(
+        requests.post, url_path, new_query_args)
 
     query_id = json_result.get("id", None)
     return query_id
 
   def _get_visualization(self, query_id):
     url_path = "queries/{0}?{1}".format(str(query_id), self._url_params)
-    query_url = urljoin(self.API_BASE_URL, url_path)
 
-    query_json_data, response = self._make_request(requests.get, query_url)
+    query_json_data, response = self._make_api_request(requests.get, url_path)
     query_visualizations = query_json_data.get("visualizations", [])
 
     visualization_data = None
@@ -134,8 +136,7 @@ class RedashClient(object):
     # Refresh our new query so it becomes available
     url_path = "queries/{0}/refresh?{1}".format(
         str(query_id), self._url_params)
-    query_url = urljoin(self.API_BASE_URL, url_path)
-    self._make_request(requests.post, query_url)
+    self._make_api_request(requests.post, url_path)
 
   def create_new_query(self, name, sql_query,
                        data_source_id, description=None):
@@ -158,7 +159,6 @@ class RedashClient(object):
 
   def get_query_results(self, sql_query, data_source_id):
     url_path = "query_results?{0}".format(self._url_params)
-    query_url = urljoin(self.API_BASE_URL, url_path)
 
     get_query_results_args = json.dumps({
         "query": sql_query,
@@ -168,8 +168,8 @@ class RedashClient(object):
     # If this query is still not uploaded, we'll get a job ID.
     # Let's retry in 1 second.
     for attempt in range(self.MAX_RETRY_COUNT):
-      json_response, response = self._make_request(
-          requests.post, query_url, get_query_results_args)
+      json_response, response = self._make_api_request(
+          requests.post, url_path, get_query_results_args)
       if "job" not in json_response:
         break
 
@@ -181,7 +181,6 @@ class RedashClient(object):
 
   def make_new_visualization_request(self, query_id, viz_type, options, title):
     url_path = "visualizations?{0}".format(self._url_params)
-    query_url = urljoin(self.API_BASE_URL, url_path)
 
     new_visualization_args = json.dumps({
         "type": viz_type,
@@ -190,8 +189,8 @@ class RedashClient(object):
         "query_id": query_id,
     })
 
-    json_result, response = self._make_request(
-        requests.post, query_url, new_visualization_args)
+    json_result, response = self._make_api_request(
+        requests.post, url_path, new_visualization_args)
     visualization_id = json_result.get("id", None)
     return visualization_id
 
@@ -239,13 +238,12 @@ class RedashClient(object):
 
     # Check if dashboard exists
     url_path = "dashboards/{0}?{1}".format(slug, self._url_params)
-    query_url = urljoin(self.API_BASE_URL, url_path)
 
     new_dashboard_args = json.dumps({"name": name})
 
     try:
-      json_result, response = self._make_request(
-          requests.get, query_url)
+      json_result, response = self._make_api_request(
+          requests.get, url_path)
       self._logger.info((
           "RedashClient: Dashboard {name} exists and has "
           "been fetched").format(name=name))
@@ -256,10 +254,9 @@ class RedashClient(object):
             "RedashClient: Dashboard {name} does not exist. "
             "Creating a new one.").format(name=name))
         url_path = "dashboards?{0}".format(self._url_params)
-        query_url = urljoin(self.API_BASE_URL, url_path)
 
-        json_result, response = self._make_request(
-            requests.post, query_url, new_dashboard_args)
+        json_result, response = self._make_api_request(
+            requests.post, url_path, new_dashboard_args)
 
     slug = json_result.get("slug", None)
     url_path = "dashboard/{slug}".format(slug=slug)
@@ -273,29 +270,25 @@ class RedashClient(object):
   def get_public_url(self, dash_id):
     url_path = "dashboards/{0}/share?{1}".format(
         str(dash_id), self._url_params)
-    query_url = urljoin(self.API_BASE_URL, url_path)
 
-    json_result, response = self._make_request(requests.post, query_url)
+    json_result, response = self._make_api_request(requests.post, url_path)
     public_url = json_result.get("public_url", None)
     return public_url
 
   def publish_dashboard(self, dash_id):
     url_path = "dashboards/{0}?{1}".format(str(dash_id), self._url_params)
-    query_url = urljoin(self.API_BASE_URL, url_path)
 
     publish_dashboard_args = json.dumps({"is_draft": False})
 
-    self._make_request(requests.post, query_url, publish_dashboard_args)
+    self._make_api_request(requests.post, url_path, publish_dashboard_args)
 
   def remove_visualization(self, viz_id):
     url_path = "widgets/{0}?{1}".format(str(viz_id), self._url_params)
-    query_url = urljoin(self.API_BASE_URL, url_path)
-    self._make_request(requests.delete, query_url)
+    self._make_api_request(requests.delete, url_path)
 
   def delete_query(self, query_id):
     url_path = "queries/{0}?{1}".format(str(query_id), self._url_params)
-    query_url = urljoin(self.API_BASE_URL, url_path)
-    self._make_request(requests.delete, query_url)
+    self._make_api_request(requests.delete, url_path)
 
   def add_visualization_to_dashboard(self, dash_id, viz_id, viz_width):
     if viz_width != VizWidth.REGULAR and viz_width != VizWidth.WIDE:
@@ -303,7 +296,6 @@ class RedashClient(object):
                         "VizWidth.WIDE or VizWidth.REGULAR"))
 
     url_path = "widgets?{0}".format(self._url_params)
-    query_url = urljoin(self.API_BASE_URL, url_path)
 
     add_visualization_args = json.dumps({
         "dashboard_id": dash_id,
@@ -313,7 +305,7 @@ class RedashClient(object):
         "text": "",
     })
 
-    self._make_request(requests.post, query_url, add_visualization_args)
+    self._make_api_request(requests.post, url_path, add_visualization_args)
 
   def get_visualization_public_url(self, query_id, widget_id):
     url_path = ("embed/query/{query_id}/visualization/{viz_id}"
@@ -324,16 +316,14 @@ class RedashClient(object):
 
   def update_query_schedule(self, query_id, schedule):
     url_path = "queries/{0}?{1}".format(str(query_id), self._url_params)
-    query_url = urljoin(self.API_BASE_URL, url_path)
 
     update_query_args = json.dumps({"schedule": schedule, "id": query_id})
 
-    self._make_request(requests.post, query_url, update_query_args)
+    self._make_api_request(requests.post, url_path, update_query_args)
 
   def update_query(self, query_id, name, sql_query,
                    data_source_id, description, options=None):
     url_path = "queries/{0}?{1}".format(str(query_id), self._url_params)
-    query_url = urljoin(self.API_BASE_URL, url_path)
 
     update_query_args = {
         "data_source_id": data_source_id,
@@ -346,15 +336,15 @@ class RedashClient(object):
     if options:
       update_query_args["options"] = options
 
-    self._make_request(requests.post, query_url, json.dumps(update_query_args))
+    self._make_api_request(requests.post, url_path,
+                           json.dumps(update_query_args))
     self._refresh_graph(query_id)
 
   def fork_query(self, query_id):
     url_path = "queries/{0}/fork?{1}".format(query_id, self._url_params)
-    query_url = urljoin(self.API_BASE_URL, url_path)
 
-    json_result, response = self._make_request(
-        requests.post, query_url)
+    json_result, response = self._make_api_request(
+        requests.post, url_path)
     fork = {
         "id": json_result.get("id", None),
         "query": json_result.get("query", None),
@@ -365,10 +355,9 @@ class RedashClient(object):
 
   def search_queries(self, keyword):
     url_path = "queries?q={0}&{1}".format(keyword, self._url_params)
-    query_url = urljoin(self.API_BASE_URL, url_path)
 
-    json_result, response = self._make_request(
-        requests.get, query_url)
+    json_result, response = self._make_api_request(
+        requests.get, url_path)
 
     templated_queries = []
     for query in json_result["results"]:
@@ -392,14 +381,12 @@ class RedashClient(object):
   def get_widget_from_dash(self, name):
     slug = self.get_slug(name)
     url_path = "dashboards/{0}?{1}".format(slug, self._url_params)
-    query_url = urljoin(self.API_BASE_URL, url_path)
 
     # Note: row_arr is in the form:
     # [{}, {}, {} ...]
     #
     # Where each object represents a widget in a redash dashboard
 
-    json_result, response = self._make_request(
-        requests.get, query_url)
+    json_result, response = self._make_api_request(requests.get, url_path)
     widgets = json_result.get("widgets", [])
     return widgets
