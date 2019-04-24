@@ -1,5 +1,4 @@
 import mock
-import json
 import unittest
 
 
