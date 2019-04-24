@@ -11,9 +11,9 @@ class TestRedashClient(AppTest):
 
   def setUp(self):
     # Maintain python2 compatibility
-    if not hasattr(self, 'assertCountEqual'):
+    if not hasattr(self, 'assertCountEqual'):  # pragma: no cover
       self.assertCountEqual = self.assertItemsEqual
-    if not hasattr(self, 'assertRaisesRegex'):
+    if not hasattr(self, 'assertRaisesRegex'):  # pragma: no cover
       self.assertRaisesRegex = self.assertRaisesRegexp
 
     api_key = "test_key"
@@ -557,3 +557,12 @@ class TestRedashClient(AppTest):
 
     self.assertEqual(widget_list, FLAT_WIDGETS)
     self.assertEqual(self.mock_requests_get.call_count, 1)
+
+  def test_get_data_sources(self):
+    DATA_SOURCES = [{"name": "data_source_1"}, {"name": "data_source_2"}]
+    get_response = self.get_mock_response(content=json.dumps(DATA_SOURCES))
+    get_response.json.return_value = DATA_SOURCES
+    self.mock_requests_get.return_value = get_response
+
+    sources = self.redash.get_data_sources()
+    self.assertEqual(sources, DATA_SOURCES)

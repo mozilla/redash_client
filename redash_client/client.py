@@ -5,9 +5,9 @@ import requests
 from slugify import slugify
 
 # Taking into account different versions of Python
-try:
-  from urlparse import urljoin
+try:  # pragma: no cover
   from urllib import urlencode
+  from urlparse import urljoin
 except ImportError:  # pragma: no cover
   from urllib.parse import urlencode
   from urllib.parse import urljoin
