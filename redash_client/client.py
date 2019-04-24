@@ -26,6 +26,7 @@ class RedashClient(object):
   def __init__(self, api_key):
     self._api_key = api_key
     self._url_params = {"api_key": self._api_key}
+    self._retry_delay = 1
 
     logging.basicConfig()
     self._logger = logging.getLogger()
@@ -170,7 +171,7 @@ class RedashClient(object):
       job = json_response['job']
       if job['status'] in (3, 4):
           break
-      time.sleep(1)
+      time.sleep(self._retry_delay)
 
     return job
 
