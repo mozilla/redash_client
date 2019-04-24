@@ -173,7 +173,9 @@ class RedashClient(object):
           break
       time.sleep(self._retry_delay)
 
-    return job
+    if job['status'] == 3:
+      return job['query_result_id']
+    return None
 
   def get_query_results(self, sql_query, data_source_id):
     url_path = "query_results"
@@ -183,12 +185,16 @@ class RedashClient(object):
         "data_source_id": data_source_id,
     })
 
-    # If this query is still not uploaded, we'll get a job ID.
-    # Let's retry in 1 second.
+    # If there aren't yet results, we'll get a job ID, so we poll for job
+    # completion and then get the results when they're ready.
     json_response, response = self._make_api_request(
         requests.post, url_path, get_query_results_args)
     if "job" in json_response:
-      self._poll_job(json_response['job'])
+      result_id = self._poll_job(json_response['job'])
+      if result_id:
+        url_path = "{}/{}".format(url_path, result_id)
+        json_response, response = self._make_api_request(
+            requests.get, url_path)
 
     rows = json_response.get(
         "query_result", {}).get("data", {}).get("rows", [])
