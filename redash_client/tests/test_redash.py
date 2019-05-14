@@ -10,6 +10,12 @@ from redash_client.constants import VizType, ChartType, VizWidth
 class TestRedashClient(AppTest):
 
   def setUp(self):
+    # Maintain python2 compatibility
+    if not hasattr(self, 'assertCountEqual'):  # pragma: no cover
+      self.assertCountEqual = self.assertItemsEqual
+    if not hasattr(self, 'assertRaisesRegex'):  # pragma: no cover
+      self.assertRaisesRegex = self.assertRaisesRegexp
+
     api_key = "test_key"
     self.redash = RedashClient(api_key)
 
@@ -37,10 +43,10 @@ class TestRedashClient(AppTest):
     self.mock_requests_post.side_effect = server_call_raising_exception
 
     url = "www.test.com"
-    self.assertRaisesRegexp(
+    self.assertRaisesRegex(
         self.redash.RedashClientException,
         "Unable to communicate with redash: {0}".format(ERROR_STRING),
-        lambda: self.redash._make_request(None, url, args={}))
+        lambda: self.redash._make_request(None, url, req_args={}))
 
   def test_failed_request_throws(self):
     STATUS = 404
@@ -49,28 +55,31 @@ class TestRedashClient(AppTest):
         STATUS, ERROR_STRING)
 
     url = "www.test.com"
-    self.assertRaisesRegexp(
+    self.assertRaisesRegex(
         self.redash.RedashClientException,
         "Error status returned: {0} {1}".format(STATUS, ERROR_STRING),
-        lambda: self.redash._make_request(None, url, args={}))
+        lambda: self.redash._make_request(None, url, req_args={}))
 
   def test_failed_to_load_content_json(self):
     BAD_JSON = "boop beep _ epic json fail"
     JSON_ERROR = "No JSON object could be decoded"
-    self.mock_requests_post.return_value = self.get_mock_response(
-        content=BAD_JSON)
+    post_response = self.get_mock_response(content=BAD_JSON)
+    post_response.json.side_effect = ValueError(JSON_ERROR)
+    self.mock_requests_post.return_value = post_response
 
     url = "www.test.com"
-    self.assertRaisesRegexp(
+    self.assertRaisesRegex(
         self.redash.RedashClientException,
         "Unable to parse JSON response: {0}".format(JSON_ERROR),
-        lambda: self.redash._make_request(None, url, args={}))
+        lambda: self.redash._make_request(None, url, req_args={}))
 
   def test_get_public_url_returns_expected_url(self):
     DASH_ID = 6
     EXPECTED_PUBLIC_URL = {"public_url": "www.example.com/expected"}
-    self.mock_requests_post.return_value = self.get_mock_response(
+    post_response = self.get_mock_response(
         content=json.dumps(EXPECTED_PUBLIC_URL))
+    post_response.json.return_value = EXPECTED_PUBLIC_URL
+    self.mock_requests_post.return_value = post_response
 
     public_url = self.redash.get_public_url(DASH_ID)
     self.assertEqual(public_url, EXPECTED_PUBLIC_URL["public_url"])
@@ -101,10 +110,15 @@ class TestRedashClient(AppTest):
         }]
     }
 
-    self.mock_requests_post.return_value = self.get_mock_response(
-        content=json.dumps(QUERY_ID_RESPONSE))
-    self.mock_requests_get.return_value = self.get_mock_response(
-        content=json.dumps(VISUALIZATION_LIST_RESPONSE))
+    query_id_response_json = json.dumps(QUERY_ID_RESPONSE)
+    post_response = self.get_mock_response(content=query_id_response_json)
+    post_response.json.return_value = QUERY_ID_RESPONSE
+    self.mock_requests_post.return_value = post_response
+
+    viz_list_response_json = json.dumps(VISUALIZATION_LIST_RESPONSE)
+    get_response = self.get_mock_response(content=viz_list_response_json)
+    get_response.json.return_value = VISUALIZATION_LIST_RESPONSE
+    self.mock_requests_get.return_value = get_response
 
     query_id, table_id = self.redash.create_new_query(
         "Dash Name",
@@ -119,9 +133,10 @@ class TestRedashClient(AppTest):
     QUERY_FAULTY_RESPONSE = {
         "some_bad_response": "boop"
     }
-
-    self.mock_requests_post.return_value = self.get_mock_response(
+    post_response = self.get_mock_response(
         content=json.dumps(QUERY_FAULTY_RESPONSE))
+    post_response.json.return_value = QUERY_FAULTY_RESPONSE
+    self.mock_requests_post.return_value = post_response
 
     query_id, table_id = self.redash.create_new_query(
         "Dash Name",
@@ -149,12 +164,14 @@ class TestRedashClient(AppTest):
         }
     }
 
-    self.mock_requests_post.return_value = self.get_mock_response(
+    post_response = self.get_mock_response(
         content=json.dumps(QUERY_RESULTS_RESPONSE))
+    post_response.json.return_value = QUERY_RESULTS_RESPONSE
+    self.mock_requests_post.return_value = post_response
 
     rows = self.redash.get_query_results("SELECT * FROM test", 5)
 
-    self.assertItemsEqual(rows, EXPECTED_ROWS)
+    self.assertCountEqual(rows, EXPECTED_ROWS)
     self.assertEqual(self.mock_requests_post.call_count, 1)
 
   def test_late_response_query_results_are_correct(self):
@@ -174,38 +191,66 @@ class TestRedashClient(AppTest):
         }
     }
     QUERY_RESULTS_NOT_READY_RESPONSE = {
-        "job": {}
+        "job": {"status": 1, "id": "123"}
     }
 
-    self.server_calls = 0
+    QUERY_RESULTS_READY_RESPONSE = {
+        "job": {"status": 3, "id": "123", "query_result_id": 456}
+    }
 
-    def simulate_server_calls(url, data):
-      response = QUERY_RESULTS_NOT_READY_RESPONSE
-      if self.server_calls >= 2:
+    # We should have one POST request and two GET requests
+    post_response = self.get_mock_response(
+        content=json.dumps(QUERY_RESULTS_NOT_READY_RESPONSE))
+    post_response.json.return_value = QUERY_RESULTS_NOT_READY_RESPONSE
+    self.mock_requests_post.return_value = post_response
+
+    self.get_calls = 0
+
+    def simulate_get_calls(url):
+      if self.get_calls == 0:
+        self.assertTrue("jobs" in url)
+        self.assertTrue("123" in url)
+        response = QUERY_RESULTS_READY_RESPONSE
+        self.get_calls += 1
+      else:
+        self.assertTrue("query_results" in url)
+        self.assertTrue("456" in url)
         response = QUERY_RESULTS_RESPONSE
 
-      self.server_calls += 1
-      return self.get_mock_response(content=json.dumps(response))
+      get_response = self.get_mock_response(content=json.dumps(response))
+      get_response.json.return_value = response
+      return get_response
 
-    self.mock_requests_post.side_effect = simulate_server_calls
+    self.mock_requests_get.side_effect = simulate_get_calls
 
     rows = self.redash.get_query_results("SELECT * FROM test", 5)
 
     self.assertEqual(rows, EXPECTED_ROWS)
-    self.assertEqual(self.mock_requests_post.call_count, 3)
+    self.assertEqual(self.mock_requests_post.call_count, 1)
+    self.assertEqual(self.mock_requests_get.call_count, 2)
 
   def test_query_results_not_available(self):
     QUERY_RESULTS_NOT_READY_RESPONSE = {
-        "job": {}
+        "job": {"status": 1, "id": "123"}
     }
 
-    self.mock_requests_post.return_value = self.get_mock_response(
+    self.redash._retry_delay = .000000001
+
+    post_response = self.get_mock_response(
         content=json.dumps(QUERY_RESULTS_NOT_READY_RESPONSE))
+    post_response.json.return_value = QUERY_RESULTS_NOT_READY_RESPONSE
+    self.mock_requests_post.return_value = post_response
+
+    get_response = self.get_mock_response(
+        content=json.dumps(QUERY_RESULTS_NOT_READY_RESPONSE))
+    get_response.json.return_value = QUERY_RESULTS_NOT_READY_RESPONSE
+    self.mock_requests_get.return_value = get_response
 
     rows = self.redash.get_query_results("SELECT * FROM test", 5)
 
     self.assertEqual(rows, [])
-    self.assertEqual(self.mock_requests_post.call_count, 5)
+    self.assertEqual(self.mock_requests_post.call_count, 1)
+    self.assertEqual(self.mock_requests_get.call_count, 5)
 
   def test_new_visualization_throws_for_missing_chart_data(self):
     EXPECTED_QUERY_ID = "query_id123"
@@ -235,8 +280,10 @@ class TestRedashClient(AppTest):
     }
     TIME_INTERVAL = "weekly"
 
-    self.mock_requests_post.return_value = self.get_mock_response(
+    post_response = self.get_mock_response(
         content=json.dumps(QUERY_ID_RESPONSE))
+    post_response.json.return_value = QUERY_ID_RESPONSE
+    self.mock_requests_post.return_value = post_response
 
     query_id = self.redash.create_new_visualization(
         EXPECTED_QUERY_ID, VizType.COHORT, time_interval=TIME_INTERVAL)
@@ -252,7 +299,7 @@ class TestRedashClient(AppTest):
 
     options = self.redash.make_visualization_options(
         viz_type=VizType.COHORT, time_interval=TIME_INTERVAL)
-    self.assertItemsEqual(options, COHORT_OPTIONS)
+    self.assertCountEqual(options, COHORT_OPTIONS)
 
   def test_format_chart_options_correctly(self):
     COLUMN_MAPPING = {"date": "x", "event_rate": "y", "type": "series"}
@@ -270,7 +317,7 @@ class TestRedashClient(AppTest):
 
     options = self.redash.make_visualization_options(
         ChartType.LINE, VizType.CHART, COLUMN_MAPPING)
-    self.assertItemsEqual(options, CHART_OPTIONS)
+    self.assertCountEqual(options, CHART_OPTIONS)
 
   def test_make_correct_slug(self):
     DASH_NAME = "Activity Stream A/B Testing: Beep Meep"
@@ -288,8 +335,10 @@ class TestRedashClient(AppTest):
         "slug": EXPECTED_SLUG
     }
 
-    self.mock_requests_get.return_value = self.get_mock_response(
+    get_response = self.get_mock_response(
         content=json.dumps(QUERY_ID_RESPONSE))
+    get_response.json.return_value = QUERY_ID_RESPONSE
+    self.mock_requests_get.return_value = get_response
 
     dash_info = self.redash.create_new_dashboard(DASH_NAME)
 
@@ -311,8 +360,10 @@ class TestRedashClient(AppTest):
     }
 
     self.mock_requests_get.return_value = self.get_mock_response(status=404)
-    self.mock_requests_post.return_value = self.get_mock_response(
+    post_response = self.get_mock_response(
         content=json.dumps(QUERY_ID_RESPONSE))
+    post_response.json.return_value = QUERY_ID_RESPONSE
+    self.mock_requests_post.return_value = post_response
 
     dash_info = self.redash.create_new_dashboard(DASH_NAME)
 
@@ -428,12 +479,15 @@ class TestRedashClient(AppTest):
 
     def get_server(url):
       response = self.get_mock_response()
+      response.json.return_value = {}
       if self.get_calls == 0:
         response = self.get_mock_response(
             content=json.dumps(QUERIES_IN_SEARCH))
+        response.json.return_value = QUERIES_IN_SEARCH
       else:
         response = self.get_mock_response(
             content=json.dumps(VISUALIZATIONS_FOR_QUERY))
+        response.json.return_value = VISUALIZATIONS_FOR_QUERY
 
       self.get_calls += 1
       return response
@@ -494,10 +548,21 @@ class TestRedashClient(AppTest):
         ]
     }
 
-    self.mock_requests_get.return_value = self.get_mock_response(
+    get_response = self.get_mock_response(
         content=json.dumps(WIDGETS_RESPONSE))
+    get_response.json.return_value = WIDGETS_RESPONSE
+    self.mock_requests_get.return_value = get_response
 
     widget_list = self.redash.get_widget_from_dash(DASH_NAME)
 
     self.assertEqual(widget_list, FLAT_WIDGETS)
     self.assertEqual(self.mock_requests_get.call_count, 1)
+
+  def test_get_data_sources(self):
+    DATA_SOURCES = [{"name": "data_source_1"}, {"name": "data_source_2"}]
+    get_response = self.get_mock_response(content=json.dumps(DATA_SOURCES))
+    get_response.json.return_value = DATA_SOURCES
+    self.mock_requests_get.return_value = get_response
+
+    sources = self.redash.get_data_sources()
+    self.assertEqual(sources, DATA_SOURCES)
