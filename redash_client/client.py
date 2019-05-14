@@ -168,8 +168,11 @@ class RedashClient(object):
     for attempt in range(self.MAX_RETRY_COUNT):
       url_path = "jobs/{}".format(job['id'])
       json_response, response = self._make_api_request(requests.get, url_path)
-      job = json_response['job']
-      if job['status'] in (3, 4):
+      job = json_response.get('job', None)
+
+      # If the status shows the job is done processing
+      # TODO: Add better comment for these statuses.
+      if job.get('status', None) in (3, 4):
           break
       time.sleep(self._retry_delay)
 
