@@ -34,6 +34,11 @@ class TestRedashClient(AppTest):
     self.mock_requests_delete = mock_requests_delete_patcher.start()
     self.addCleanup(mock_requests_delete_patcher.stop)
 
+    mock_time_sleep_patcher = mock.patch("redash_client.client.time.sleep")
+    mock_time_sleep = mock_time_sleep_patcher.start()
+    mock_time_sleep.return_value = None
+    self.addCleanup(mock_time_sleep_patcher.stop)
+
   def test_request_exception_thrown(self):
     ERROR_STRING = "FAIL"
 
