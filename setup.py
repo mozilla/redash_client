@@ -17,6 +17,6 @@ setup(
   install_requires=[
     "requests == 2.21.0",
     "python-slugify == 1.2.4",
-    "urllib3 == 1.24.2"
+    "urllib3 == 1.26.5"
   ]
 )
