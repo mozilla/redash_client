@@ -15,7 +15,7 @@ setup(
   keywords = ['redash', 'experiments', 'a/b tests'],
   classifiers = [],
   install_requires=[
-    "requests == 2.21.0",
+    "requests == 2.31.0",
     "python-slugify == 1.2.4",
     "urllib3 == 1.24.2"
   ]
